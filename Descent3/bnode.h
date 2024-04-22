@@ -90,7 +90,7 @@ struct bn_edge {
 };
 
 struct bn_node {
-  vector pos;
+  vec::vector pos;
   int num_edges;
   bn_edge *edges;
 };
@@ -115,7 +115,7 @@ void BNode_RemapTerrainRooms(int old_hri, int new_hri);
 extern int BNode_Path[MAX_BNODES_PER_ROOM];
 extern int BNode_PathNumNodes;
 extern bool BNode_FindPath(int start_room, int i, int j, float rad);
-extern int BNode_FindDirLocalVisibleBNode(int roomnum, vector *pos, vector *fvec, float rad);
-extern int BNode_FindClosestLocalVisibleBNode(int roomnum, vector *pos, float rad);
+extern int BNode_FindDirLocalVisibleBNode(int roomnum, vec::vector *pos, vec::vector *fvec, float rad);
+extern int BNode_FindClosestLocalVisibleBNode(int roomnum, vec::vector *pos, float rad);
 
 #endif

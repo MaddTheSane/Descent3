@@ -93,7 +93,7 @@ struct dynamic_wb_info {
   uint8_t wb_anim_mask;
   float wb_anim_frame;
 
-  vector cur_target;
+  vec::vector cur_target;
 
   char upgrade_level; // For multi-level weapons ( 0 to MAX_WB_UPGRADES-1)
 

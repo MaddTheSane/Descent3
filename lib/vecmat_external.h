@@ -44,6 +44,12 @@
 #define VECMAT_EXTERNAL_H
 
 #include <cstdint>
+#include <simd/simd.h>
+
+namespace vec {
+
+// Angles are unsigned shorts
+typedef unsigned short angle; // make sure this matches up with fix.h
 
 // Angles are unsigned shorts
 typedef uint16_t angle; // make sure this matches up with fix.h
@@ -53,36 +59,40 @@ struct angvec {
 };
 
 #define IDENTITY_MATRIX                                                                                                \
-  {                                                                                                                    \
-    {1.0, 0, 0}, {0, 1.0, 0}, { 0, 0, 1.0 }                                                                            \
-  }
+{                                                                                                                    \
+{1.0, 0, 0}, {0, 1.0, 0}, { 0, 0, 1.0 }                                                                            \
+}
 
-struct vector {
-  float x, y, z;
-};
+typedef simd::float3 vector;
+//typedef struct {
+//  float x, y, z;
+//} vector;
 
-struct vector4 {
-  float x, y, z, kat_pad;
-};
+//typedef struct vector4 {
+//  float x, y, z, kat_pad;
+//} vector4;
 
-struct vector_array {
-  float xyz[3];
-};
+typedef simd::float4 vector4;
 
-struct matrix {
-  vector rvec, uvec, fvec;
-};
+typedef struct {
+	float xyz[3];
+} vector_array;
 
-struct matrix4 {
-  vector4 rvec, uvec, fvec;
-};
+typedef struct {
+	simd::float3 rvec, uvec, fvec;
+} matrix;
+
+typedef struct {
+	simd::float4 rvec, uvec, fvec;
+} matrix4;
 
 // Zero's out a vector
-static inline void vm_MakeZero(vector *v) { v->x = v->y = v->z = 0; }
+inline void vm_MakeZero(simd::float3 *v) { v->x = v->y = v->z = 0; }
 
 // Set an angvec to {0,0,0}
 static inline void vm_MakeZero(angvec *a) { a->p = a->h = a->b = 0; }
 
+#if 0
 // Checks for equality
 static inline bool operator==(vector a, vector b) {
   bool equality = false;
@@ -119,6 +129,8 @@ static inline vector operator+(vector a, vector b) {
 // Adds 2 vectors
 static inline vector operator+=(vector &a, vector b) { return (a = a + b); }
 
+#endif
+
 // Adds 2 matrices
 static inline matrix operator+(matrix a, matrix b) {
   // Adds two 3x3 matrixs.
@@ -132,6 +144,8 @@ static inline matrix operator+(matrix a, matrix b) {
 
 // Adds 2 matrices
 static inline matrix operator+=(matrix &a, matrix b) { return (a = a + b); }
+
+#if 0
 
 // Subtracts 2 vectors
 static inline vector operator-(vector a, vector b) {
@@ -147,6 +161,8 @@ static inline vector operator-(vector a, vector b) {
 // Subtracts 2 vectors
 static inline vector operator-=(vector &a, vector b) { return (a = a - b); }
 
+#endif
+
 // Subtracts 2 matrices
 static inline matrix operator-(matrix a, matrix b) {
   // subtracts two 3x3 matrices
@@ -160,6 +176,8 @@ static inline matrix operator-(matrix a, matrix b) {
 
 // Subtracts 2 matrices
 static inline matrix operator-=(matrix &a, matrix b) { return (a = a - b); }
+
+#if 0
 
 // Does a simple dot product calculation
 static inline float operator*(vector u, vector v) { return (u.x * v.x) + (u.y * v.y) + (u.z * v.z); }
@@ -179,6 +197,8 @@ static inline vector operator*=(vector &v, float s) { return (v = v * s); }
 // Scalar multiplication
 static inline vector operator*(float s, vector v) { return v * s; }
 
+#endif
+
 // Scalar multiplication
 static inline matrix operator*(float s, matrix m) {
   m.fvec = m.fvec * s;
@@ -194,6 +214,8 @@ static inline matrix operator*(matrix m, float s) { return s * m; }
 // Scalar multiplication
 static inline matrix operator*=(matrix &m, float s) { return (m = m * s); }
 
+#if 0
+
 // Scalar division
 static inline vector operator/(vector src, float n) {
   src.x /= n;
@@ -205,6 +227,8 @@ static inline vector operator/(vector src, float n) {
 
 // Scalar division
 static inline vector operator/=(vector &src, float n) { return (src = src / n); }
+
+#endif
 
 // Scalar division
 static inline matrix operator/(matrix src, float n) {
@@ -218,17 +242,17 @@ static inline matrix operator/(matrix src, float n) {
 // Scalar division
 static inline matrix operator/=(matrix &src, float n) { return (src = src / n); }
 
-// Computes a cross product between u and v, returns the result
-//	in Normal.
-static inline vector operator^(vector u, vector v) {
-  vector dest;
-
-  dest.x = (u.y * v.z) - (u.z * v.y);
-  dest.y = (u.z * v.x) - (u.x * v.z);
-  dest.z = (u.x * v.y) - (u.y * v.x);
-
-  return dest;
-}
+//// Computes a cross product between u and v, returns the result
+////	in Normal.
+//static inline vector operator^(vector u, vector v) {
+//  vector dest;
+//
+//  dest.x = (u.y * v.z) - (u.z * v.y);
+//  dest.y = (u.z * v.x) - (u.x * v.z);
+//  dest.z = (u.x * v.y) - (u.y * v.x);
+//
+//  return dest;
+//}
 
 // Matrix transpose
 static inline matrix operator~(matrix m) {
@@ -247,6 +271,7 @@ static inline matrix operator~(matrix m) {
   return m;
 }
 
+#if 0
 // Negate vector
 static inline vector operator-(vector a) {
   a.x *= -1;
@@ -256,19 +281,23 @@ static inline vector operator-(vector a) {
   return a;
 }
 
+#endif
+
 // Apply a matrix to a vector
 static inline vector operator*(vector v, matrix m) {
   vector result;
 
-  result.x = v * m.rvec;
-  result.y = v * m.uvec;
-  result.z = v * m.fvec;
+  result.x = simd::dot(v, m.rvec);
+  result.y = simd::dot(v, m.uvec);
+  result.z = simd::dot(v, m.fvec);
 
   return result;
 }
 
-static inline float vm_Dot3Vector(float x, float y, float z, vector *v) { return (x * v->x) + (y * v->y) + (z * v->z); }
+static inline float vm_Dot3Vector(float x, float y, float z, vector *v) { return simd::dot(simd_make_float3(x, y, z), *v); }
 
 #define vm_GetSurfaceNormal vm_GetNormal
+
+}
 
 #endif

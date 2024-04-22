@@ -102,23 +102,23 @@
 // gun bank
 struct w_bank {
   int parent;
-  vector pnt;
-  vector norm;
+  vec::vector pnt;
+  vec::vector norm;
 };
 
 // attach bank
 struct a_bank {
   int parent;
-  vector pnt;
-  vector norm;
-  vector uvec;
+  vec::vector pnt;
+  vec::vector norm;
+  vec::vector uvec;
   bool f_uvec;
 };
 
 struct lightmap_object_face {
   uint8_t num_verts;
   uint16_t lmi_handle;
-  vector rvec, uvec;
+  vec::vector rvec, uvec;
   float *u2, *v2;
 };
 
@@ -142,13 +142,13 @@ struct polyface {
   ddgr_color color;
   int16_t texnum;
 
-  vector normal;
+  vec::vector normal;
 };
 
 // glow info
 struct glowinfo {
   float glow_r, glow_g, glow_b, glow_size, glow_length;
-  vector center, normal;
+  vec::vector center, normal;
 };
 
 // bsp information
@@ -158,20 +158,20 @@ struct bsp_info {
   int movement_axis;       // which axis this subobject moves or rotates on.
   int tree_offset;         // offset of tree data (children included) into the model_data
   int data_offset;         // offset of data into the model_data
-  vector offset;           // 3d offset from parent object
-  vector norm;             // norm for sep plane
+  vec::vector offset;           // 3d offset from parent object
+  vec::vector norm;             // norm for sep plane
   float d;                 // norm d for sep plane
-  vector pnt;              // point for sep plane
-  vector geometric_center; // geometric center of this subobject.  In the same Frame Of
+  vec::vector pnt;              // point for sep plane
+  vec::vector geometric_center; // geometric center of this subobject.  In the same Frame Of
                            // Reference as all other vertices in this submodel. (Relative to pivot point)
   float rad;               // radius for each submodel
 
-  vector *verts; // vertices for the submodel (NEWSTYLE)
-  vector *vertnorms;
+  vec::vector *verts; // vertices for the submodel (NEWSTYLE)
+  vec::vector *vertnorms;
   float *alpha;
   polyface *faces; // faces for the submodel (NEWSTYLE)
-  vector *face_min;
-  vector *face_max;
+  vec::vector *face_min;
+  vec::vector *face_max;
 
   int16_t *vertnum_memory;
   float *u_memory;
@@ -184,18 +184,18 @@ struct bsp_info {
   int parent;                     // what is parent for each submodel
   uint8_t num_children;
 
-  vector min;
-  vector max;
+  vec::vector min;
+  vec::vector max;
   int blown_off; // If set, this subobject is blown off. Stuffed by model_set_instance
 
-  angvec angs;
-  matrix mod_matrix; // The angles from parent.  Stuffed by model_set_instance
-  vector mod_pos;    // The modified position of this object.  Used for positional interpolation
+  vec::angvec angs;
+  vec::matrix mod_matrix; // The angles from parent.  Stuffed by model_set_instance
+  vec::vector mod_pos;    // The modified position of this object.  Used for positional interpolation
 
-  vector *keyframe_axis; // the axis of rotation for each keyframe
+  vec::vector *keyframe_axis; // the axis of rotation for each keyframe
   int *keyframe_angles;  // The destination angles for each key frame
-  vector *keyframe_pos;
-  matrix *keyframe_matrix; // the combined rotation matrices up to frame n
+  vec::vector *keyframe_pos;
+  vec::matrix *keyframe_matrix; // the combined rotation matrices up to frame n
   uint16_t *tick_pos_remap;  // For looking up keyframes fast
   uint16_t *tick_ang_remap;  // For looking up keyframes fast
   int *rot_start_time;
@@ -239,14 +239,14 @@ struct poly_model {
   int model_data_size;
   uint8_t *model_data;
 
-  vector mins, maxs; // min,max for whole model
-  vector view_pos;   // viewing position.  Default to {0,0,0}.
+  vec::vector mins, maxs; // min,max for whole model
+  vec::vector view_pos;   // viewing position.  Default to {0,0,0}.
 
   float wall_size;
-  vector wall_size_offset;
+  vec::vector wall_size_offset;
 
   float anim_size;
-  vector anim_size_offset;
+  vec::vector anim_size_offset;
 
   float rad;
   int n_textures;
@@ -312,16 +312,16 @@ struct polymodel_effect {
   int custom_color;
 
   float spec_r, spec_g, spec_b;
-  vector spec_light_pos;
+  simd::float3 spec_light_pos;
   float spec_scalar;
 
-  vector bump_light_pos;
+  simd::float3 bump_light_pos;
   float bump_scalar;
 
   float fog_depth;
   float fog_eye_distance;
   float fog_distance;
-  vector fog_plane, fog_portal_vert;
+  simd::float3 fog_plane, fog_portal_vert;
   int fog_plane_check;
 
   float glow_length_scalar;

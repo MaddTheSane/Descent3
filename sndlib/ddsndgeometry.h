@@ -78,11 +78,11 @@ public:
 
   // primitives, nv = number of verts, and verts is an array of pointers to vertices.
   // you can pass a sound material value if you want special reflective properties on this polygon.
-  void AddPoly(int nv, vector **verts, unsigned tag, tSoundMaterial material = SNDGEO_MATERIAL_NONE);
+  void AddPoly(int nv, vec::vector **verts, unsigned tag, tSoundMaterial material = SNDGEO_MATERIAL_NONE);
 
 private:
-  void AddQuad(unsigned tag, vector **verts);     // 4 verts here.
-  void AddTriangle(unsigned tag, vector **verts); // 3 verts here.
+  void AddQuad(unsigned tag, vec::vector **verts);     // 4 verts here.
+  void AddTriangle(unsigned tag, vec::vector **verts); // 3 verts here.
 
 private:
   llsSystem *m_snd_system; // sound library attached.

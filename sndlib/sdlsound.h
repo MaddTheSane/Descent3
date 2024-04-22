@@ -31,9 +31,9 @@ void lnxsound_ErrorText(const char *fmt, ...);
 
 class emulated_listener {
 public:
-  matrix orient;
-  vector position;
-  vector velocity;
+  vec::matrix orient;
+  vec::vector position;
+  vec::vector velocity;
 };
 
 class lnxsound : public llsSystem {

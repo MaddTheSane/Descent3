@@ -159,6 +159,8 @@
 // vecmat_external.h is where anything that can be used by DLLs should be.
 #include "vecmat_external.h"
 
+namespace vec {
+
 extern const vector Zero_vector;
 extern const matrix Identity_matrix;
 
@@ -320,8 +322,10 @@ float vm_ComputeBoundingSphere(vector *center, vector *vecs, int num_verts);
 // Returns the size of the passed in stuff
 float vm_GetCentroidFast(vector *centroid, vector *src, int nv);
 
+}
+
 // Here are the C++ operator overloads -- they do as expected
-extern matrix operator*(matrix src0, matrix src1);
-extern matrix operator*=(matrix &src0, matrix src1);
+extern vec::matrix operator*(vec::matrix src0, vec::matrix src1);
+extern vec::matrix operator*=(vec::matrix &src0, vec::matrix src1);
 
 #endif

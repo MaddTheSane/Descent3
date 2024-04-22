@@ -32,7 +32,7 @@ static InstanceContext sInstanceStack[MAX_INSTANCE_DEPTH];
 static int sInstanceDepth = 0;
 
 // instance at specified point with specified orientation
-void g3_StartInstanceMatrix(vector *pos, matrix *orient) {
+void g3_StartInstanceMatrix(vec::vector *pos, vec::matrix *orient) {
   ASSERT(orient != NULL);
   ASSERT(sInstanceDepth < MAX_INSTANCE_DEPTH);
 
@@ -43,13 +43,13 @@ void g3_StartInstanceMatrix(vector *pos, matrix *orient) {
   ++sInstanceDepth;
 
   // step 1: subtract object position from view position
-  vector tempv = View_position - *pos;
+  vec::vector tempv = View_position - *pos;
 
   // step 2: rotate view vector through object matrix
   View_position = tempv * *orient;
 
   // step 3: rotate object matrix through view_matrix (vm = ob * vm)
-  matrix tempm, tempm2 = ~*orient;
+  vec::matrix tempm, tempm2 = ~*orient;
 
   tempm = tempm2 * View_matrix;
   View_matrix = tempm;

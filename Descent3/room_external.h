@@ -216,25 +216,25 @@ struct room {
   int num_verts;   // how many verts in the room
   face *faces;     // pointer to list of faces
   portal *portals; // pointer to list of portals
-  vector *verts;   // array of vertices for this room
-  vector4 *verts4; // array of 16byte vertices for this room
+  vec::vector *verts;   // array of vertices for this room
+  vec::vector4 *verts4; // array of 16byte vertices for this room
 
   doorway *doorway_data;   // pointer to this room's doorway data, or NULL if not a doorway
   char *name;              // name of this room, or NULL
   int objects;             // index of first object in this room
-  vector max_xyz, min_xyz; // for external room visibility checking
+  vec::vector max_xyz, min_xyz; // for external room visibility checking
 
   float last_render_time; // Last time we rendered this room
 
   // Hierarchical bounding boxes for this room
-  vector bbf_min_xyz;
-  vector bbf_max_xyz;
+  vec::vector bbf_min_xyz;
+  vec::vector bbf_max_xyz;
   int16_t num_bbf_regions;
   int16_t pad1;
   int16_t **bbf_list;
   int16_t *num_bbf;
-  vector *bbf_list_min_xyz;
-  vector *bbf_list_max_xyz;
+  vec::vector *bbf_list_min_xyz;
+  vec::vector *bbf_list_max_xyz;
   uint8_t *bbf_list_sector;
 
   bn_list bn_info;
@@ -242,7 +242,7 @@ struct room {
   int16_t wpb_index;           // world point buffer index - where this room starts
   uint8_t pulse_time;          // each room can has a pulse time
   uint8_t pulse_offset;        // each room has a timer offset for which it pulses
-  vector wind;               // Wind vector for the room
+  vec::vector wind;               // Wind vector for the room
   int ambient_sound;         // Index of ambient sound pattern for this room, or -1 if none
   int16_t vis_effects;         // index of first visual effect in this room
   int16_t mirror_face;         // Index of face that this room is to be mirrored by
@@ -250,7 +250,7 @@ struct room {
   uint16_t *mirror_faces_list; // the list of faces in this room that have the same texture as the mirror
   float damage;              // The damage per second applied to players (& maybe others) in room
 
-  vector path_pnt;      // Point used by the path system
+  vec::vector path_pnt;      // Point used by the path system
   uint8_t *volume_lights; // Pointer to memory for our volumetric lighting
   int16_t volume_width;   // The dimensions of our volumetric room
   int16_t volume_height;

@@ -412,8 +412,8 @@ extern char AI_Status;
 
 // Last know player info -- might make it a [MAX_PLAYERS]
 
-extern vector ai_lkplayer_pos;
-extern vector ai_lkplayer_velocity;
+extern vec::vector ai_lkplayer_pos;
+extern vec::vector ai_lkplayer_velocity;
 extern float ai_lkplayer_time;
 
 #define MAX_AI_INIT_CLASSES 3
@@ -505,8 +505,8 @@ struct ai_path_info {
 
 // Used for predefined move lists (off of normal static paths)
 struct ai_move_path {
-  vector pos;
-  matrix orient;
+  vec::vector pos;
+  vec::matrix orient;
 
   int16_t path_id;
 };
@@ -605,8 +605,8 @@ struct goal_info {
 
   union {
     float time;
-    vector vec;
-    vector pos;
+    vec::vector vec;
+    vec::vector pos;
     g_floats fs; // goal floats or a vector
   };
 
@@ -648,9 +648,9 @@ struct goal {
 
   float dist_to_goal;
 
-  vector vec_to_target;
+  vec::vector vec_to_target;
   float next_check_see_target_time;
-  vector last_see_target_pos;
+  vec::vector last_see_target_pos;
   float last_see_target_time;
   float next_target_update_time;
 

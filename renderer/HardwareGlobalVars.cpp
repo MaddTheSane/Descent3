@@ -20,19 +20,19 @@
 #include "HardwareInternal.h"
 #include <float.h>
 
-vector View_position;
+vec::vector View_position;
 float View_zoom;
 
 float Far_clip_z = FLT_MAX; // set to a really really far distance initially
 
 uint8_t Clip_custom = 0;
 float Clip_plane_distance = 0;
-vector Clip_plane;
+vec::vector Clip_plane;
 
 matrix Unscaled_matrix; // before scaling
 matrix View_matrix;
 
-vector Matrix_scale; // how the matrix is scaled, window_scale * zoom
+vec::vector Matrix_scale; // how the matrix is scaled, window_scale * zoom
 
 int Window_width;  // the actual width
 int Window_height; // the actual height

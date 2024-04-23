@@ -1,20 +1,20 @@
 /*
-* Descent 3 
-* Copyright (C) 2024 Parallax Software
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Descent 3
+ * Copyright (C) 2024 Parallax Software
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef _IFF_H
 #define _IFF_H
@@ -41,18 +41,18 @@
 #define TYPE_PBM 0
 #define TYPE_ILBM 1
 
-// Loads an IFF file, returning bitmap handle or -1 if error
+/// Loads an IFF file, returning bitmap handle or -1 if error
 int bm_iff_alloc_file(CFILE *);
 
-// Loads a tga or ogf file into a bitmap...returns handle to bm or -1 on error
+/// Loads a tga or ogf file into a bitmap...returns handle to bm or -1 on error
 int bm_tga_alloc_file(CFILE *infile, char *name, int format = 0);
 
-// Loads a pcx file and converts it to 16 bit.  Returns bitmap handle or -1 on error
+/// Loads a pcx file and converts it to 16 bit.  Returns bitmap handle or -1 on error
 int bm_pcx_alloc_file(CFILE *infile);
 
 int bm_tga_load_short_file(CFILE *infile, char *name);
 
-// Pages in bitmap index n.  Returns 1 if successful, 0 if not
+/// Pages in bitmap index n.  Returns 1 if successful, 0 if not
 int bm_page_in_file(int n);
 
 int bm_iff_read_animbrush(const char *ifilename, int *bm_list);

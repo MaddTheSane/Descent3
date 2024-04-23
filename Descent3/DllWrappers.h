@@ -79,12 +79,12 @@ bool dUnattachChild(object *parent, char parent_ap);
 // Unattaches an object from its parent
 bool dUnattachFromParent(object *child);
 // Set a vector to {0,0,0}
-void dvm_MakeZeroVector(vector *v);
-void dvm_MakeZeroAngle(angvec *v);
+void dvm_MakeZeroVector(simd::float3 *v);
+void dvm_MakeZeroAngle(vec::angvec *v);
 void dStartFrame(int x, int y, int x2, int y2, bool clear);
 
 // ObjSetPos, that automatically sets the OF_MOVED_THIS_FRAME
-void ObjSetPosAndMarkMoved(object *obj, vector *pos, int roomnum, matrix *orient, bool f_update_attached_children);
+void ObjSetPosAndMarkMoved(object *obj, simd::float3 *pos, int roomnum, vec::matrix *orient, bool f_update_attached_children);
 // SetObjectDeadFlag that automatically writes out demo data
 void dSetObjectDeadFlagWDemo(object *obj, bool tell_clients_to_remove = false, bool tell_clients_to_play_sound = false);
 void dSetAudioTaunts(bool enable);

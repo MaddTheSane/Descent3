@@ -78,7 +78,7 @@ void g3_GetProjectionMatrix(float zoom, float *projMat) {
 }
 
 // start the frame
-void g3_StartFrame(vector *view_pos, matrix *view_matrix, float zoom) {
+void g3_StartFrame(simd::float3 *view_pos, vec::matrix *view_matrix, float zoom) {
   // initialize the viewport transform
   g3_GetViewPortMatrix((float *)gTransformViewPort);
   g3_GetProjectionMatrix(zoom, (float *)gTransformProjection);
@@ -147,11 +147,11 @@ void g3_EndFrame(void) {
 }
 
 // get the current view position
-void g3_GetViewPosition(vector *vp) { *vp = View_position; }
+void g3_GetViewPosition(simd::float3 *vp) { *vp = View_position; }
 
-void g3_GetViewMatrix(matrix *mat) { *mat = View_matrix; }
+void g3_GetViewMatrix(vec::matrix *mat) { *mat = View_matrix; }
 
-void g3_GetUnscaledMatrix(matrix *mat) { *mat = Unscaled_matrix; }
+void g3_GetUnscaledMatrix(vec::matrix *mat) { *mat = Unscaled_matrix; }
 
 // Gets the matrix scale vector
-void g3_GetMatrixScale(vector *matrix_scale) { *matrix_scale = Matrix_scale; }
+void g3_GetMatrixScale(simd::float3 *matrix_scale) { *matrix_scale = Matrix_scale; }

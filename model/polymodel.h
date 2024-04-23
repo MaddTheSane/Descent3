@@ -319,11 +319,11 @@ extern polymodel_light_type Polymodel_light_type;
 extern float Polylighting_static_red;
 extern float Polylighting_static_green;
 extern float Polylighting_static_blue;
-extern vector *Polymodel_light_direction, Polymodel_fog_portal_vert, Polymodel_fog_plane, Polymodel_specular_pos,
+extern simd::float3 *Polymodel_light_direction, Polymodel_fog_portal_vert, Polymodel_fog_plane, Polymodel_specular_pos,
     Polymodel_bump_pos;
 extern lightmap_object *Polylighting_lightmap_object;
 
-extern vector Interp_pos_instance_vec;
+extern simd::float3 Interp_pos_instance_vec;
 extern g3Point Robot_points[];
 
 // Flag to draw an outline around the faces
@@ -350,12 +350,12 @@ void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normali
 
 // This one is for gouraud shading - the lightdir is the normalized light direction, and lightscalar is a 0-1 scalar to
 // apply
-void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normalized_time, int flags, vector *lightdir,
+void DrawPolygonModel(simd::float3 *pos, vec::matrix *orient, int model_num, float *normalized_time, int flags, simd::float3 *lightdir,
                       float r, float g, float b, uint32_t f_render_sub = 0xFFFFFFFF, uint8_t use_effect = 0,
                       uint8_t overlay = 0);
 
 // This one is for lightmap rendering
-void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normalized_time, int flags,
+void DrawPolygonModel(simd::float3 *pos, vec::matrix *orient, int model_num, float *normalized_time, int flags,
                       lightmap_object *lm_object, uint32_t f_render_sub, uint8_t use_effect = 0, uint8_t overlay = 0);
 
 // Inits our models array
@@ -372,7 +372,7 @@ float GetNormalizedKeyframe(int handle, float num);
 void RemapPolyModels();
 
 // Sets a positional instance
-void StartPolyModelPosInstance(vector *posvec);
+void StartPolyModelPosInstance(simd::float3 *posvec);
 
 // Pops a positional instance
 void DonePolyModelPosInstance();
@@ -396,9 +396,9 @@ int RenderPolygonModel(poly_model *, uint32_t f_render_sub = 0xFFFFFFFF);
 void RenderSubmodel(poly_model *pm, bsp_info *sm, uint32_t f_render_sub);
 
 //	returns point within polymodel/submodel in world coordinates.
-void GetPolyModelPointInWorld(vector *dest, poly_model *pm, vector *wpos, matrix *orient, int subnum, vector *pos,
+void GetPolyModelPointInWorld(simd::float3 *dest, poly_model *pm, simd::float3 *wpos, vec::matrix *orient, int subnum, vector *pos,
                               vector *norm = nullptr);
-void GetPolyModelPointInWorld(vector *dest, poly_model *pm, vector *wpos, matrix *orient, int subnum,
+void GetPolyModelPointInWorld(simd::float3 *dest, poly_model *pm, simd::float3 *wpos, vec::matrix *orient, int subnum,
                               float *normalized_time, vector *pos, vector *norm = nullptr);
 
 // Returns 1 if this submodel shouldn't be rendered

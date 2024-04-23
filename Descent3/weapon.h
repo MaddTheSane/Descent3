@@ -382,7 +382,7 @@ void RemapAllWeaponObjects(int old_index, int new_index);
 
 // Creates an weapon and sends it speeding on its way
 // returns the objnum of the weapon
-int CreateAndFireWeapon(vector *pos, vector *dir, object *parent, int weapon_num);
+int CreateAndFireWeapon(simd::float3 *pos, simd::float3 *dir, object *parent, int weapon_num);
 
 // Given an object and a weapon, fires a shot from that object
 // returns the object number of the weapon
@@ -410,7 +410,7 @@ void FireFlareFromPlayer(object *objp);
 void WeaponDoFrame(object *obj);
 
 // Returns the position and the normal of a gun point
-bool WeaponCalcGun(vector *gun_point, vector *gun_normal, object *obj, int gun_num);
+bool WeaponCalcGun(simd::float3 *gun_point, simd::float3 *gun_normal, object *obj, int gun_num);
 
 // Checks for relation between weapons and other objects
 extern bool ObjectsAreRelated(int o1, int o2);
@@ -447,12 +447,12 @@ void DrawAlphaBlendedScreen(float r, float g, float b, float alpha);
 void DoSprayEffect(object *obj, otype_wb_info *static_wb, uint8_t wb_index);
 
 // Plays the animation that accompanies a weapon death
-void DoWeaponExploded(object *, vector *norm = NULL, vector *collision_point = NULL, object *hit_object = NULL);
+void DoWeaponExploded(object *, simd::float3 *norm = NULL, simd::float3 *collision_point = NULL, object *hit_object = NULL);
 
 void TimeoutWeapon(object *);
 
 // Creates chidren from a dying weapon
-void CreateImpactSpawnFromWeapon(object *obj, vector *norm);
+void CreateImpactSpawnFromWeapon(object *obj, simd::float3 *norm);
 
 // Releases the guided missile of a passed in player
 void ReleaseGuidedMissile(int slot);

@@ -103,25 +103,25 @@ void g3_DrawSpecialLine(g3Point *p0, g3Point *p1) {
 
 // returns true if a plane is facing the viewer. takes the unrotated surface
 // normal of the plane, and a point on it.  The normal need not be normalized
-bool g3_CheckNormalFacing(vector *v, vector *norm) {
-  vector tempv;
+bool g3_CheckNormalFacing(simd::float3 *v, simd::float3 *norm) {
+  simd::float3 tempv;
 
   tempv = View_position - *v;
 
-  return ((tempv * *norm) > 0);
+  return (simd::dot(tempv, *norm) > 0);
 }
 
-bool DoFacingCheck(vector *norm, g3Point **vertlist, vector *p) {
+bool DoFacingCheck(simd::float3 *norm, g3Point **vertlist, simd::float3 *p) {
   if (norm) {
     // have normal
     ASSERT(norm->x || norm->y || norm->z);
     return g3_CheckNormalFacing(p, norm);
   } else {
     // normal not specified, so must compute
-    vector tempv;
+    simd::float3 tempv;
     // get three points (rotated) and compute normal
-    vm_GetPerp(&tempv, &vertlist[0]->p3_vec, &vertlist[1]->p3_vec, &vertlist[2]->p3_vec);
-    return ((tempv * vertlist[1]->p3_vec) < 0);
+    vec::vm_GetPerp(&tempv, &vertlist[0]->p3_vec, &vertlist[1]->p3_vec, &vertlist[2]->p3_vec);
+    return (simd::dot(tempv, vertlist[1]->p3_vec) < 0);
   }
 }
 
@@ -130,7 +130,7 @@ bool DoFacingCheck(vector *norm, g3Point **vertlist, vector *p) {
 // pre-compute the normal, and pass it to this function.  When the normal
 // is passed, this function works like g3_CheckNormalFacing() plus
 // g3_DrawPoly().
-void g3_CheckAndDrawPoly(int nv, g3Point **pointlist, int bm, vector *norm, vector *pnt) {
+void g3_CheckAndDrawPoly(int nv, g3Point **pointlist, int bm, simd::float3 *norm, simd::float3 *pnt) {
   if (DoFacingCheck(norm, pointlist, pnt))
     g3_DrawPoly(nv, pointlist, bm);
 }
@@ -246,9 +246,9 @@ void g3_DrawSphere(ddgr_color color, g3Point *pnt, float rad) {
 // If offsets  are not -1, then the blitter draws not from the upper left hand
 // corner of the bitmap, but from size*offsetx,size*offsety
 // See Jason for explaination
-void g3_DrawBitmap(vector *pos, float width, float height, int bm, int color) {
+void g3_DrawBitmap(simd::float3 *pos, float width, float height, int bm, int color) {
   // get the view orientation
-  matrix viewOrient;
+  vec::matrix viewOrient;
   g3_GetUnscaledMatrix(&viewOrient);
 
   // break down the color into components
@@ -271,7 +271,7 @@ void g3_DrawBitmap(vector *pos, float width, float height, int bm, int color) {
     float cornerScaleV = (i & 2) ? 1.0f : -1.0f;
 
     // find the point (parallel to the view frame)
-    vector cornerPos = *pos + (viewOrient.uvec * (height * -cornerScaleV)) + (viewOrient.rvec * (width * cornerScaleU));
+    simd::float3 cornerPos = *pos + (viewOrient.uvec * (height * -cornerScaleV)) + (viewOrient.rvec * (width * cornerScaleU));
     corners[i].p3_codes = 0;
     g3_RotatePoint(pts[i], &cornerPos);
 
@@ -296,18 +296,18 @@ void g3_DrawBitmap(vector *pos, float width, float height, int bm, int color) {
 }
 
 // Draws a bitmap that has been rotated about its center.  Angle of rotation is passed as 'rot_angle'
-void g3_DrawRotatedBitmap(vector *pos, angle rot_angle, float width, float height, int bm, int color) {
+void g3_DrawRotatedBitmap(simd::float3 *pos, vec::angle rot_angle, float width, float height, int bm, int color) {
   // get the view orientation
-  matrix viewOrient;
+  simd::float3 viewOrient;
   g3_GetUnscaledMatrix(&viewOrient);
 
-  matrix rot_matrix;
+  vec::matrix rot_matrix;
   vm_AnglesToMatrix(&rot_matrix, 0, 0, rot_angle);
 
   float w = width;
   float h = height;
 
-  vector rot_vectors[4];
+  simd::float3 rot_vectors[4];
   rot_vectors[0].x = -w;
   rot_vectors[0].y = h;
 
@@ -323,11 +323,11 @@ void g3_DrawRotatedBitmap(vector *pos, angle rot_angle, float width, float heigh
   g3Point rot_points[8], *pntlist[8];
   int i;
   for (i = 0; i < 4; ++i) {
-    vector offset;
+    simd::float3 offset;
     rot_vectors[i].z = 0.0f;
     vm_MatrixMulVector(&offset, &rot_vectors[i], &rot_matrix);
 
-    vector cornerPos = *pos + (viewOrient.uvec * offset.y) + (viewOrient.rvec * offset.x);
+    simd::float3 cornerPos = *pos + (viewOrient.uvec * offset.y) + (viewOrient.rvec * offset.x);
     rot_points[i].p3_codes = 0;
     g3_RotatePoint(&rot_points[i], &cornerPos);
 
@@ -351,18 +351,18 @@ void g3_DrawRotatedBitmap(vector *pos, angle rot_angle, float width, float heigh
 }
 
 // Draws a bitmap on a specific plane.  Also does rotation.  Angle of rotation is passed as 'rot_angle'
-void g3_DrawPlanarRotatedBitmap(vector *pos, vector *norm, angle rot_angle, float width, float height, int bm) {
-  matrix rot_matrix;
+void g3_DrawPlanarRotatedBitmap(simd::float3 *pos, simd::float3 *norm, vec::angle rot_angle, float width, float height, int bm) {
+  vec::matrix rot_matrix;
   vm_VectorToMatrix(&rot_matrix, norm, NULL, NULL);
   vm_TransposeMatrix(&rot_matrix);
 
-  matrix twist_matrix;
+  vec::matrix twist_matrix;
   vm_AnglesToMatrix(&twist_matrix, 0, 0, rot_angle);
 
   float w = width;
   float h = height;
 
-  vector rot_vectors[4];
+  simd::float3 rot_vectors[4];
   rot_vectors[0] = (twist_matrix.rvec * -w);
   rot_vectors[0] += (twist_matrix.uvec * h);
 
@@ -377,7 +377,7 @@ void g3_DrawPlanarRotatedBitmap(vector *pos, vector *norm, angle rot_angle, floa
 
   int i;
   for (i = 0; i < 4; ++i) {
-    vector temp_vec = rot_vectors[i];
+    simd::float3 temp_vec = rot_vectors[i];
     vm_MatrixMulVector(&rot_vectors[i], &temp_vec, &rot_matrix);
   }
 

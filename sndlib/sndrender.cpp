@@ -90,7 +90,7 @@ void sound_render_room_geometry(int iroom, int slot) {
   int iface, reflect_face;
   room *rp;
   face *rfacelist;
-  vector *vertlist[MAX_VERTS_PER_FACE];
+  simd::float3 *vertlist[MAX_VERTS_PER_FACE];
   unsigned room_tag = (iroom << 20); // 12 bits for room (4096 rooms max per level)
                                      // 14 bits for faces (16384 faces per room)
                                      // 6 bits per face (64 primatives per face.)

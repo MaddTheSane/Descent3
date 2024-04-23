@@ -717,7 +717,7 @@ extern player_fire_packet Player_fire_packet[MAX_NET_PLAYERS];
 #define MULTI_SEND_MESSAGE_YELLOW_TEAM -5
 
 struct powerup_respawn {
-  vector pos;
+  simd::float3 pos;
   int objnum;
   int roomnum;
   uint8_t used;
@@ -900,10 +900,10 @@ void MultiMakePlayerReal(int slot);
 // Sends a fire packet from a player
 void MultiSendFirePlayerWB(int playernum, uint8_t wb_index, uint8_t fire_mask, uint8_t reliable = 0, float scalar = 1.0);
 
-void MultiMakeMatrix(multi_orientation *dest, matrix *src);
+void MultiMakeMatrix(multi_orientation *dest, vec::matrix *src);
 
 // Extracts a matrix from an abbreviated matrix
-void MultiExtractMatrix(matrix *dest, multi_orientation *src);
+void MultiExtractMatrix(vec::matrix *dest, multi_orientation *src);
 
 void MultiSendBlowupBuilding(int, int, float);
 
@@ -988,7 +988,7 @@ int MultiStuffRobotPosition(uint16_t objectnum, uint8_t *data);
 void MultiDoRobotPos(uint8_t *data);
 
 // Handle robot (or any AI created) weapon fire
-int MultiSendRobotFireWeapon(uint16_t objectnum, vector *pos, vector *dir, uint16_t weaponnum);
+int MultiSendRobotFireWeapon(uint16_t objectnum, simd::float3 *pos, simd::float3 *dir, uint16_t weaponnum);
 
 // Send robot damage
 void MultiSendKillObject(object *hit_obj, object *killer, float damage, int death_flags, float delay, int16_t seed);

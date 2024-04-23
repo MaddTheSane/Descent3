@@ -22,8 +22,8 @@
 #include "object.h"
 
 bool AttachDoPosOrient(object *parent, char parent_ap, object *child, char child_ap, bool f_parent,
-                       bool f_move_obj = true, vector *pos = NULL, matrix *orient = NULL, bool f_dropping_off = false);
-bool AttachDoPosOrientRad(object *parent, char p_ap, object *child, float rad_percent, vector *pos);
+                       bool f_move_obj = true, simd::float3 *pos = NULL, vec::matrix *orient = NULL, bool f_dropping_off = false);
+bool AttachDoPosOrientRad(object *parent, char p_ap, object *child, float rad_percent, simd::float3 *pos);
 void AttachUpdateSubObjects(object *obj);
 
 bool AttachObject(object *parent, char parent_ap, object *child, char child_ap, bool f_use_aligned = false);

@@ -26,9 +26,9 @@
 static int sUseTransformPassthru = -1;
 
 extern float Z_bias;
-void g3_GetModelViewMatrix(const vector *viewPos, const matrix *viewMatrix, float *mvMat) {
-  matrix localOrient = (*viewMatrix);
-  vector localPos = -(*viewPos);
+void g3_GetModelViewMatrix(const simd::float3 *viewPos, const vec::matrix *viewMatrix, float *mvMat) {
+  vec::matrix localOrient = (*viewMatrix);
+  simd::float3 localPos = -(*viewPos);
   mvMat[0] = localOrient.rvec.x;
   mvMat[1] = localOrient.uvec.x;
   mvMat[2] = localOrient.fvec.x;
@@ -41,9 +41,9 @@ void g3_GetModelViewMatrix(const vector *viewPos, const matrix *viewMatrix, floa
   mvMat[9] = localOrient.uvec.z;
   mvMat[10] = localOrient.fvec.z;
   mvMat[11] = 0.0f;
-  mvMat[12] = localPos * localOrient.rvec;
-  mvMat[13] = localPos * localOrient.uvec;
-  mvMat[14] = localPos * localOrient.fvec + Z_bias;
+  mvMat[12] = simd::dot(localPos, localOrient.rvec);
+  mvMat[13] = simd::dot(localPos, localOrient.uvec);
+  mvMat[14] = simd::dot(localPos, localOrient.fvec) + Z_bias;
   mvMat[15] = 1.0f;
 }
 

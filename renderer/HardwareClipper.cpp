@@ -24,7 +24,7 @@
 static int free_point_num = -1;
 static g3Point temp_points[MAX_POINTS_IN_POLY];
 static g3Point *free_points[MAX_POINTS_IN_POLY];
-vector Clip_plane_point;
+simd::float3 Clip_plane_point;
 
 void InitFreePoints(void) {
   int i;
@@ -127,21 +127,21 @@ g3Point *ClipFarEdge(g3Point *on_pnt, g3Point *off_pnt) {
 g3Point *ClipCustomEdge(g3Point *on_pnt, g3Point *off_pnt) {
   g3Point *tmp = GetTempPoint();
 
-  vector ray_direction = off_pnt->p3_vec - on_pnt->p3_vec;
+  simd::float3 ray_direction = off_pnt->p3_vec - on_pnt->p3_vec;
   ray_direction.x /= Matrix_scale.x;
   ray_direction.y /= Matrix_scale.y;
   ray_direction.z /= Matrix_scale.z;
 
-  vector w = on_pnt->p3_vec - Clip_plane_point;
+  simd::float3 w = on_pnt->p3_vec - Clip_plane_point;
   w.x /= Matrix_scale.x;
   w.y /= Matrix_scale.y;
   w.z /= Matrix_scale.z;
 
-  float k, den = -(Clip_plane * ray_direction);
+  float k, den = -simd::dot(Clip_plane, ray_direction);
   if (den == 0.0f) {
     k = 1.0f;
   } else {
-    float num = Clip_plane * w;
+    float num = simd::dot(Clip_plane, w);
     k = num / den;
   }
 
@@ -374,16 +374,16 @@ g3Point **g3_ClipPolygon(g3Point **pointlist, int *nv, g3Codes *cc) {
 void g3_SetFarClipZ(float z) { Far_clip_z = z; }
 
 // Sets up a custom clipping plane - g3_StartFrame must be called before this is called
-void g3_SetCustomClipPlane(uint8_t state, vector *pnt, vector *normal) {
+void g3_SetCustomClipPlane(uint8_t state, simd::float3 *pnt, simd::float3 *normal) {
   Clip_custom = state;
   if (state) {
-    vector tempv;
-    vector norm = *normal;
+    simd::float3 tempv;
+    simd::float3 norm = *normal;
 
     tempv = *pnt - View_position;
     Clip_plane_point = tempv * View_matrix;
 
     Clip_plane = norm * Unscaled_matrix; // View_matrix;
-    vm_NormalizeVector(&Clip_plane);
+    vec::vm_NormalizeVector(&Clip_plane);
   }
 }

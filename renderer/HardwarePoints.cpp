@@ -20,7 +20,7 @@
 #include "HardwareInternal.h"
 #include <string.h>
 
-extern vector Clip_plane_point;
+extern simd::float3 Clip_plane_point;
 // code a point.  fills in the p3_codes field of the point, and returns the codes
 uint8_t g3_CodePoint(g3Point *p) {
   uint8_t cc = 0;
@@ -45,12 +45,12 @@ uint8_t g3_CodePoint(g3Point *p) {
 
   // Check to see if we should be clipped to the custom plane
   if (Clip_custom) {
-    vector vec = p->p3_vec - Clip_plane_point;
+    simd::float3 vec = p->p3_vec - Clip_plane_point;
     vec.x /= Matrix_scale.x;
     vec.y /= Matrix_scale.y;
     vec.z /= Matrix_scale.z;
 
-    float dp = vec * Clip_plane;
+    float dp = simd::dot(vec, Clip_plane);
     if (dp < -0.005f) {
       cc |= CC_OFF_CUSTOM;
     }
@@ -60,12 +60,12 @@ uint8_t g3_CodePoint(g3Point *p) {
 }
 
 // rotates a point. returns codes.  does not check if already rotated
-uint8_t g3_RotatePoint(g3Point *dest, vector *src) {
+uint8_t g3_RotatePoint(g3Point *dest, simd::float3 *src) {
   // store the pre-rotated point
   dest->p3_vecPreRot = *src;
 
   // find the point offset from the view/camera position
-  vector tempv = *src - View_position;
+  simd::float3 tempv = *src - View_position;
 
   // rotate the point by the view/camera's orientation
   dest->p3_vec = tempv * View_matrix;
@@ -87,9 +87,9 @@ void g3_ProjectPoint(g3Point *p) {
 }
 
 // from a 2d point, compute the vector through that point
-void g3_Point2Vec(vector *v, int16_t sx, int16_t sy) {
-  vector tempv;
-  matrix tempm;
+void g3_Point2Vec(simd::float3 *v, int16_t sx, int16_t sy) {
+  simd::float3 tempv;
+  simd::float3 tempm;
 
   tempv.x = (((sx - Window_w2) / Window_w2) * Matrix_scale.z / Matrix_scale.x);
   tempv.y = -(((sy - Window_h2) / Window_h2) * Matrix_scale.z / Matrix_scale.y);
@@ -103,7 +103,7 @@ void g3_Point2Vec(vector *v, int16_t sx, int16_t sy) {
 }
 
 // delta rotation functions
-vector *g3_RotateDeltaX(vector *dest, float dx) {
+simd::float3 *g3_RotateDeltaX(simd::float3 *dest, float dx) {
   dest->x = View_matrix.rvec.x * dx;
   dest->y = View_matrix.uvec.x * dx;
   dest->z = View_matrix.fvec.x * dx;
@@ -111,7 +111,7 @@ vector *g3_RotateDeltaX(vector *dest, float dx) {
   return dest;
 }
 
-vector *g3_RotateDeltaY(vector *dest, float dy) {
+simd::float3 *g3_RotateDeltaY(simd::float3 *dest, float dy) {
   dest->x = View_matrix.rvec.y * dy;
   dest->y = View_matrix.uvec.y * dy;
   dest->z = View_matrix.fvec.y * dy;
@@ -119,7 +119,7 @@ vector *g3_RotateDeltaY(vector *dest, float dy) {
   return dest;
 }
 
-vector *g3_RotateDeltaZ(vector *dest, float dz) {
+simd::float3 *g3_RotateDeltaZ(simd::float3 *dest, float dz) {
   dest->x = View_matrix.rvec.z * dz;
   dest->y = View_matrix.uvec.z * dz;
   dest->z = View_matrix.fvec.z * dz;
@@ -127,13 +127,13 @@ vector *g3_RotateDeltaZ(vector *dest, float dz) {
   return dest;
 }
 
-vector *g3_RotateDeltaVec(vector *dest, vector *src) {
+simd::float3 *g3_RotateDeltaVec(simd::float3 *dest, vector *src) {
   *dest = *src * View_matrix;
 
   return dest;
 }
 
-uint8_t g3_AddDeltaVec(g3Point *dest, g3Point *src, vector *deltav) {
+uint8_t g3_AddDeltaVec(g3Point *dest, g3Point *src, simd::float3 *deltav) {
   dest->p3_vec = src->p3_vec + *deltav;
 
   dest->p3_flags = 0; // not projected
@@ -142,7 +142,7 @@ uint8_t g3_AddDeltaVec(g3Point *dest, g3Point *src, vector *deltav) {
 }
 
 // calculate the depth of a point - returns the z coord of the rotated point
-float g3_CalcPointDepth(vector *pnt) {
+float g3_CalcPointDepth(simd::float3 *pnt) {
   return ((pnt->x - View_position.x) * View_matrix.fvec.x) + ((pnt->y - View_position.y) * View_matrix.fvec.y) +
          ((pnt->z - View_position.z) * View_matrix.fvec.z);
 }

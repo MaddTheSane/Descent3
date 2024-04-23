@@ -21,9 +21,9 @@
 #include <string.h>
 
 struct InstanceContext {
-  matrix m_viewMatrix;     // matrix
-  matrix m_unscaledMatrix; // unscaled matrix
-  vector m_viewPosition;   // position
+  vec::matrix m_viewMatrix;     // matrix
+  vec::matrix m_unscaledMatrix; // unscaled matrix
+  simd::float3 m_viewPosition;   // position
   float m_modelView[4][4]; // model/view transform
 };
 
@@ -63,15 +63,15 @@ void g3_StartInstanceMatrix(vec::vector *pos, vec::matrix *orient) {
 }
 
 // instance at specified point with specified orientation
-void g3_StartInstanceAngles(vector *pos, angvec *angles) {
+void g3_StartInstanceAngles(simd::float3 *pos, vec::angvec *angles) {
   if (angles == NULL) {
-    matrix ident;
+    vec::matrix ident;
     vm_MakeIdentity(&ident);
     g3_StartInstanceMatrix(pos, &ident);
     return;
   }
 
-  matrix tm;
+  vec::matrix tm;
   vm_AnglesToMatrix(&tm, angles->p, angles->h, angles->b);
 
   g3_StartInstanceMatrix(pos, &tm);

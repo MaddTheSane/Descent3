@@ -467,7 +467,7 @@ void InitiatePlayerDeath(object *playerobj, bool melee = false, int fate = -1);
 void EndPlayerDeath(int slot);
 
 //	Detaches a subobject from the player ship
-void DeadPlayerShipHit(object *obj, int hit_room, vector *hitpt, float magnitude);
+void DeadPlayerShipHit(object *obj, int hit_room, simd::float3 *hitpt, float magnitude);
 
 //	Do actions for the player each frame
 void DoPlayerFrame();
@@ -517,7 +517,7 @@ void PlayerSetLighting(int slot, float dist, float r, float g, float b);
 void PlayerSetRotatingBall(int slot, int num, float speed, float *r, float *g, float *b);
 
 // Gets the position of a given ball in world coords
-void PlayerGetBallPosition(vector *dest, int slot, int num);
+void PlayerGetBallPosition(simd::float3 *dest, int slot, int num);
 
 // Spews the inventory of the passed in player object
 void PlayerSpewInventory(object *obj, bool spew_energy_and_shield = true, bool spew_nonspewable = false);

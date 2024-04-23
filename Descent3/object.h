@@ -741,7 +741,7 @@ void ObjSetAABB(object *obj);
 
 // initialize a new object.  adds to the list for the given room
 // returns the object number
-int ObjCreate(uint8_t type, uint16_t id, int roomnum, vector *pos, const matrix *orient,
+int ObjCreate(uint8_t type, uint16_t id, int roomnum, simd::float3 *pos, const vec::matrix *orient,
               int parent_handle = OBJECT_HANDLE_NONE);
 
 // remove object from the world
@@ -771,8 +771,8 @@ void ObjGotoNextViewer();
 //					pos - the new position
 //					roomnum - the correct roomnum for pos.  No error checking is done.
 //					orient - if this is not null, the object's orientation is set to this.
-void ObjSetPos(object *obj, vector *pos, int roomnum, matrix *orient, bool f_update_attached_children);
-void ObjSetOrient(object *obj, const matrix *orient);
+void ObjSetPos(object *obj, simd::float3 *pos, int roomnum, vec::matrix *orient, bool f_update_attached_children);
+void ObjSetOrient(object *obj, const vec::matrix *orient);
 
 // delete objects, such as weapons & explosions, that shouldn't stay between levels
 // if clear_all is set, clear even proximity bombs
@@ -791,7 +791,7 @@ void CreatePlayerObject(int roomnum);
 object *ObjGet(int handle);
 
 //	returns a vertex of an object in WORLD coordinates.
-void GetObjectPointInWorld(vector *dest, object *obj, int subnum, int vertnum);
+void GetObjectPointInWorld(simd::float3 *dest, object *obj, int subnum, int vertnum);
 
 // These functions are for setting and getting an objects animation information
 // (used in multiplayer games and the like)
@@ -818,7 +818,7 @@ void ObjUnGhostObject(int objnum);
 #define MAX_OBJECT_POS_HISTORY (MAX_OBJECTS / 2)
 #define MAX_POSITION_HISTORY 3
 struct tPosHistory {
-  vector pos[MAX_POSITION_HISTORY];
+  simd::float3 pos[MAX_POSITION_HISTORY];
 };
 extern tPosHistory Object_position_samples[MAX_OBJECT_POS_HISTORY];
 extern uint8_t Object_position_head;

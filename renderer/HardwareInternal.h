@@ -60,14 +60,14 @@ void CheckTempPoints();
 extern int Window_width, Window_height; // the actual integer width & height
 extern float Window_w2, Window_h2;      // width,height/2
 extern float View_zoom;
-extern vector View_position, Matrix_scale;
-extern matrix View_matrix, Unscaled_matrix;
+extern simd::float3 View_position, Matrix_scale;
+extern vec::matrix View_matrix, Unscaled_matrix;
 extern float Far_clip_z;
 
 // For custom clipping plane
 extern uint8_t Clip_custom;
 extern float Clip_plane_distance;
-extern vector Clip_plane;
+extern simd::float3 Clip_plane;
 
 extern float gTransformViewPort[4][4];
 extern float gTransformProjection[4][4];

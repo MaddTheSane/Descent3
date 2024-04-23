@@ -105,7 +105,7 @@ void GameFrame(void);
 //					viewer_orient - the oriention for this view
 //					zoom - the zoom for this view
 //					rear_view - if true, we're looking out the rear of this object
-void GameRenderWorld(object *viewer, vector *viewer_eye, int viewer_roomnum, matrix *viewer_orient, float zoom,
+void GameRenderWorld(object *viewer, simd::float3 *viewer_eye, int viewer_roomnum, vec::matrix *viewer_orient, float zoom,
                      bool rear_view);
 
 extern float Render_zoom;

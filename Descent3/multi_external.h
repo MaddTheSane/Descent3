@@ -381,14 +381,14 @@ inline void MultiGetString(char *str, uint8_t *data, int *count) {
   *count += len;
 }
 
-inline void MultiAddVector(vector v, uint8_t *data, int *count) {
+inline void MultiAddVector(simd::float3 v, uint8_t *data, int *count) {
   MultiAddFloat(v.x, data, count);
   MultiAddFloat(v.y, data, count);
   MultiAddFloat(v.z, data, count);
 }
 
-inline vector MultiGetVector(uint8_t *data, int *count) {
-  vector v;
+inline simd::float3 MultiGetVector(uint8_t *data, int *count) {
+  simd::float3 v;
 
   v.x = MultiGetFloat(data, count);
   v.y = MultiGetFloat(data, count);

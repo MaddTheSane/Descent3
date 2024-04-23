@@ -377,7 +377,7 @@ g3Point **g3_ClipPolygon(g3Point **pointlist, int *nv, g3Codes *cc);
 void g3_FreeTempPoints(g3Point **pointlist, int nv);
 
 // Gets the matrix scale vector
-void g3_GetMatrixScale(vec::vector *matrix_scale);
+void g3_GetMatrixScale(simd::float3 *matrix_scale);
 
 // Sets the triangulation test to on or off
 void g3_SetTriangulationTest(int state);
@@ -386,11 +386,11 @@ void g3_SetTriangulationTest(int state);
 void g3_DrawSpecialLine(g3Point *p0, g3Point *p1);
 
 // Draws a bitmap on a specific plane.  Also does rotation.  Angle of rotation is passed as 'rot_angle'
-void g3_DrawPlanarRotatedBitmap(vec::vector *pos, vec::vector *norm, vec::angle rot_angle, float width, float height, int bm);
+void g3_DrawPlanarRotatedBitmap(simd::float3 *pos, simd::float3 *norm, vec::angle rot_angle, float width, float height, int bm);
 
 void g3_TransformMult(float res[4][4], float a[4][4], float b[4][4]);
 void g3_TransformTrans(float res[4][4], float t[4][4]);
-void g3_GetModelViewMatrix(const vec::vector *viewPos, const vec::matrix *viewMatrix, float *mvMat);
+void g3_GetModelViewMatrix(const simd::float3 *viewPos, const vec::matrix *viewMatrix, float *mvMat);
 extern float gTransformViewPort[4][4];
 extern float gTransformProjection[4][4];
 extern float gTransformModelView[4][4];

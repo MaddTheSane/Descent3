@@ -88,8 +88,8 @@ struct guninfo {
 };
 
 struct pointinfo {
-  vector origin; // origin of the viseffect (needed if it's NOT gunpoint based)
-  vector normal; // normal of the point
+  simd::float3 origin; // origin of the viseffect (needed if it's NOT gunpoint based)
+  simd::float3 normal; // normal of the point
   int room_num;  // room number of point of origin
 };
 
@@ -119,7 +119,7 @@ struct spewinfo {
   float time_until_next_blob; // per spewer
   float start_time;           // time viseffect started
 
-  vector gp_normal, gun_point; // vectors saved to keep from recalculating
+  simd::float3 gp_normal, gun_point; // vectors saved to keep from recalculating
 };
 
 #define SPEW_RAND_WIGGLE 1

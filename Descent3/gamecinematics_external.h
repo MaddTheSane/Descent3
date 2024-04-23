@@ -144,8 +144,8 @@ struct tCannedCinematicInfo {
 
   int32_t object_to_use_for_point;
 
-  vector pos;
-  matrix orient;
+  simd::float3 pos;
+  vec::matrix orient;
 
 };
 
@@ -205,8 +205,8 @@ struct tGameCinematic {
 
   // the name of the path or the position that the camera should be at
   int32_t pathid;
-  vector position;
-  matrix *orient;
+  simd::float3 position;
+  vec::matrix *orient;
   int32_t room;
 
   // the total time that the cinematic should play

@@ -105,9 +105,9 @@ struct player {
 
   // positional data for player starts
   int32_t start_index;
-  vector start_pos; // where the player starts
+  simd::float3 start_pos; // where the player starts
   int32_t start_roomnum;
-  matrix start_orient;
+  vec::matrix start_orient;
 
   int32_t startpos_flags; // these flags apply to the start position (used for teams)
 
@@ -227,7 +227,7 @@ struct player {
   int32_t ship_permissions;
 
   // For invul hit effect
-  vector invul_vector;
+  simd::float3 invul_vector;
 
   // Used to disable various controller input from scripting
   uint32_t controller_bitflags;

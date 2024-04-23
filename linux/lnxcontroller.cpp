@@ -1227,7 +1227,7 @@ float lnxgameController::get_axis_value(int8_t controller, uint8_t axis, ct_form
     axis++;
 
     if ((axis == CT_X_AXIS) && (ctldev->id == CTID_MOUSE) && (std::abs(val) > FLT_EPSILON)) {
-      matrix orient;
+      vec::matrix orient;
 
       if (!(Players[Player_num].controller_bitflags & PCBF_HEADINGLEFT)) {
         if (val < 0)
@@ -1250,7 +1250,7 @@ float lnxgameController::get_axis_value(int8_t controller, uint8_t axis, ct_form
       return 0;
     }
     if ((axis == CT_Y_AXIS) && (ctldev->id == CTID_MOUSE) && (std::abs(val) > FLT_EPSILON)) {
-      matrix orient;
+      vec::matrix orient;
 
       if (!(Players[Player_num].controller_bitflags & PCBF_PITCHUP)) {
         if (val < 0)

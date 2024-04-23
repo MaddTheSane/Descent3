@@ -142,13 +142,13 @@ struct face {
 
   int16_t *face_verts;       // index into list of vertices for this face
   roomUVL *face_uvls;      // index into list of uvls for this face
-  vector normal;           // the surface normal of this face
+  simd::float3 normal;           // the surface normal of this face
   int16_t tmap;              // texture numbers for this face
   uint16_t lmi_handle;       // the lightmap info number for this face
   int16_t special_handle;    // the index into the special_faces array
   uint8_t renderframe;       // what frame this face was last rendered (for lighting)
   uint8_t light_multiple;    // what multiple to times by
-  vector min_xyz, max_xyz; // min & max extents of this face (for FVI)
+  simd::float3 min_xyz, max_xyz; // min & max extents of this face (for FVI)
 };
 
 // Portal flags
@@ -168,7 +168,7 @@ struct portal {
   int16_t cportal;     // the portal in croom this portal connects to
   int16_t bnode_index;
   int combine_master; // For rendering combined portals
-  vector path_pnt;    // Point used by the path system
+  simd::float3 path_pnt;    // Point used by the path system
 };
 
 // Room flags
@@ -216,25 +216,25 @@ struct room {
   int num_verts;   // how many verts in the room
   face *faces;     // pointer to list of faces
   portal *portals; // pointer to list of portals
-  vec::vector *verts;   // array of vertices for this room
-  vec::vector4 *verts4; // array of 16byte vertices for this room
+  simd::float3 *verts;   // array of vertices for this room
+  simd::float4 *verts4; // array of 16byte vertices for this room
 
   doorway *doorway_data;   // pointer to this room's doorway data, or NULL if not a doorway
   char *name;              // name of this room, or NULL
   int objects;             // index of first object in this room
-  vec::vector max_xyz, min_xyz; // for external room visibility checking
+  simd::float3 max_xyz, min_xyz; // for external room visibility checking
 
   float last_render_time; // Last time we rendered this room
 
   // Hierarchical bounding boxes for this room
-  vec::vector bbf_min_xyz;
-  vec::vector bbf_max_xyz;
+  simd::float3 bbf_min_xyz;
+  simd::float3 bbf_max_xyz;
   int16_t num_bbf_regions;
   int16_t pad1;
   int16_t **bbf_list;
   int16_t *num_bbf;
-  vec::vector *bbf_list_min_xyz;
-  vec::vector *bbf_list_max_xyz;
+  simd::float3 *bbf_list_min_xyz;
+  simd::float3 *bbf_list_max_xyz;
   uint8_t *bbf_list_sector;
 
   bn_list bn_info;
@@ -242,7 +242,7 @@ struct room {
   int16_t wpb_index;           // world point buffer index - where this room starts
   uint8_t pulse_time;          // each room can has a pulse time
   uint8_t pulse_offset;        // each room has a timer offset for which it pulses
-  vec::vector wind;               // Wind vector for the room
+  simd::float3 wind;               // Wind vector for the room
   int ambient_sound;         // Index of ambient sound pattern for this room, or -1 if none
   int16_t vis_effects;         // index of first visual effect in this room
   int16_t mirror_face;         // Index of face that this room is to be mirrored by
@@ -250,7 +250,7 @@ struct room {
   uint16_t *mirror_faces_list; // the list of faces in this room that have the same texture as the mirror
   float damage;              // The damage per second applied to players (& maybe others) in room
 
-  vec::vector path_pnt;      // Point used by the path system
+  simd::float3 path_pnt;      // Point used by the path system
   uint8_t *volume_lights; // Pointer to memory for our volumetric lighting
   int16_t volume_width;   // The dimensions of our volumetric room
   int16_t volume_height;

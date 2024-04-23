@@ -237,8 +237,8 @@ public:
   union {
     struct {
       int segnum; // Use physics' bit-bit stuff (inside/outside)
-      vector pos;
-      matrix orient; // only need pitch and heading -- not roll (sound cones are symetrical)
+      simd::float3 pos;
+      vec::matrix orient; // only need pitch and heading -- not roll (sound cones are symetrical)
     } pos_info;
 
     int object_handle;
@@ -258,7 +258,7 @@ class hlsSystem {
   int n_lls_sounds;        // number of sounds that we want the low level mixer to mix.
 
   bool Emulate3dSound(int sound_obj_index);
-  bool ComputePlayInfo(int sound_obj_index, vector *virtual_pos, vector *virtual_vel, float *adjusted_volume);
+  bool ComputePlayInfo(int sound_obj_index, simd::float3 *virtual_pos, simd::float3 *virtual_vel, float *adjusted_volume);
 
   inline int MakeUniqueId(int sound_obj_index);
   inline int ValidateUniqueId(int hl_sound_uid);

@@ -167,7 +167,7 @@ struct effect_info_s {
   int32_t damage_handle;    // the object handle of the owner of the damage
 
   float volume_change_time;
-  vector volume_old_pos;
+  simd::float3 volume_old_pos;
   int32_t volume_old_room;
 
   // For powerups only
@@ -175,7 +175,7 @@ struct effect_info_s {
   int32_t last_object_hit;
 
   // For specular lighting
-  vector spec_pos;
+  simd::float3 spec_pos;
   float spec_mag;
   float spec_r, spec_g, spec_b;
 
@@ -251,14 +251,14 @@ struct polyobj_info {
 
 // A shard of, presumably, glass
 struct shard_info_s {
-  vector points[3];
+  simd::float3 points[3];
   float u[3], v[3];
-  vector normal;
+  simd::float3 normal;
   int16_t tmap;
 };
 
 struct line_info_s {
-  vector end_pos; // start pos is the object's .pos field
+  simd::float3 end_pos; // start pos is the object's .pos field
 };
 
 struct blast_info_s {
@@ -289,9 +289,9 @@ struct laser_info_s {
   float last_track_time;    // Last track time (see if an object is visible)
 
   int32_t hit_status;       // Zero not used
-  vector hit_pnt;
-  vector hit_wall_pnt;
-  vector hit_wall_normal;
+  simd::float3 hit_pnt;
+  simd::float3 hit_wall_pnt;
+  simd::float3 hit_wall_normal;
   int32_t hit_room;
   int32_t hit_pnt_room;
   int16_t hit_face;
@@ -300,7 +300,7 @@ struct laser_info_s {
   float thrust_left; // How many seconds of thrust are left before the weapon stops thrusting
 
   float last_drop_time;  // Last time a particle was dropped from this weapon
-  vector last_smoke_pos; // Last place smoke was dropped from this weapon
+  simd::float3 last_smoke_pos; // Last place smoke was dropped from this weapon
   bool casts_light;      // Whether or not this weapon casts light
 };
 
@@ -311,8 +311,8 @@ struct powerup_info_s {
 struct splinter_info_s {
   uint8_t subobj_num;
   int16_t facenum;
-  vector verts[MAX_VERTS_PER_SPLINTER];
-  vector center;
+  simd::float3 verts[MAX_VERTS_PER_SPLINTER];
+  simd::float3 center;
 };
 
 // Data for sourcesource objects
@@ -327,16 +327,16 @@ struct soundsource_info_s {
 // to change the mass of an object...)  Wait to move until we are optimizing -- see Chris if you move any fields
 // out of the physics_info struct.  Thanx!
 struct physics_info {
-  vector velocity;    // Velocity vector of this object
-  vector thrust;      // Constant force applied to this object
+  simd::float3 velocity;    // Velocity vector of this object
+  simd::float3 thrust;      // Constant force applied to this object
   union {
-    vector rotvel;    // Rotational velecity (angles)
+    simd::float3 rotvel;    // Rotational velecity (angles)
     float turn_rate;
   };
   union {
-    vector rotthrust; // Rotational acceleration
+    simd::float3 rotthrust; // Rotational acceleration
   };
-  angle turnroll;           // Rotation caused by turn banking
+  vec::angle turnroll;           // Rotation caused by turn banking
   float last_still_time;    // The current delta position a wiggle has caused.
   int32_t num_bounces;      // Number of bounces before exploding (PHYSICS_UNLIMITED_BOUNCE is for unlimited bouncing)
 
@@ -357,7 +357,7 @@ struct physics_info {
   float wiggle_amplitude;   // The amplitude of an object's wiggle     -- what about moving into type info
   float wiggles_per_sec;    // How fast something wiggles              -- what about moving into type info
 
-  vector dest_pos; // destination position for interpolating velocity (for multiplayer only)
+  simd::float3 dest_pos; // destination position for interpolating velocity (for multiplayer only)
 
   union {
     float hit_die_dot;
@@ -379,9 +379,9 @@ struct shockwave_info {
 struct object_link_info {
   int32_t parent_handle;
   int32_t sobj_index;
-  vector fvec;
-  vector uvec;
-  vector pos;
+  simd::float3 fvec;
+  simd::float3 uvec;
+  simd::float3 pos;
 };
 
 struct tOSIRISScriptNode {
@@ -416,14 +416,14 @@ struct object {
 
   int32_t roomnum; // room number or terrain cell containing object
 
-  vector pos;      // absolute x,y,z coordinate of center of object
-  matrix orient;   // orientation of object in world
-  vector last_pos; // where object was last frame
+  simd::float3 pos;      // absolute x,y,z coordinate of center of object
+  vec::matrix orient;   // orientation of object in world
+  simd::float3 last_pos; // where object was last frame
 
   uint16_t renderframe; // framenum this object was last rendered
 
-  vector wall_sphere_offset;
-  vector anim_sphere_offset;
+  simd::float3 wall_sphere_offset;
+  simd::float3 anim_sphere_offset;
 
   float size;    // 3d size of object - for collision detection
   float shields; // Starts at maximum, when <0, object dies..
@@ -460,7 +460,7 @@ struct object {
   } mtype;
 
   // Collition detection stuff
-  vector min_xyz, max_xyz; // the current min & max extents of this object's sphere
+  simd::float3 min_xyz, max_xyz; // the current min & max extents of this object's sphere
 
   // Current weapon battery info for this object
   dynamic_wb_info *dynamic_wb;

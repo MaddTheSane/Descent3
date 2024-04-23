@@ -389,7 +389,7 @@
 struct room_changes {
   int roomnum;
   bool fog;
-  vector start_vector, end_vector;
+  simd::float3 start_vector, end_vector;
   float start_depth, end_depth;
   float start_time;
   float total_time;
@@ -424,7 +424,7 @@ void InitRooms();
 // Allows a spew'er to find out if he is in a room or external to the mine
 // NOTE:  THIS FUNCTION IS NOT FOR IN GAME STUFF.  It is REALLY SLOW and accurate.
 // Talk to Chris if you need something like this function.
-int FindPointRoom(vector *pnt);
+int FindPointRoom(simd::float3 *pnt);
 
 // Put this here so we don't need to include render.h
 extern bool Render_floating_triggers;
@@ -450,7 +450,7 @@ void FreeAllRooms();
 // Finds the center point of a room
 // Parameters:	vp - filled in with the center point
 //					rp - the room whose center to find
-void ComputeRoomCenter(vector *vp, room *rp);
+void ComputeRoomCenter(simd::float3 *vp, room *rp);
 
 // Computes (fills in) the surface normal of a face.
 // Finds the best normal on this face by checking all sets of three vertices
@@ -469,16 +469,16 @@ bool ComputeFaceNormal(room *rp, int facenum);
 //					verts - the array of vertices into which the elements of vertnum_list index
 // Returns:		true if the normal is ok
 //					false if the normal has a very small (pre-normalization) magnitude
-bool ComputeNormal(vector *normal, int num_verts, short *vertnum_list, vector *verts);
+bool ComputeNormal(simd::float3 *normal, int num_verts, short *vertnum_list, simd::float3 *verts);
 
 // Finds the center point of a portal by averaging the points in the portal
 // Parameters:	vp           - filled in with the center point
 //					rp           - the room
 //					portal_index - the index of the portal whose center to find
-void ComputePortalCenter(vector *vp, room *rp, int portal_index);
+void ComputePortalCenter(simd::float3 *vp, room *rp, int portal_index);
 
 // Computes the center point on a face by averaging the points in the face
-void ComputeCenterPointOnFace(vector *vp, room *rp, int facenum);
+void ComputeCenterPointOnFace(simd::float3 *vp, room *rp, int facenum);
 
 // Free the memory used by a room face structure
 void FreeRoomFace(face *fp);
@@ -497,7 +497,7 @@ float GetAreaForFace(room *rp, int facenum);
 //					rp - pointer to the room that pnt is in
 //					facenum - the face that pnt is on
 // Returns:	true if can pass through the given point, else 0
-int CheckTransparentPoint(const vector *pnt, const room *rp, const int facenum);
+int CheckTransparentPoint(const simd::float3 *pnt, const room *rp, const int facenum);
 
 // Face physics flags returned by GetFacePhysicsFlags()
 // Note that:
@@ -562,7 +562,7 @@ static inline int GetFacePhysicsFlags(const room *rp, const face *fp) {
 // Parameters: center - filled in with the center point of the sphere
 //		rp - the room we're bounding
 // Returns: the radius of the bounding sphere
-float ComputeRoomBoundingSphere(vector *center, room *rp);
+float ComputeRoomBoundingSphere(simd::float3 *center, room *rp);
 
 // Create objects for the external rooms
 void CreateRoomObjects();
@@ -570,32 +570,32 @@ void CreateRoomObjects();
 // Clears lightmaps for a single room
 void ClearRoomLightmaps(int roomnum);
 
-// returns the index of the first room that is being used.  Returns -1 if there are none
+/// returns the index of the first room that is being used.  Returns -1 if there are none
 int FindFirstUsedRoom();
 
-// Clears specmaps for a single room
+/// Clears specmaps for a single room
 void ClearRoomSpecmaps(int roomnum);
 
 // Removes all room specularity maps from memory and sets indoor faces accordingly
 // External=1 means to perform the operation on external rooms only, 0 means indoor rooms only
 void ClearAllRoomSpecmaps(int external);
 
-extern void GetIJ(const vector *normal, int *ii, int *jj);
+extern void GetIJ(const simd::float3 *normal, int *ii, int *jj);
 
-// Changes a face's texture within a room
-//	returns true on successs
+/// Changes a face's texture within a room
+///	returns true on successs
 bool ChangeRoomFaceTexture(int room_num, int face_num, int texture);
 
-// Clears the data for room changes
+/// Clears the data for room changes
 void ClearRoomChanges();
 
-// Returns index of room change allocatd, else -1 on error
+/// Returns index of room change allocatd, else -1 on error
 int AllocRoomChange();
 
-// Does whatever fading/changing of room stuff that needs to be done this frame
+/// Does whatever fading/changing of room stuff that needs to be done this frame
 void DoRoomChangeFrame();
 
-// Sets up a room to change its fog or wind over time
-int SetRoomChangeOverTime(int roomnum, bool fog, vector *end, float depth_end, float time);
+/// Sets up a room to change its fog or wind over time
+int SetRoomChangeOverTime(int roomnum, bool fog, simd::float3 *end, float depth_end, float time);
 
 #endif

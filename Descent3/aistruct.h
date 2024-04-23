@@ -605,8 +605,8 @@ struct goal_info {
 
   union {
     float time;
-    vec::vector vec;
-    vec::vector pos;
+    simd::float3 vec;
+    simd::float3 pos;
     g_floats fs; // goal floats or a vector
   };
 
@@ -648,9 +648,9 @@ struct goal {
 
   float dist_to_goal;
 
-  vec::vector vec_to_target;
+  simd::float3 vec_to_target;
   float next_check_see_target_time;
-  vec::vector last_see_target_pos;
+  simd::float3 last_see_target_pos;
   float last_see_target_time;
   float next_target_update_time;
 
@@ -659,8 +659,8 @@ struct goal {
 
   int goal_uid; // used by the AI system for paths
 
-  vector set_fvec;
-  vector set_uvec;
+  simd::float3 set_fvec;
+  simd::float3 set_uvec;
 
   bool used;
 };
@@ -682,7 +682,7 @@ struct notify {
   };
 
   union {
-    vector pos;
+    simd::float3 pos;
     int movement_type;
     int anim_type;
     int attack_num;
@@ -698,7 +698,7 @@ struct ain_weapon_hit_info {
   int hit_face;
   int hit_subobject;
   float hit_damage;
-  vector hit_pnt;
+  simd::float3 hit_pnt;
 };
 
 //-------------------------------------------------
@@ -777,11 +777,11 @@ struct ai_frame {
 
   float dist_to_target_actual;
   float dist_to_target_perceived;
-  vector vec_to_target_actual;
-  vector vec_to_target_perceived;
+  vec::vector vec_to_target_actual;
+  vec::vector vec_to_target_perceived;
 
   float next_check_see_target_time;
-  vector last_see_target_pos;
+  vec::vector last_see_target_pos;
   float last_see_target_time;
   float last_hear_target_time;
 
@@ -800,8 +800,8 @@ struct ai_frame {
   int notify_flags; // Agent is only notified of some event types
 
   // Normalized movement and facing information
-  vector movement_dir;
-  vector rot_thrust_vector;
+  vec::vector movement_dir;
+  vec::vector rot_thrust_vector;
 
   float fov;
 
@@ -841,12 +841,12 @@ struct ai_frame {
   float biased_flight_min;
   float biased_flight_max;
 
-  vector last_dodge_dir;
+  vec::vector last_dodge_dir;
   float dodge_till_time;
 
   float awareness;
 
-  matrix saved_orient;
+  vec::matrix saved_orient;
 
 };
 
@@ -866,7 +866,7 @@ public:
     owner_handle = OBJECT_HANDLE_NONE;
   };
 
-  vector pos[MAX_NODES];
+  simd::float3 pos[MAX_NODES];
   int roomnum[MAX_NODES];
 
   int16_t num_nodes;

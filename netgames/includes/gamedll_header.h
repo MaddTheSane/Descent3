@@ -79,7 +79,7 @@ struct tPreJoinData {
 };
 
 struct game_collide_info {
-  vector point, normal;
+  simd::float3 point, normal;
   float hitspeed, hit_dot;
   int hitseg, hitwall;
 };
@@ -168,7 +168,7 @@ DMFCDLLOUT(MultiPaintGoalRooms_fp DLLMultiPaintGoalRooms;)
 typedef void (*MultiSendSpecialPacket_fp)(int slot, uint8_t *outdata, int size);
 DMFCDLLOUT(MultiSendSpecialPacket_fp DLLMultiSendSpecialPacket;)
 
-typedef void (*ComputeRoomCenter_fp)(vector *vp, room *rp);
+typedef void (*ComputeRoomCenter_fp)(simd::float3 *vp, room *rp);
 DMFCDLLOUT(ComputeRoomCenter_fp DLLComputeRoomCenter;)
 
 typedef int (*GetGoalRoomForTeam_fp)(int teamnum);
@@ -177,18 +177,19 @@ DMFCDLLOUT(GetGoalRoomForTeam_fp DLLGetGoalRoomForTeam;)
 // ObjCreate without writing data to demo
 // typedef int( *ObjCreate_fp ) (uint8_t type,uint16_t id,int roomnum,vector *pos,const matrix *orient,int parent_handle =
 // OBJECT_HANDLE_NONE);
-typedef int (*ObjCreate_fp)(uint8_t type, uint16_t id, int roomnum, vector *pos, const matrix *orient, int parent_handle);
+typedef int (*ObjCreate_fp)(uint8_t type, uint16_t id, int roomnum, simd::float3 *pos, const vec::matrix *orient, int parent_handle);
 DMFCDLLOUT(ObjCreate_fp DLLObjCreate;)
 
 typedef int (*FindObjectIDName_fp)(const char *name);
 DMFCDLLOUT(FindObjectIDName_fp DLLFindObjectIDName;)
 
-typedef void (*ObjSetPosNoMark_fp)(object *objp, vector *newpos, int roomnum, matrix *orient,
+typedef void (*ObjSetPosNoMark_fp)(object *objp, simd::float3 *newpos, int roomnum, vec::matrix *orient,
                                    bool f_update_attached_children);
 DMFCDLLOUT(ObjSetPosNoMark_fp DLLObjSetPosNoMark;)
 
 // ObjSetPos, that automatically sets the OF_MOVED_THIS_FRAME
-typedef void (*ObjSetPos_fp)(object *obj, vector *pos, int roomnum, matrix *orient, bool f_update_attached_children);
+typedef void (*ObjSetPos_fp)(object *obj, simd::float3 *pos, int roomnum, vec::matrix *orient,
+                             bool f_update_attached_children);
 DMFCDLLOUT(ObjSetPos_fp DLLObjSetPos;)
 
 typedef void (*SetMaxTeams_fp)(int num);
@@ -200,8 +201,10 @@ DMFCDLLOUT(IncTeamScore_fp DLLIncTeamScore;)
 typedef bool (*InvCheckItem_fp)(int pnum, int type, int id);
 DMFCDLLOUT(InvCheckItem_fp DLLInvCheckItem;)
 
-// typedef bool( *InvAddTypeID_fp ) (int pnum, int type,int id,int aux_type=-1,int aux_id=-1,int flags=0,const char *description=NULL);
-typedef bool (*InvAddTypeID_fp)(int pnum, int type, int id, int aux_type, int aux_id, int flags, const char *description);
+// typedef bool( *InvAddTypeID_fp ) (int pnum, int type,int id,int aux_type=-1,int aux_id=-1,int flags=0,const char
+// *description=NULL);
+typedef bool (*InvAddTypeID_fp)(int pnum, int type, int id, int aux_type, int aux_id, int flags,
+                                const char *description);
 DMFCDLLOUT(InvAddTypeID_fp DLLInvAddTypeID;)
 
 typedef bool (*InvRemove_fp)(int pnum, int type, int id);
@@ -961,129 +964,129 @@ DMFCDLLOUT(UnattachChild_fp DLLUnattachChild;)
 typedef bool (*UnattachFromParent_fp)(object *child);
 DMFCDLLOUT(UnattachFromParent_fp DLLUnattachFromParent;)
 
-typedef float (*vm_GetMagnitude_fp)(vector *vec);
+typedef float (*vm_GetMagnitude_fp)(simd::float3 *vec);
 DMFCDLLOUT(vm_GetMagnitude_fp DLLvm_GetMagnitude;)
 
 // Rotates a vector thru a matrix
-typedef void (*vm_MatrixMulVector_fp)(vector *, vector *, matrix *);
+typedef void (*vm_MatrixMulVector_fp)(simd::float3 *, simd::float3 *, vec::matrix *);
 DMFCDLLOUT(vm_MatrixMulVector_fp DLLvm_MatrixMulVector;)
 
 // Applies an instantaneous force on an object, resulting in an instantaneous
 // change in velocity.
 // typedef void (*phys_apply_force_fp)(object *obj,vector *force_vec,int16_t weapon_index=-1);
-typedef void (*phys_apply_force_fp)(object *obj, vector *force_vec, int16_t weapon_index);
+typedef void (*phys_apply_force_fp)(object *obj, simd::float3 *force_vec, int16_t weapon_index);
 DMFCDLLOUT(phys_apply_force_fp DLLphys_apply_force;)
 
-typedef void (*phys_apply_rot_fp)(object *obj, vector *force_vec);
+typedef void (*phys_apply_rot_fp)(object *obj, simd::float3 *force_vec);
 DMFCDLLOUT(phys_apply_rot_fp DLLphys_apply_rot;)
 
 // Transposes a matrix in place
-typedef void (*vm_TransposeMatrix_fp)(matrix *);
+typedef void (*vm_TransposeMatrix_fp)(vec::matrix *);
 DMFCDLLOUT(vm_TransposeMatrix_fp DLLvm_TransposeMatrix;)
 
 // Returns a perpendicular vector to the two given vectors
-typedef void (*vm_CrossProduct_fp)(vector *, vector *, vector *);
+typedef void (*vm_CrossProduct_fp)(simd::float3 *, simd::float3 *, simd::float3 *);
 DMFCDLLOUT(vm_CrossProduct_fp DLLvm_CrossProduct;)
 
 // Normalizes a vector
 // Returns the magnitude before normalization
-typedef float (*vm_NormalizeVector_fp)(vector *);
+typedef float (*vm_NormalizeVector_fp)(simd::float3 *);
 DMFCDLLOUT(vm_NormalizeVector_fp DLLvm_NormalizeVector;)
 
-typedef void (*ConvertEulerToAxisAmount_fp)(vector *e, vector *n, float *w);
+typedef void (*ConvertEulerToAxisAmount_fp)(simd::float3 *e, simd::float3 *n, float *w);
 DMFCDLLOUT(ConvertEulerToAxisAmount_fp DLLConvertEulerToAxisAmount;)
 
-typedef void (*ConvertAxisAmountToEuler_fp)(vector *n, float *w, vector *e);
+typedef void (*ConvertAxisAmountToEuler_fp)(simd::float3 *n, float *w, simd::float3 *e);
 DMFCDLLOUT(ConvertAxisAmountToEuler_fp DLLConvertAxisAmountToEuler;)
 
 // Given a vector, returns an approximation of the magnitude
-typedef float (*vm_GetMagnitudeFast_fp)(vector *);
+typedef float (*vm_GetMagnitudeFast_fp)(simd::float3 *);
 DMFCDLLOUT(vm_GetMagnitudeFast_fp DLLvm_GetMagnitudeFast;)
 
 // Given a matrix, makes it an identity matrix
-typedef void (*vm_MakeIdentity_fp)(matrix *);
+typedef void (*vm_MakeIdentity_fp)(vec::matrix *);
 DMFCDLLOUT(vm_MakeIdentity_fp DLLvm_MakeIdentity;)
 
 // Set a vector to {0,0,0}
-typedef void (*vm_MakeVectorZero_fp)(vector *v);
+typedef void (*vm_MakeVectorZero_fp)(simd::float3 *v);
 DMFCDLLOUT(vm_MakeVectorZero_fp DLLvm_MakeVectorZero;)
 
 // Set an angvec to {0,0,0}
-typedef void (*vm_MakeAngleZero_fp)(angvec *a);
+typedef void (*vm_MakeAngleZero_fp)(vec::angvec *a);
 DMFCDLLOUT(vm_MakeAngleZero_fp DLLvm_MakeAngleZero;)
 
 // Multiply a vector times the transpose of a matrix
-typedef void (*vm_VectorMulTMatrix_fp)(vector *result, vector *v, matrix *m);
+typedef void (*vm_VectorMulTMatrix_fp)(simd::float3 *result, simd::float3 *v, vec::matrix *m);
 DMFCDLLOUT(vm_VectorMulTMatrix_fp DLLvm_VectorMulTMatrix;)
 
 // Multiplies 2 3x3 matrixes, returning the result in first argument
-typedef void (*vm_MatrixMul_fp)(matrix *, matrix *, matrix *);
+typedef void (*vm_MatrixMul_fp)(vec::matrix *, vec::matrix *, vec::matrix *);
 DMFCDLLOUT(vm_MatrixMul_fp DLLvm_MatrixMul;)
 
 // Multiply a matrix times the transpose of a matrix
-typedef void (*vm_MatrixMulTMatrix_fp)(matrix *dest, matrix *src0, matrix *src1);
+typedef void (*vm_MatrixMulTMatrix_fp)(vec::matrix *dest, vec::matrix *src0, vec::matrix *src1);
 DMFCDLLOUT(vm_MatrixMulTMatrix_fp DLLvm_MatrixMulTMatrix;)
 
 // Returns the dot product of the two given vectors
-typedef float (*vm_DotProduct_fp)(vector *, vector *);
+typedef float (*vm_DotProduct_fp)(simd::float3 *, simd::float3 *);
 DMFCDLLOUT(vm_DotProduct_fp DLLvm_DotProduct;)
 
 // Returns the difference between two vectors
-typedef void (*vm_SubVectors_fp)(vector *, const vector *, const vector *);
+typedef void (*vm_SubVectors_fp)(simd::float3 *, const simd::float3 *, const simd::float3 *);
 DMFCDLLOUT(vm_SubVectors_fp DLLvm_SubVectors;)
 
 // Returns adds two vectors, returns result in first arg
-typedef void (*vm_AddVectors_fp)(vector *, vector *, vector *);
+typedef void (*vm_AddVectors_fp)(simd::float3 *, simd::float3 *, simd::float3 *);
 DMFCDLLOUT(vm_AddVectors_fp DLLvm_AddVectors;)
 
 // Given a vector, divides second arg by vector components
-typedef void (*vm_AverageVector_fp)(vector *, int);
+typedef void (*vm_AverageVector_fp)(simd::float3 *, int);
 DMFCDLLOUT(vm_AverageVector_fp DLLvm_AverageVector;)
 
 // Scales second arg vector by 3rd arg, placing result in first arg
-typedef void (*vm_ScaleVector_fp)(vector *, vector *, float);
+typedef void (*vm_ScaleVector_fp)(simd::float3 *, simd::float3 *, float);
 DMFCDLLOUT(vm_ScaleVector_fp DLLvm_ScaleVector;)
 
 // Scales all components of vector v by value s adds the result to p and stores result in vector d
-typedef void (*vm_ScaleAddVector_fp)(vector *d, vector *p, vector *v, float s);
+typedef void (*vm_ScaleAddVector_fp)(simd::float3 *d, simd::float3 *p, simd::float3 *v, float s);
 DMFCDLLOUT(vm_ScaleAddVector_fp DLLvm_ScaleAddVector;)
 
 // Divides second vector components by 3rd arg, placing result in first arg.  Useful for parametric lines
-typedef void (*vm_DivVector_fp)(vector *, vector *, float);
+typedef void (*vm_DivVector_fp)(simd::float3 *, simd::float3 *, float);
 DMFCDLLOUT(vm_DivVector_fp DLLvm_DivVector;)
 
 // Same as NormalizeVector, but uses approximation
-typedef float (*vm_NormalizeVectorFast_fp)(vector *);
+typedef float (*vm_NormalizeVectorFast_fp)(simd::float3 *);
 DMFCDLLOUT(vm_NormalizeVectorFast_fp DLLvm_NormalizeVectorFast;)
 
 // Clears a matrix to zero
-typedef void (*vm_ClearMatrix_fp)(matrix *);
+typedef void (*vm_ClearMatrix_fp)(vec::matrix *);
 DMFCDLLOUT(vm_ClearMatrix_fp DLLvm_ClearMatrix;)
 
 // Given 3 angles (p,h,b), makes a rotation matrix out of them
-typedef void (*vm_AnglesToMatrix_fp)(matrix *, angle p, angle h, angle b);
+typedef void (*vm_AnglesToMatrix_fp)(vec::matrix *, angle p, angle h, angle b);
 DMFCDLLOUT(vm_AnglesToMatrix_fp DLLvm_AnglesToMatrix;)
 
 // Ensure that a matrix is orthogonal
-typedef void (*vm_Orthogonalize_fp)(matrix *m);
+typedef void (*vm_Orthogonalize_fp)(vec::matrix *m);
 DMFCDLLOUT(vm_Orthogonalize_fp DLLvm_Orthogonalize;)
 
 // Compute a matrix from one or two vectors.  At least one and at most two vectors must/can be specified.
 // Parameters:	m - filled in with the orienation matrix
 //					fvec,uvec,rvec - pointers to vectors that determine the matrix.
 //						One or two of these must be specified, with the other(s) set to NULL.
-typedef void (*vm_VectorToMatrix_fp)(matrix *m, vector *fvec, vector *uvec, vector *rvec);
+typedef void (*vm_VectorToMatrix_fp)(vec::matrix *m, simd::float3 *fvec, simd::float3 *uvec, simd::float3 *rvec);
 DMFCDLLOUT(vm_VectorToMatrix_fp DLLvm_VectorToMatrix;)
 
 // Computes a matrix from a vector and and angle of rotation around that vector
 // Parameters:	m - filled in with the computed matrix
 //					v - the forward vector of the new matrix
 //					a - the angle of rotation around the forward vector
-typedef void (*vm_VectorAngleToMatrix_fp)(matrix *m, vector *v, angle a);
+typedef void (*vm_VectorAngleToMatrix_fp)(vec::matrix *m, simd::float3 *v, vec::angle a);
 DMFCDLLOUT(vm_VectorAngleToMatrix_fp DLLvm_VectorAngleToMatrix;)
 
 // Given an angle, places sin in 2nd arg, cos in 3rd.  Either can be null
-typedef void (*vm_SinCos_fp)(angle, float *, float *);
+typedef void (*vm_SinCos_fp)(vec::angle, float *, float *);
 DMFCDLLOUT(vm_SinCos_fp DLLvm_SinCos;)
 
 // Given x1,y1,x2,y2, returns the slope
@@ -1093,7 +1096,7 @@ DMFCDLLOUT(vm_GetSlope_fp DLLvm_GetSlope;)
 // Calculates the perpendicular vector given three points
 // Parms:	n - the computed perp vector (filled in)
 //			v0,v1,v2 - three clockwise vertices
-typedef void (*vm_GetPerp_fp)(vector *n, vector *a, vector *b, vector *c);
+typedef void (*vm_GetPerp_fp)(simd::float3 *n, simd::float3 *a, simd::float3 *b, simd::float3 *c);
 DMFCDLLOUT(vm_GetPerp_fp DLLvm_GetPerp;)
 
 // Calculates the (normalized) surface normal give three points
@@ -1101,39 +1104,39 @@ DMFCDLLOUT(vm_GetPerp_fp DLLvm_GetPerp;)
 //			v0,v1,v2 - three clockwise vertices
 // Returns the magnitude of the normal before it was normalized.
 // The bigger this value, the better the normal.
-typedef float (*vm_GetNormal_fp)(vector *n, vector *v0, vector *v1, vector *v2);
+typedef float (*vm_GetNormal_fp)(simd::float3 *n, simd::float3 *v0, simd::float3 *v1, simd::float3 *v2);
 DMFCDLLOUT(vm_GetNormal_fp DLLvm_GetNormal;)
 
 // Gets the distances (magnitude) between two vectors. Slow.
-typedef float (*vm_VectorDistance_fp)(const vector *a, const vector *b);
+typedef float (*vm_VectorDistance_fp)(const simd::float3 *a, const simd::float3 *b);
 DMFCDLLOUT(vm_VectorDistance_fp DLLvm_VectorDistance;)
 
 // Gets the approx distances (magnitude) between two vectors. Faster.
-typedef float (*vm_VectorDistanceQuick_fp)(vector *a, vector *b);
+typedef float (*vm_VectorDistanceQuick_fp)(simd::float3 *a, simd::float3 *b);
 DMFCDLLOUT(vm_VectorDistanceQuick_fp DLLvm_VectorDistanceQuick;)
 
 // Computes a normalized direction vector between two points
 // Parameters:	dest - filled in with the normalized direction vector
 //					start,end - the start and end points used to calculate the vector
 // Returns:		the distance between the two input points
-typedef float (*vm_GetNormalizedDir_fp)(vector *dest, vector *end, vector *start);
+typedef float (*vm_GetNormalizedDir_fp)(simd::float3 *dest, simd::float3 *end, simd::float3 *start);
 DMFCDLLOUT(vm_GetNormalizedDir_fp DLLvm_GetNormalizedDir;)
 
 // Returns a normalized direction vector between two points
 // Uses sloppier magnitude, less precise
-typedef float (*vm_GetNormalizedDirFast_fp)(vector *dest, vector *end, vector *start);
+typedef float (*vm_GetNormalizedDirFast_fp)(simd::float3 *dest, simd::float3 *end, simd::float3 *start);
 DMFCDLLOUT(vm_GetNormalizedDirFast_fp DLLvm_GetNormalizedDirFast;)
 
 // extract angles from a matrix
-typedef angvec *(*vm_ExtractAnglesFromMatrix_fp)(angvec *a, matrix *m);
+typedef vec::angvec *(*vm_ExtractAnglesFromMatrix_fp)(vec::angvec *a, vec::matrix *m);
 DMFCDLLOUT(vm_ExtractAnglesFromMatrix_fp DLLvm_ExtractAnglesFromMatrix;)
 
 //	returns the angle between two vectors and a forward vector
-typedef angle (*vm_DeltaAngVec_fp)(vector *v0, vector *v1, vector *fvec);
+typedef angle (*vm_DeltaAngVec_fp)(simd::float3 *v0, simd::float3 *v1, simd::float3 *fvec);
 DMFCDLLOUT(vm_DeltaAngVec_fp DLLvm_DeltaAngVec;)
 
 //	returns the angle between two normalized vectors and a forward vector
-typedef angle (*vm_DeltaAngVecNorm_fp)(vector *v0, vector *v1, vector *fvec);
+typedef angle (*vm_DeltaAngVecNorm_fp)(simd::float3 *v0, simd::float3 *v1, simd::float3 *fvec);
 DMFCDLLOUT(vm_DeltaAngVecNorm_fp DLLvm_DeltaAngVecNorm;)
 
 // Computes the distance from a point to a plane.
@@ -1141,34 +1144,35 @@ DMFCDLLOUT(vm_DeltaAngVecNorm_fp DLLvm_DeltaAngVecNorm;)
 // Parms:	norm - the (normalized) surface normal of the plane
 //				planep - a point on the plane
 // Returns:	The signed distance from the plane; negative dist is on the back of the plane
-typedef float (*vm_DistToPlane_fp)(vector *checkp, vector *norm, vector *planep);
+typedef float (*vm_DistToPlane_fp)(simd::float3 *checkp, simd::float3 *norm, simd::float3 *planep);
 DMFCDLLOUT(vm_DistToPlane_fp DLLvm_DistToPlane;)
 
 // returns the value of a determinant
-typedef float (*vm_CalcDetValue_fp)(matrix *det);
+typedef float (*vm_CalcDetValue_fp)(vec::matrix *det);
 DMFCDLLOUT(vm_CalcDetValue_fp DLLvm_CalcDetValue;)
 
-typedef void (*vm_MakeInverseMatrix_fp)(matrix *dest);
+typedef void (*vm_MakeInverseMatrix_fp)(vec::matrix *dest);
 DMFCDLLOUT(vm_MakeInverseMatrix_fp DLLvm_MakeInverseMatrix;)
 
-typedef void (*vm_SinCosToMatrix_fp)(matrix *m, float sinp, float cosp, float sinb, float cosb, float sinh, float cosh);
+typedef void (*vm_SinCosToMatrix_fp)(vec::matrix *m, float sinp, float cosp, float sinb, float cosb, float sinh,
+                                     float cosh);
 DMFCDLLOUT(vm_SinCosToMatrix_fp DLLvm_SinCosToMatrix;)
 
 // Gets the real center of a polygon
-typedef float (*vm_GetCentroid_fp)(vector *centroid, vector *src, int nv);
+typedef float (*vm_GetCentroid_fp)(simd::float3 *centroid, simd::float3 *src, int nv);
 DMFCDLLOUT(vm_GetCentroid_fp DLLvm_GetCentroid;)
 
 //	retrieves a random vector in values -RAND_MAX/2 to RAND_MAX/2
-typedef void (*vm_MakeRandomVector_fp)(vector *vec);
+typedef void (*vm_MakeRandomVector_fp)(simd::float3 *vec);
 DMFCDLLOUT(vm_MakeRandomVector_fp DLLvm_MakeRandomVector;)
 
 // Given a set of points, computes the minimum bounding sphere of those points
-typedef float (*vm_ComputeBoundingSphere_fp)(vector *center, vector *vecs, int num_verts);
+typedef float (*vm_ComputeBoundingSphere_fp)(simd::float3 *center, simd::float3 *vecs, int num_verts);
 DMFCDLLOUT(vm_ComputeBoundingSphere_fp DLLvm_ComputeBoundingSphere;)
 
 // Gets the real center of a polygon, but uses fast magnitude calculation
 // Returns the size of the passed in stuff
-typedef float (*vm_GetCentroidFast_fp)(vector *centroid, vector *src, int nv);
+typedef float (*vm_GetCentroidFast_fp)(simd::float3 *centroid, simd::float3 *src, int nv);
 DMFCDLLOUT(vm_GetCentroidFast_fp DLLvm_GetCentroidFast;)
 
 // returns scaled line width
@@ -1196,8 +1200,8 @@ DMFCDLLOUT(ResetFacings_fp DLLResetFacings;)
 //					viewer_orient - the oriention for this view
 //					zoom - the zoom for this view
 //					rear_view - if true, we're looking out the rear of this object
-typedef void (*GameRenderWorld_fp)(object *viewer, vector *viewer_eye, int viewer_roomnum, matrix *viewer_orient,
-                                   float zoom, bool rear_view);
+typedef void (*GameRenderWorld_fp)(object *viewer, simd::float3 *viewer_eye, int viewer_roomnum,
+                                   vec::matrix *viewer_orient, float zoom, bool rear_view);
 DMFCDLLOUT(GameRenderWorld_fp DLLGameRenderWorld;)
 
 // retrives the settings of the last call to StartFrame
@@ -1316,12 +1320,12 @@ DMFCDLLOUT(fvi_FindIntersection_fp DLLfvi_FindIntersection;)
 
 // Generates a list of faces(with corresponding room numbers) within a given distance to a position.
 // Return value is the number of faces in the list
-typedef int (*fvi_QuickDistFaceList_fp)(int init_room_index, vector *pos, float rad, fvi_face_room_list *quick_fr_list,
-                                        int max_elements);
+typedef int (*fvi_QuickDistFaceList_fp)(int init_room_index, simd::float3 *pos, float rad,
+                                        fvi_face_room_list *quick_fr_list, int max_elements);
 DMFCDLLOUT(fvi_QuickDistFaceList_fp DLLfvi_QuickDistFaceList;)
 
 // Returns the number of cells that are approximately within the specified radius
-typedef int (*fvi_QuickDistCellList_fp)(int init_cell_index, vector *pos, float rad, int *quick_cell_list,
+typedef int (*fvi_QuickDistCellList_fp)(int init_cell_index, simd::float3 *pos, float rad, int *quick_cell_list,
                                         int max_elements);
 DMFCDLLOUT(fvi_QuickDistCellList_fp DLLfvi_QuickDistCellList;)
 
@@ -1329,14 +1333,14 @@ DMFCDLLOUT(fvi_QuickDistCellList_fp DLLfvi_QuickDistCellList;)
 // typedef int (*fvi_QuickDistObjectList_fp)(vector *pos, int init_roomnum, float rad, int16_t *object_index_list, int
 // max_elements, bool f_lightmap_only, bool f_only_players_and_ais = false, bool f_include_non_collide_objects = false,
 // bool f_stop_at_closed_doors = false);
-typedef int (*fvi_QuickDistObjectList_fp)(vector *pos, int init_roomnum, float rad, int16_t *object_index_list,
+typedef int (*fvi_QuickDistObjectList_fp)(simd::float3 *pos, int init_roomnum, float rad, int16_t *object_index_list,
                                           int max_elements, bool f_lightmap_only, bool f_only_players_and_ais,
                                           bool f_include_non_collide_objects, bool f_stop_at_closed_doors);
 DMFCDLLOUT(fvi_QuickDistObjectList_fp DLLfvi_QuickDistObjectList;)
 
 // returns true if the given point is in the given room
 // typedef bool (*fvi_QuickRoomCheck_fp)(vector *pos, room *cur_room, bool try_again = false);
-typedef bool (*fvi_QuickRoomCheck_fp)(vector *pos, room *cur_room, bool try_again);
+typedef bool (*fvi_QuickRoomCheck_fp)(simd::float3 *pos, room *cur_room, bool try_again);
 DMFCDLLOUT(fvi_QuickRoomCheck_fp DLLfvi_QuickRoomCheck;)
 
 // returns true if audio taunts are enabled
@@ -1367,7 +1371,7 @@ DMFCDLLOUT(VisEffectInitType_fp DLLVisEffectInitType;)
 
 // initialize a new viseffect.  adds to the list for the given room
 // returns the object number
-typedef int (*VisEffectCreate_fp)(uint8_t type, uint8_t id, int roomnum, vector *pos);
+typedef int (*VisEffectCreate_fp)(uint8_t type, uint8_t id, int roomnum, simd::float3 *pos);
 DMFCDLLOUT(VisEffectCreate_fp DLLVisEffectCreate;)
 
 // link the viseffect  into the list for its room
@@ -1392,13 +1396,14 @@ DMFCDLLOUT(VisEffectDelete_fp DLLVisEffectDelete;)
 // Creates a some sparks that go in random directions
 // typedef void (*CreateRandomSparks_fp) (int num_sparks,vector *pos,int roomnum,int which_index=-1,float
 // force_scalar=1);
-typedef void (*CreateRandomSparks_fp)(int num_sparks, vector *pos, int roomnum, int which_index, float force_scalar);
+typedef void (*CreateRandomSparks_fp)(int num_sparks, simd::float3 *pos, int roomnum, int which_index,
+                                      float force_scalar);
 DMFCDLLOUT(CreateRandomSparks_fp DLLCreateRandomSparks;)
 
 // Creates a some line sparks that go in random directions
 // typedef void (*CreateRandomLineSparks_fp) (int num_sparks,vector *pos,int roomnum,uint16_t color=0,float
 // force_scalar=1);
-typedef void (*CreateRandomLineSparks_fp)(int num_sparks, vector *pos, int roomnum, uint16_t color, float force_scalar);
+typedef void (*CreateRandomLineSparks_fp)(int num_sparks, simd::float3 *pos, int roomnum, uint16_t color, float force_scalar);
 DMFCDLLOUT(CreateRandomLineSparks_fp DLLCreateRandomLineSparks;)
 
 // Creates vis effects but has the caller set their parameters
@@ -1406,13 +1411,13 @@ DMFCDLLOUT(CreateRandomLineSparks_fp DLLCreateRandomLineSparks;)
 // returns the vis number
 // typedef int (*VisEffectCreateControlled_fp)(uint8_t type,object *parent,uint8_t id,int roomnum,vector *pos,float
 // lifetime,vector *velocity,int phys_flags=0,float size=0,float mass=0.0f,float drag=0.0f,bool isreal=0);
-typedef int (*VisEffectCreateControlled_fp)(uint8_t type, object *parent, uint8_t id, int roomnum, vector *pos,
-                                            float lifetime, vector *velocity, int phys_flags, float size, float mass,
+typedef int (*VisEffectCreateControlled_fp)(uint8_t type, object *parent, uint8_t id, int roomnum, simd::float3 *pos,
+                                            float lifetime, simd::float3 *velocity, int phys_flags, float size, float mass,
                                             float drag, bool isreal);
 DMFCDLLOUT(VisEffectCreateControlled_fp DLLVisEffectCreateControlled;)
 
 // Creates a some particles that go in random directions
-typedef void (*CreateRandomParticles_fp)(int num_sparks, vector *pos, int roomnum, int bm_handle, float size,
+typedef void (*CreateRandomParticles_fp)(int num_sparks, simd::float3 *pos, int roomnum, int bm_handle, float size,
                                          float life);
 DMFCDLLOUT(CreateRandomParticles_fp DLLCreateRandomParticles;)
 
@@ -1428,7 +1433,7 @@ DMFCDLLOUT(InitObjectScripts_fp DLLInitObjectScripts;)
 // Frame setup functions:
 
 // start the frame, specifying view position, matrix, & zoom
-typedef void (*g3_StartFrame_fp)(vector *view_pos, matrix *view_matrix, float zoom);
+typedef void (*g3_StartFrame_fp)(simd::float3 *view_pos, vec::matrix *view_matrix, float zoom);
 DMFCDLLOUT(g3_StartFrame_fp DLLg3_StartFrame;)
 
 // end the frame
@@ -1436,25 +1441,25 @@ typedef void (*g3_EndFrame_fp)(void);
 DMFCDLLOUT(g3_EndFrame_fp DLLg3_EndFrame;)
 
 // get the current view position
-typedef void (*g3_GetViewPosition_fp)(vector *vp);
+typedef void (*g3_GetViewPosition_fp)(simd::float3 *vp);
 DMFCDLLOUT(g3_GetViewPosition_fp DLLg3_GetViewPosition;)
 
 //	returns the current view matrix
-typedef void (*g3_GetViewMatrix_fp)(matrix *mat);
+typedef void (*g3_GetViewMatrix_fp)(vec::matrix *mat);
 DMFCDLLOUT(g3_GetViewMatrix_fp DLLg3_GetViewMatrix;)
 
 //	returns the current unscaled view matrix
-typedef void (*g3_GetUnscaledMatrix_fp)(matrix *mat);
+typedef void (*g3_GetUnscaledMatrix_fp)(vec::matrix *mat);
 DMFCDLLOUT(g3_GetUnscaledMatrix_fp DLLg3_GetUnscaledMatrix;)
 
 // Instancing
 
 // instance at specified point with specified orientation
-typedef void (*g3_StartInstanceMatrix_fp)(vector *pos, matrix *orient);
+typedef void (*g3_StartInstanceMatrix_fp)(simd::float3 *pos, vec::matrix *orient);
 DMFCDLLOUT(g3_StartInstanceMatrix_fp DLLg3_StartInstanceMatrix;)
 
 // instance at specified point with specified orientation
-typedef void (*g3_StartInstanceAngles_fp)(vector *pos, angvec *angles);
+typedef void (*g3_StartInstanceAngles_fp)(simd::float3 *pos, vec::angvec *angles);
 DMFCDLLOUT(g3_StartInstanceAngles_fp DLLg3_StartInstanceAngles;)
 
 // pops the old context
@@ -1465,13 +1470,13 @@ DMFCDLLOUT(g3_DoneInstance_fp DLLg3_DoneInstance;)
 
 // returns true if a plane is facing the viewer. takes the unrotated surface
 // normal of the plane, and a point on it.  The normal need not be normalized
-typedef bool (*g3_CheckNormalFacing_fp)(vector *v, vector *norm);
+typedef bool (*g3_CheckNormalFacing_fp)(simd::float3 *v, simd::float3 *norm);
 DMFCDLLOUT(g3_CheckNormalFacing_fp DLLg3_CheckNormalFacing;)
 
 // Point definition and rotation functions:
 
 // rotates a point. returns codes.  does not check if already rotated
-typedef uint8_t (*g3_RotatePoint_fp)(g3Point *dest, vector *src);
+typedef uint8_t (*g3_RotatePoint_fp)(g3Point *dest, simd::float3 *src);
 DMFCDLLOUT(g3_RotatePoint_fp DLLg3_RotatePoint;)
 
 // projects a point
@@ -1479,11 +1484,11 @@ typedef void (*g3_ProjectPoint_fp)(g3Point *point);
 DMFCDLLOUT(g3_ProjectPoint_fp DLLg3_ProjectPoint;)
 
 // calculate the depth of a point - returns the z coord of the rotated point
-typedef float (*g3_CalcPointDepth_fp)(vector *pnt);
+typedef float (*g3_CalcPointDepth_fp)(simd::float3 *pnt);
 DMFCDLLOUT(g3_CalcPointDepth_fp DLLg3_CalcPointDepth;)
 
 // from a 2d point, compute the vector through that point
-typedef void (*g3_Point2Vec_fp)(vector *v, int16_t sx, int16_t sy);
+typedef void (*g3_Point2Vec_fp)(simd::float3 *v, int16_t sx, int16_t sy);
 DMFCDLLOUT(g3_Point2Vec_fp DLLg3_Point2Vec;)
 
 // code a point.  fills in the p3_codes field of the point, and returns the codes
@@ -1491,15 +1496,15 @@ typedef uint8_t (*g3_CodePoint_fp)(g3Point *point);
 DMFCDLLOUT(g3_CodePoint_fp DLLg3_CodePoint;)
 
 // delta rotation functions
-typedef vector *(*g3_RotateDeltaX_fp)(vector *dest, float dx);
+typedef simd::float3 *(*g3_RotateDeltaX_fp)(simd::float3 *dest, float dx);
 DMFCDLLOUT(g3_RotateDeltaX_fp DLLg3_RotateDeltaX;)
-typedef vector *(*g3_RotateDeltaY_fp)(vector *dest, float dy);
+typedef simd::float3 *(*g3_RotateDeltaY_fp)(simd::float3 *dest, float dy);
 DMFCDLLOUT(g3_RotateDeltaY_fp DLLg3_RotateDeltaY;)
-typedef vector *(*g3_RotateDeltaZ_fp)(vector *dest, float dz);
+typedef simd::float3 *(*g3_RotateDeltaZ_fp)(simd::float3 *dest, float dz);
 DMFCDLLOUT(g3_RotateDeltaZ_fp DLLg3_RotateDeltaZ;)
-typedef vector *(*g3_RotateDeltaVec_fp)(vector *dest, vector *src);
+typedef simd::float3 *(*g3_RotateDeltaVec_fp)(simd::float3 *dest, simd::float3 *src);
 DMFCDLLOUT(g3_RotateDeltaVec_fp DLLg3_RotateDeltaVec;)
-typedef uint8_t (*g3_AddDeltaVec_fp)(g3Point *dest, g3Point *src, vector *deltav);
+typedef uint8_t (*g3_AddDeltaVec_fp)(g3Point *dest, g3Point *src, simd::float3 *deltav);
 DMFCDLLOUT(g3_AddDeltaVec_fp DLLg3_AddDeltaVec;)
 
 // Drawing functions:
@@ -1521,7 +1526,7 @@ DMFCDLLOUT(g3_DrawSphere_fp DLLg3_DrawSphere;)
 // pre-compute the normal, and pass it to this function.  When the normal
 // is passed, this function works like g3_CheckNormalFacing() plus
 // g3_DrawPoly().
-typedef void (*g3_CheckAndDrawPoly_fp)(int nv, g3Point **pointlist, int bm, vector *norm, vector *pnt);
+typedef void (*g3_CheckAndDrawPoly_fp)(int nv, g3Point **pointlist, int bm, simd::float3 *norm, simd::float3 *pnt);
 DMFCDLLOUT(g3_CheckAndDrawPoly_fp DLLg3_CheckAndDrawPoly;)
 
 // draws a line. takes two points.
@@ -1531,12 +1536,13 @@ DMFCDLLOUT(g3_DrawLine_fp DLLg3_DrawLine;)
 // draws a bitmap with the specified 3d width & height
 // returns 1 if off screen, 0 if drew
 // typedef void (*g3_DrawBitmap_fp)(vector *pos,float width,float height,int bm,int color=-1);
-typedef void (*g3_DrawBitmap_fp)(vector *pos, float width, float height, int bm, int color);
+typedef void (*g3_DrawBitmap_fp)(simd::float3 *pos, float width, float height, int bm, int color);
 DMFCDLLOUT(g3_DrawBitmap_fp DLLg3_DrawBitmap;)
 
 // Draws a bitmap that has been rotated about its center.  Angle of rotation is passed as 'rot_angle'
 // typedef void (*g3_DrawRotatedBitmap_fp)(vector *pos,angle rot_angle,float width,float height,int bm,int color=-1);
-typedef void (*g3_DrawRotatedBitmap_fp)(vector *pos, angle rot_angle, float width, float height, int bm, int color);
+typedef void (*g3_DrawRotatedBitmap_fp)(simd::float3 *pos, vec::angle rot_angle, float width, float height, int bm,
+                                        int color);
 DMFCDLLOUT(g3_DrawRotatedBitmap_fp DLLg3_DrawRotatedBitmap;)
 
 // Draw a wireframe box aligned with the screen.  Used for the editor.
@@ -1547,7 +1553,7 @@ typedef void (*g3_DrawBox_fp)(ddgr_color color, g3Point *pnt, float rad);
 DMFCDLLOUT(g3_DrawBox_fp DLLg3_DrawBox;)
 
 // Sets up a custom clipping plane - g3_StartFrame must be called before this is called
-typedef void (*g3_SetCustomClipPlane_fp)(uint8_t state, vector *pnt, vector *normal);
+typedef void (*g3_SetCustomClipPlane_fp)(uint8_t state, simd::float3 *pnt, simd::float3 *normal);
 DMFCDLLOUT(g3_SetCustomClipPlane_fp DLLg3_SetCustomClipPlane;)
 
 // sets the z distance of the far clipping plane
@@ -1570,7 +1576,7 @@ typedef void (*g3_FreeTempPoints_fp)(g3Point **pointlist, int nv);
 DMFCDLLOUT(g3_FreeTempPoints_fp DLLg3_FreeTempPoints;)
 
 // Gets the matrix scale vector
-typedef void (*g3_GetMatrixScale_fp)(vector *matrix_scale);
+typedef void (*g3_GetMatrixScale_fp)(simd::float3 *matrix_scale);
 DMFCDLLOUT(g3_GetMatrixScale_fp DLLg3_GetMatrixScale;)
 
 // Sets the triangulation test to on or off
@@ -1582,8 +1588,8 @@ typedef void (*g3_DrawSpecialLine_fp)(g3Point *p0, g3Point *p1);
 DMFCDLLOUT(g3_DrawSpecialLine_fp DLLg3_DrawSpecialLine;)
 
 // Draws a bitmap on a specific plane.  Also does rotation.  Angle of rotation is passed as 'rot_angle'
-typedef void (*g3_DrawPlanarRotatedBitmap_fp)(vector *pos, vector *norm, angle rot_angle, float width, float height,
-                                              int bm);
+typedef void (*g3_DrawPlanarRotatedBitmap_fp)(simd::float3 *pos, simd::float3 *norm, vec::angle rot_angle, float width,
+                                              float height, int bm);
 DMFCDLLOUT(g3_DrawPlanarRotatedBitmap_fp DLLg3_DrawPlanarRotatedBitmap;)
 
 // Stops all sounds for a player
@@ -1600,7 +1606,7 @@ typedef int (*FireWeaponFromObject_fp)(object *obj, int weapon_num, int gun_num,
 DMFCDLLOUT(FireWeaponFromObject_fp DLLFireWeaponFromObject;)
 
 // Creates an weapon and sends it speeding on its way
-typedef int (*CreateAndFireWeapon_fp)(vector *pos, vector *dir, object *parent, int weapon_num);
+typedef int (*CreateAndFireWeapon_fp)(simd::float3 *pos, simd::float3 *dir, object *parent, int weapon_num);
 DMFCDLLOUT(CreateAndFireWeapon_fp DLLCreateAndFireWeapon;)
 
 // Selects the next camera view in the small windows

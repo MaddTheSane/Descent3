@@ -144,7 +144,8 @@ void DMFCBase::Set_OnServerPlayerExploded(void (*callback)(int player_num)) { Us
 
 void DMFCBase::Set_OnServerCollide(void (*callback)(object *me_obj, object *it_obj)) { UserOnServerCollide = callback; }
 
-void DMFCBase::Set_OnServerCollide(void (*callback)(object *me_obj, object *it_obj, vector *point, vector *normal)) {
+void DMFCBase::Set_OnServerCollide(void (*callback)(object *me_obj, object *it_obj, simd::float3 *point,
+                                                    simd::float3 *normal)) {
   UserOnServerCollide2 = callback;
 }
 
@@ -181,7 +182,8 @@ void DMFCBase::Set_OnServerIsAddressBanned(bool (*callback)(network_address *add
 }
 
 void DMFCBase::Set_OnServerWallCollide(void (*callback)(object *obj, float hitspeed, int hitseg, int hitwall,
-                                                        vector *hitpt, vector *wall_normal, float hit_dot)) {
+                                                        simd::float3 *hitpt, simd::float3 *wall_normal,
+                                                        float hit_dot)) {
   UserOnServerWallCollide = callback;
 }
 
@@ -199,7 +201,8 @@ void DMFCBase::Set_OnClientPlayerExploded(void (*callback)(int player_num)) { Us
 
 void DMFCBase::Set_OnClientCollide(void (*callback)(object *me_obj, object *it_obj)) { UserOnClientCollide = callback; }
 
-void DMFCBase::Set_OnClientCollide(void (*callback)(object *me_obj, object *it_obj, vector *point, vector *normal)) {
+void DMFCBase::Set_OnClientCollide(void (*callback)(object *me_obj, object *it_obj, simd::float3 *point,
+                                                    simd::float3 *normal)) {
   UserOnClientCollide2 = callback;
 }
 
@@ -238,7 +241,8 @@ void DMFCBase::Set_OnClientLevelStart(void (*callback)(void)) { UserOnClientLeve
 void DMFCBase::Set_OnClientLevelEnd(void (*callback)(void)) { UserOnClientLevelEnd = callback; }
 
 void DMFCBase::Set_OnClientWallCollide(void (*callback)(object *obj, float hitspeed, int hitseg, int hitwall,
-                                                        vector *hitpt, vector *wall_normal, float hit_dot)) {
+                                                        simd::float3 *hitpt, simd::float3 *wall_normal,
+                                                        float hit_dot)) {
   UserOnClientWallCollide = callback;
 }
 
@@ -335,7 +339,7 @@ void DMFCBase::CallOnServerCollide(object *me_obj, object *it_obj) {
     OnServerCollide(me_obj, it_obj);
 }
 
-void DMFCBase::CallOnServerCollide(object *me_obj, object *it_obj, vector *point, vector *normal) {
+void DMFCBase::CallOnServerCollide(object *me_obj, object *it_obj, simd::float3 *point, simd::float3 *normal) {
   if (UserOnServerCollide2)
     (*UserOnServerCollide2)(me_obj, it_obj, point, normal);
   else
@@ -412,8 +416,8 @@ bool DMFCBase::CallOnServerIsAddressBanned(network_address *addr, const char *tr
     return OnServerIsAddressBanned(addr, tracker_id);
 }
 
-void DMFCBase::CallOnServerWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                                       vector *wall_normal, float hit_dot) {
+void DMFCBase::CallOnServerWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                                       simd::float3 *wall_normal, float hit_dot) {
   if (UserOnServerWallCollide)
     (*UserOnServerWallCollide)(obj, hitspeed, hitseg, hitwall, hitpt, wall_normal, hit_dot);
   else
@@ -455,7 +459,7 @@ void DMFCBase::CallOnClientCollide(object *me_obj, object *it_obj) {
     OnClientCollide(me_obj, it_obj);
 }
 
-void DMFCBase::CallOnClientCollide(object *me_obj, object *it_obj, vector *point, vector *normal) {
+void DMFCBase::CallOnClientCollide(object *me_obj, object *it_obj, simd::float3 *point, simd::float3 *normal) {
   if (UserOnClientCollide2)
     (*UserOnClientCollide2)(me_obj, it_obj, point, normal);
   else
@@ -539,8 +543,8 @@ void DMFCBase::CallOnClientLevelEnd(void) {
     OnClientLevelEnd();
 }
 
-void DMFCBase::CallOnClientWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                                       vector *wall_normal, float hit_dot) {
+void DMFCBase::CallOnClientWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                                       simd::float3 *wall_normal, float hit_dot) {
   if (UserOnClientWallCollide)
     (*UserOnClientWallCollide)(obj, hitspeed, hitseg, hitwall, hitpt, wall_normal, hit_dot);
   else
@@ -942,7 +946,7 @@ void DMFCBase::TranslateEvent(int eventnum, dllinfo *data) {
 
   case EVT_GAMECHECKBAN: {
     network_address *addr = (network_address *)data->special_data;
-    const char *tracker_id = (const char *) data->iParam;
+    const char *tracker_id = (const char *)data->iParam;
 
     data->iRet = (CallOnServerIsAddressBanned(addr, tracker_id)) ? 1 : 0;
   } break;

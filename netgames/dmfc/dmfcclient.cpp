@@ -395,7 +395,7 @@ void DMFCBase::OnClientPlayerExploded(int player_num) {}
 //   me_obj = object pointer to the me object
 //   it_obj = object pointer to the it object
 void DMFCBase::OnClientCollide(object *me_obj, object *it_obj) {}
-void DMFCBase::OnClientCollide(object *me_obj, object *it_obj, vector *point, vector *normal) {}
+void DMFCBase::OnClientCollide(object *me_obj, object *it_obj, simd::float3 *point, simd::float3 *normal) {}
 
 // DMFCBase::OnClientPlayerChangeSegment (Only called if server tells client to execute)
 //
@@ -1065,8 +1065,8 @@ void DMFCBase::OnDoControls(game_controls *controls) {
 // DMFCBase::OnClientWallCollide
 //
 //	Called by the game when their is a collision between an object and a wall
-void DMFCBase::OnClientWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                                   vector *wall_normal, float hit_dot) {}
+void DMFCBase::OnClientWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                                   simd::float3 *wall_normal, float hit_dot) {}
 
 //	DMFCBase::OnClientObjectKilled
 //

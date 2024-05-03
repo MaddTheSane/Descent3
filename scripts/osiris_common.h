@@ -1225,7 +1225,7 @@ struct msafe_struct {
   int16_t texnum;
   int16_t portalnum;
   float fog_r, fog_g, fog_b, fog_depth;
-  vector wind;
+  simd::float3 wind;
   uint8_t pulse_time;
   uint8_t pulse_offset;
 
@@ -1246,17 +1246,17 @@ struct msafe_struct {
   uint8_t playsound;
   uint8_t remove;
   uint8_t do_powerup;
-  vector velocity;
-  vector rot_velocity;
+  simd::float3 velocity;
+  simd::float3 rot_velocity;
   float rot_drag;
-  vector thrust;
-  vector rot_thrust;
+  simd::float3 thrust;
+  simd::float3 rot_thrust;
   int8_t control_type;
   int8_t movement_type;
   float creation_time;
   int32_t physics_flags;
-  vector pos;
-  matrix orient;
+  simd::float3 pos;
+  vec::matrix orient;
   float anim_frame;
 
   // Spew
@@ -1309,7 +1309,7 @@ struct msafe_struct {
   float directional_dot;
   int32_t timebits;
 
-  vector pos2;
+  simd::float3 pos2;
 
   // Second message
   char message2[MSAFE_MESSAGE_LENGTH];
@@ -1319,15 +1319,15 @@ struct msafe_struct {
 struct ray_info {
   int32_t fate;
   int32_t hit_room;
-  vector hit_point;
+  simd::float3 hit_point;
 
   int32_t hit_object;
   int32_t hit_subobject;
 
   int32_t hit_face;
-  vector hit_face_pnt;
+  simd::float3 hit_face_pnt;
   int32_t hit_face_room;
-  vector hit_wallnorm;
+  simd::float3 hit_wallnorm;
 };
 
 #define PV_POS 0x00000001        // set/get pos member (pass in an osiris_path_node_info ptr)
@@ -1341,11 +1341,11 @@ struct ray_info {
 #define PV_I_NUMPATHS 0x00040000 // get number of paths (path_id & node_id are ignored in this case)
 
 struct osiris_path_node_info {
-  vector pos;      // where this node is in the world
+  simd::float3 pos;      // where this node is in the world
   int32_t roomnum; // what room?
   int32_t flags;   // if this point lives over the terrain, etc
-  vector fvec;
-  vector uvec;
+  simd::float3 fvec;
+  simd::float3 uvec;
 };
 
 #endif

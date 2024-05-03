@@ -127,8 +127,8 @@ void DLLFUNCCALL IDMFC_OnServerCollide(IDMFC *instance, object *me_obj, object *
   instance->OnServerCollide(me_obj, it_obj);
 }
 
-void DLLFUNCCALL IDMFC_OnServerCollideComplex(IDMFC *instance, object *me_obj, object *it_obj, vector *point,
-                                              vector *normal) {
+void DLLFUNCCALL IDMFC_OnServerCollideComplex(IDMFC *instance, object *me_obj, object *it_obj, simd::float3 *point,
+                                              simd::float3 *normal) {
   assert(instance != NULL);
   instance->OnServerCollide(me_obj, it_obj, point, normal);
 }
@@ -184,7 +184,7 @@ bool DLLFUNCCALL IDMFC_OnServerIsAddressBanned(IDMFC *instance, network_address 
 }
 
 void DLLFUNCCALL IDMFC_OnServerWallCollide(IDMFC *instance, object *obj, float hitspeed, int hitseg, int hitwall,
-                                           vector *hitpt, vector *wall_normal, float hit_dot) {
+                                           simd::float3 *hitpt, simd::float3 *wall_normal, float hit_dot) {
   assert(instance != NULL);
   instance->OnServerWallCollide(obj, hitspeed, hitseg, hitwall, hitpt, wall_normal, hit_dot);
 }
@@ -214,8 +214,8 @@ void DLLFUNCCALL IDMFC_OnClientCollide(IDMFC *instance, object *me_obj, object *
   instance->OnClientCollide(me_obj, it_obj);
 }
 
-void DLLFUNCCALL IDMFC_OnClientCollideComplex(IDMFC *instance, object *me_obj, object *it_obj, vector *point,
-                                              vector *normal) {
+void DLLFUNCCALL IDMFC_OnClientCollideComplex(IDMFC *instance, object *me_obj, object *it_obj, simd::float3 *point,
+                                              simd::float3 *normal) {
   assert(instance != NULL);
   instance->OnClientCollide(me_obj, it_obj, point, normal);
 }
@@ -276,7 +276,7 @@ void DLLFUNCCALL IDMFC_OnClientLevelEnd(IDMFC *instance) {
 }
 
 void DLLFUNCCALL IDMFC_OnClientWallCollide(IDMFC *instance, object *obj, float hitspeed, int hitseg, int hitwall,
-                                           vector *hitpt, vector *wall_normal, float hit_dot) {
+                                           simd::float3 *hitpt, simd::float3 *wall_normal, float hit_dot) {
   assert(instance != NULL);
   instance->OnClientWallCollide(obj, hitspeed, hitseg, hitwall, hitpt, wall_normal, hit_dot);
 }
@@ -769,7 +769,8 @@ void DLLFUNCCALL IDMFC_WriteDMFCStatsToFile(IDMFC *instance, CFILE *file) {
   instance->WriteDMFCStatsToFile(file);
 }
 
-bool DLLFUNCCALL IDMFC_SetWeaponDeathMessage(IDMFC *instance, const char *weapon_name, const char *message, bool victim_first) {
+bool DLLFUNCCALL IDMFC_SetWeaponDeathMessage(IDMFC *instance, const char *weapon_name, const char *message,
+                                             bool victim_first) {
   assert(instance != NULL);
   return instance->SetWeaponDeathMessage(weapon_name, message, victim_first);
 }
@@ -1144,8 +1145,9 @@ void DLLFUNCCALL IDMFC_Set_OnServerCollideA(IDMFC *instance, void (*callback)(ob
   instance->Set_OnServerCollide(callback);
 }
 
-void DLLFUNCCALL IDMFC_Set_OnServerCollideB(IDMFC *instance, void (*callback)(object *me_obj, object *it_obj,
-                                                                              vector *point, vector *normal)) {
+void DLLFUNCCALL IDMFC_Set_OnServerCollideB(IDMFC *instance,
+                                            void (*callback)(object *me_obj, object *it_obj, simd::float3 *point,
+                                                             simd::float3 *normal)) {
   assert(instance != NULL);
   instance->Set_OnServerCollide(callback);
 }
@@ -1205,7 +1207,8 @@ void DLLFUNCCALL IDMFC_Set_OnServerIsAddressBanned(IDMFC *instance,
 
 void DLLFUNCCALL IDMFC_Set_OnServerWallCollide(IDMFC *instance,
                                                void (*callback)(object *obj, float hitspeed, int hitseg, int hitwall,
-                                                                vector *hitpt, vector *wall_normal, float hit_dot)) {
+                                                                simd::float3 *hitpt, simd::float3 *wall_normal,
+                                                                float hit_dot)) {
   assert(instance != NULL);
   instance->Set_OnServerWallCollide(callback);
 }
@@ -1236,8 +1239,9 @@ void DLLFUNCCALL IDMFC_Set_OnClientCollideA(IDMFC *instance, void (*callback)(ob
   instance->Set_OnClientCollide(callback);
 }
 
-void DLLFUNCCALL IDMFC_Set_OnClientCollideB(IDMFC *instance, void (*callback)(object *me_obj, object *it_obj,
-                                                                              vector *point, vector *normal)) {
+void DLLFUNCCALL IDMFC_Set_OnClientCollideB(IDMFC *instance,
+                                            void (*callback)(object *me_obj, object *it_obj, simd::float3 *point,
+                                                             simd::float3 *normal)) {
   assert(instance != NULL);
   instance->Set_OnClientCollide(callback);
 }
@@ -1301,7 +1305,8 @@ void DLLFUNCCALL IDMFC_Set_OnClientLevelEnd(IDMFC *instance, void (*callback)(vo
 
 void DLLFUNCCALL IDMFC_Set_OnClientWallCollide(IDMFC *instance,
                                                void (*callback)(object *obj, float hitspeed, int hitseg, int hitwall,
-                                                                vector *hitpt, vector *wall_normal, float hit_dot)) {
+                                                                simd::float3 *hitpt, simd::float3 *wall_normal,
+                                                                float hit_dot)) {
   assert(instance != NULL);
   instance->Set_OnClientWallCollide(callback);
 }
@@ -1457,8 +1462,8 @@ void DLLFUNCCALL IDMFC_CallOnServerCollideA(IDMFC *instance, object *me_obj, obj
   instance->CallOnServerCollide(me_obj, it_obj);
 }
 
-void DLLFUNCCALL IDMFC_CallOnServerCollideB(IDMFC *instance, object *me_obj, object *it_obj, vector *point,
-                                            vector *normal) {
+void DLLFUNCCALL IDMFC_CallOnServerCollideB(IDMFC *instance, object *me_obj, object *it_obj, simd::float3 *point,
+                                            simd::float3 *normal) {
   assert(instance != NULL);
   instance->CallOnServerCollide(me_obj, it_obj, point, normal);
 }
@@ -1514,7 +1519,7 @@ bool DLLFUNCCALL IDMFC_CallOnServerIsAddressBanned(IDMFC *instance, network_addr
 }
 
 void DLLFUNCCALL IDMFC_CallOnServerWallCollide(IDMFC *instance, object *obj, float hitspeed, int hitseg, int hitwall,
-                                               vector *hitpt, vector *wall_normal, float hit_dot) {
+                                               simd::float3 *hitpt, simd::float3 *wall_normal, float hit_dot) {
   assert(instance != NULL);
   instance->CallOnServerWallCollide(obj, hitspeed, hitseg, hitwall, hitpt, wall_normal, hit_dot);
 }
@@ -1544,8 +1549,8 @@ void DLLFUNCCALL IDMFC_CallOnClientCollideA(IDMFC *instance, object *me_obj, obj
   instance->CallOnClientCollide(me_obj, it_obj);
 }
 
-void DLLFUNCCALL IDMFC_CallOnClientCollideB(IDMFC *instance, object *me_obj, object *it_obj, vector *point,
-                                            vector *normal) {
+void DLLFUNCCALL IDMFC_CallOnClientCollideB(IDMFC *instance, object *me_obj, object *it_obj, simd::float3 *point,
+                                            simd::float3 *normal) {
   assert(instance != NULL);
   instance->CallOnClientCollide(me_obj, it_obj, point, normal);
 }
@@ -1606,7 +1611,7 @@ void DLLFUNCCALL IDMFC_CallOnClientLevelEnd(IDMFC *instance) {
 }
 
 void DLLFUNCCALL IDMFC_CallOnClientWallCollide(IDMFC *instance, object *obj, float hitspeed, int hitseg, int hitwall,
-                                               vector *hitpt, vector *wall_normal, float hit_dot) {
+                                               simd::float3 *hitpt, simd::float3 *wall_normal, float hit_dot) {
   assert(instance != NULL);
   instance->CallOnClientWallCollide(obj, hitspeed, hitseg, hitwall, hitpt, wall_normal, hit_dot);
 }

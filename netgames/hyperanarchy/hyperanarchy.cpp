@@ -1407,7 +1407,7 @@ void MoveHyperOrbToRoom(int objnum) {
 void CreateHyperOrbInRoom(int room) {
   if (DMFCBase->GetLocalRole() != LR_SERVER)
     return;
-  vector vpos;
+  simd::float3 vpos;
   int objnum;
   DLLComputeRoomCenter(&vpos, &((DMFCBase->GetRooms())[room]));
   objnum = DLLObjCreate(OBJ_POWERUP, HyperOrbID, room, &vpos, NULL, OBJECT_HANDLE_NONE);
@@ -1416,7 +1416,7 @@ void CreateHyperOrbInRoom(int room) {
 
 // Given the objnum and room it will move the HyperOrb to the center of that room. Objnum better be valid.
 void MoveHyperOrbToRoomCenter(int objnum, int room) {
-  vector home_pos;
+  simd::float3 home_pos;
   DLLComputeRoomCenter(&home_pos, &((DMFCBase->GetRooms())[room]));
   DLLObjSetPos(&dObjects[objnum], &home_pos, room, NULL, false);
   if (DMFCBase->GetLocalRole() == LR_SERVER) { // tell the clients to move

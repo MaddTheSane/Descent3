@@ -131,14 +131,14 @@ void (*DLLMultiSendClientExecuteDLL)(int eventnum, int me_objnum, int it_objnum,
 void (*DLLMultiSendObject)(object *obj, uint8_t announce, uint8_t demo_record);
 void (*DLLMultiPaintGoalRooms)(int *texcolors);
 void (*DLLMultiSendSpecialPacket)(int slot, uint8_t *outdata, int size);
-void (*DLLComputeRoomCenter)(vector *vp, room *rp);
+void (*DLLComputeRoomCenter)(simd::float3 *vp, room *rp);
 int (*DLLGetGoalRoomForTeam)(int teamnum);
-int (*DLLObjCreate)(uint8_t type, uint16_t id, int roomnum, vector *pos, const matrix *orient,
+int (*DLLObjCreate)(uint8_t type, uint16_t id, int roomnum, simd::float3 *pos, const vec::matrix *orient,
                                  int parent_handle);
 int (*DLLFindObjectIDName)(const char *name);
-void (*DLLObjSetPosNoMark)(object *objp, vector *newpos, int roomnum, matrix *orient,
+void (*DLLObjSetPosNoMark)(object *objp, simd::float3 *newpos, int roomnum, vec::matrix *orient,
                                         bool f_update_attached_children);
-void (*DLLObjSetPos)(object *objp, vector *newpos, int roomnum, matrix *orient,
+void (*DLLObjSetPos)(object *objp, simd::float3 *newpos, int roomnum, vec::matrix *orient,
                                   bool f_update_attached_children);
 void (*DLLSetMaxTeams)(int num);
 int (*DLLIncTeamScore)(int team, int amount);
@@ -334,61 +334,61 @@ bool (*DLLAttachObjectRadius)(object *parent, char parent_ap, object *child, flo
 bool (*DLLUnattachChildren)(object *parent);
 bool (*DLLUnattachChild)(object *parent, char parent_ap);
 bool (*DLLUnattachFromParent)(object *child);
-float (*DLLvm_GetMagnitude)(vector *);
-void (*DLLvm_MatrixMulVector)(vector *, vector *, matrix *);
-void (*DLLphys_apply_force)(object *obj, vector *force_vec, int16_t weapon_index);
-void (*DLLphys_apply_rot)(object *obj, vector *force_vec);
-void (*DLLvm_TransposeMatrix)(matrix *);
-void (*DLLvm_CrossProduct)(vector *, vector *, vector *);
-float (*DLLvm_NormalizeVector)(vector *);
-void (*DLLConvertEulerToAxisAmount)(vector *e, vector *n, float *w);
-void (*DLLConvertAxisAmountToEuler)(vector *n, float *w, vector *e);
-float (*DLLvm_GetMagnitudeFast)(vector *);
-void (*DLLvm_MakeIdentity)(matrix *);
-void (*DLLvm_MakeVectorZero)(vector *v);
-void (*DLLvm_MakeAngleZero)(angvec *a);
-void (*DLLvm_VectorMulTMatrix)(vector *result, vector *v, matrix *m);
-void (*DLLvm_MatrixMul)(matrix *, matrix *, matrix *);
-void (*DLLvm_MatrixMulTMatrix)(matrix *dest, matrix *src0, matrix *src1);
-float (*DLLvm_DotProduct)(vector *, vector *);
-void (*DLLvm_SubVectors)(vector *, const vector *, const vector *);
-void (*DLLvm_AddVectors)(vector *, vector *, vector *);
-void (*DLLvm_AverageVector)(vector *, int);
-void (*DLLvm_ScaleVector)(vector *, vector *, float);
-void (*DLLvm_ScaleAddVector)(vector *d, vector *p, vector *v, float s);
-void (*DLLvm_DivVector)(vector *, vector *, float);
-float (*DLLvm_NormalizeVectorFast)(vector *);
-void (*DLLvm_ClearMatrix)(matrix *);
-void (*DLLvm_AnglesToMatrix)(matrix *, angle p, angle h, angle b);
-void (*DLLvm_Orthogonalize)(matrix *m);
-void (*DLLvm_VectorToMatrix)(matrix *m, vector *fvec, vector *uvec, vector *rvec);
-void (*DLLvm_VectorAngleToMatrix)(matrix *m, vector *v, angle a);
+float (*DLLvm_GetMagnitude)(simd::float3 *);
+void (*DLLvm_MatrixMulVector)(simd::float3 *, simd::float3 *, vec::matrix *);
+void (*DLLphys_apply_force)(object *obj, simd::float3 *force_vec, int16_t weapon_index);
+void (*DLLphys_apply_rot)(object *obj, simd::float3 *force_vec);
+void (*DLLvm_TransposeMatrix)(vec::matrix *);
+void (*DLLvm_CrossProduct)(simd::float3 *, simd::float3 *, simd::float3 *);
+float (*DLLvm_NormalizeVector)(simd::float3 *);
+void (*DLLConvertEulerToAxisAmount)(simd::float3 *e, simd::float3 *n, float *w);
+void (*DLLConvertAxisAmountToEuler)(simd::float3 *n, float *w, simd::float3 *e);
+float (*DLLvm_GetMagnitudeFast)(simd::float3 *);
+void (*DLLvm_MakeIdentity)(vec::matrix *);
+void (*DLLvm_MakeVectorZero)(simd::float3 *v);
+void (*DLLvm_MakeAngleZero)(vec::angvec *a);
+void (*DLLvm_VectorMulTMatrix)(simd::float3 *result, simd::float3 *v, vec::matrix *m);
+void (*DLLvm_MatrixMul)(vec::matrix *, vec::matrix *, vec::matrix *);
+void (*DLLvm_MatrixMulTMatrix)(vec::matrix *dest, vec::matrix *src0, vec::matrix *src1);
+float (*DLLvm_DotProduct)(simd::float3 *, simd::float3 *);
+void (*DLLvm_SubVectors)(simd::float3 *, const simd::float3 *, const simd::float3 *);
+void (*DLLvm_AddVectors)(simd::float3 *, simd::float3 *, simd::float3 *);
+void (*DLLvm_AverageVector)(simd::float3 *, int);
+void (*DLLvm_ScaleVector)(simd::float3 *, simd::float3 *, float);
+void (*DLLvm_ScaleAddVector)(simd::float3 *d, simd::float3 *p, simd::float3 *v, float s);
+void (*DLLvm_DivVector)(simd::float3 *, simd::float3 *, float);
+float (*DLLvm_NormalizeVectorFast)(simd::float3 *);
+void (*DLLvm_ClearMatrix)(vec::matrix *);
+void (*DLLvm_AnglesToMatrix)(vec::matrix *, angle p, angle h, angle b);
+void (*DLLvm_Orthogonalize)(vec::matrix *m);
+void (*DLLvm_VectorToMatrix)(vec::matrix *m, simd::float3 *fvec, simd::float3 *uvec, simd::float3 *rvec);
+void (*DLLvm_VectorAngleToMatrix)(vec::matrix *m, simd::float3 *v, angle a);
 void (*DLLvm_SinCos)(angle, float *, float *);
 float (*DLLvm_GetSlope)(float, float, float, float);
-void (*DLLvm_GetPerp)(vector *n, vector *a, vector *b, vector *c);
-float (*DLLvm_GetNormal)(vector *n, vector *v0, vector *v1, vector *v2);
-float (*DLLvm_VectorDistance)(const vector *a, const vector *b);
-float (*DLLvm_VectorDistanceQuick)(vector *a, vector *b);
-float (*DLLvm_GetNormalizedDir)(vector *dest, vector *end, vector *start);
-float (*DLLvm_GetNormalizedDirFast)(vector *dest, vector *end, vector *start);
-angvec *(*DLLvm_ExtractAnglesFromMatrix)(angvec *a, matrix *m);
-angle (*DLLvm_DeltaAngVec)(vector *v0, vector *v1, vector *fvec);
-angle (*DLLvm_DeltaAngVecNorm)(vector *v0, vector *v1, vector *fvec);
-float (*DLLvm_DistToPlane)(vector *checkp, vector *norm, vector *planep);
-float (*DLLvm_CalcDetValue)(matrix *det);
-void (*DLLvm_MakeInverseMatrix)(matrix *dest);
-void (*DLLvm_SinCosToMatrix)(matrix *m, float sinp, float cosp, float sinb, float cosb, float sinh,
+void (*DLLvm_GetPerp)(simd::float3 *n, simd::float3 *a, simd::float3 *b, simd::float3 *c);
+float (*DLLvm_GetNormal)(simd::float3 *n, simd::float3 *v0, simd::float3 *v1, simd::float3 *v2);
+float (*DLLvm_VectorDistance)(const simd::float3 *a, const simd::float3 *b);
+float (*DLLvm_VectorDistanceQuick)(simd::float3 *a, simd::float3 *b);
+float (*DLLvm_GetNormalizedDir)(simd::float3 *dest, simd::float3 *end, simd::float3 *start);
+float (*DLLvm_GetNormalizedDirFast)(simd::float3 *dest, simd::float3 *end, simd::float3 *start);
+vec::angvec *(*DLLvm_ExtractAnglesFromMatrix)(vec::angvec *a, vec::matrix *m);
+angle (*DLLvm_DeltaAngVec)(simd::float3 *v0, simd::float3 *v1, simd::float3 *fvec);
+angle (*DLLvm_DeltaAngVecNorm)(simd::float3 *v0, simd::float3 *v1, simd::float3 *fvec);
+float (*DLLvm_DistToPlane)(simd::float3 *checkp, simd::float3 *norm, simd::float3 *planep);
+float (*DLLvm_CalcDetValue)(vec::matrix *det);
+void (*DLLvm_MakeInverseMatrix)(vec::matrix *dest);
+void (*DLLvm_SinCosToMatrix)(vec::matrix *m, float sinp, float cosp, float sinb, float cosb, float sinh,
                                           float cosh);
-float (*DLLvm_GetCentroid)(vector *centroid, vector *src, int nv);
-void (*DLLvm_MakeRandomVector)(vector *vec);
-float (*DLLvm_ComputeBoundingSphere)(vector *center, vector *vecs, int num_verts);
-float (*DLLvm_GetCentroidFast)(vector *centroid, vector *src, int nv);
+float (*DLLvm_GetCentroid)(simd::float3 *centroid, simd::float3 *src, int nv);
+void (*DLLvm_MakeRandomVector)(simd::float3 *vec);
+float (*DLLvm_ComputeBoundingSphere)(simd::float3 *center, simd::float3 *vecs, int num_verts);
+float (*DLLvm_GetCentroidFast)(simd::float3 *centroid, simd::float3 *src, int nv);
 int (*DLLRenderHUDGetTextLineWidth)(const char *string);
 int (*DLLRenderHUDGetTextHeight)(const char *string);
 void (*DLLStartFrame)(int x, int y, int x2, int y2, bool clear);
 void (*DLLEndFrame)(void);
 void (*DLLResetFacings)(void);
-void (*DLLGameRenderWorld)(object *viewer, vector *viewer_eye, int viewer_roomnum, matrix *viewer_orient,
+void (*DLLGameRenderWorld)(object *viewer, simd::float3 *viewer_eye, int viewer_roomnum, vec::matrix *viewer_orient,
                                         float zoom, bool rear_view);
 bool (*DLLGetFrameParameters)(int *x1, int *y1, int *x2, int *y2);
 void (*DLLrend_SetZBufferState)(int8_t state);
@@ -416,77 +416,77 @@ void (*DLLrend_ReleaseLFBLock)(renderer_lfb *lfb);
 void (*DLLrend_DrawLFBBitmap)(int sx, int sy, int w, int h, int dx, int dy, uint16_t *data, int rowsize);
 void (*DLLrend_DrawSpecialLine)(g3Point *p0, g3Point *p1);
 int (*DLLfvi_FindIntersection)(fvi_query *fq, fvi_info *hit_data, bool no_subdivision);
-int (*DLLfvi_QuickDistFaceList)(int init_room_index, vector *pos, float rad,
+int (*DLLfvi_QuickDistFaceList)(int init_room_index, simd::float3 *pos, float rad,
                                              fvi_face_room_list *quick_fr_list, int max_elements);
-int (*DLLfvi_QuickDistCellList)(int init_cell_index, vector *pos, float rad, int *quick_cell_list,
+int (*DLLfvi_QuickDistCellList)(int init_cell_index, simd::float3 *pos, float rad, int *quick_cell_list,
                                              int max_elements);
-int (*DLLfvi_QuickDistObjectList)(vector *pos, int init_roomnum, float rad, int16_t *object_index_list,
+int (*DLLfvi_QuickDistObjectList)(simd::float3 *pos, int init_roomnum, float rad, int16_t *object_index_list,
                                                int max_elements, bool f_lightmap_only, bool f_only_players_and_ais,
                                                bool f_include_non_collide_objects, bool f_stop_at_closed_doors);
-bool (*DLLfvi_QuickRoomCheck)(vector *pos, room *cur_room, bool try_again);
+bool (*DLLfvi_QuickRoomCheck)(simd::float3 *pos, room *cur_room, bool try_again);
 bool (*DLLtaunt_AreEnabled)(void);
 void (*DLLtaunt_Enable)(bool enable);
 int (*GetPlayerRankIndex)(int pnum, char *rankbuf);
 int (*DLLVisEffectAllocate)(void);
 int (*DLLVisEffectFree)(int visnum);
 int (*DLLVisEffectInitType)(vis_effect *vis);
-int (*DLLVisEffectCreate)(uint8_t type, uint8_t id, int roomnum, vector *pos);
+int (*DLLVisEffectCreate)(uint8_t type, uint8_t id, int roomnum, simd::float3 *pos);
 void (*DLLVisEffectLink)(int visnum, int roomnum);
 void (*DLLVisEffectUnlink)(int visnum);
 void (*DLLVisEffectRelink)(int visnum, int newroomnum);
 void (*DLLVisEffectDelete)(int visnum);
-void (*DLLCreateRandomSparks)(int num_sparks, vector *pos, int roomnum, int which_index,
+void (*DLLCreateRandomSparks)(int num_sparks, simd::float3 *pos, int roomnum, int which_index,
                                            float force_scalar);
-void (*DLLCreateRandomLineSparks)(int num_sparks, vector *pos, int roomnum, uint16_t color,
+void (*DLLCreateRandomLineSparks)(int num_sparks, simd::float3 *pos, int roomnum, uint16_t color,
                                                float force_scalar);
-int (*DLLVisEffectCreateControlled)(uint8_t type, object *parent, uint8_t id, int roomnum, vector *pos,
-                                                 float lifetime, vector *velocity, int phys_flags, float size,
+int (*DLLVisEffectCreateControlled)(uint8_t type, object *parent, uint8_t id, int roomnum, simd::float3 *pos,
+                                                 float lifetime, simd::float3 *velocity, int phys_flags, float size,
                                                  float mass, float drag, bool isreal);
-void (*DLLCreateRandomParticles)(int num_sparks, vector *pos, int roomnum, int bm_handle, float size,
+void (*DLLCreateRandomParticles)(int num_sparks, simd::float3 *pos, int roomnum, int bm_handle, float size,
                                               float life);
 void (*DLLAttachRandomNapalmEffectsToObject)(object *obj);
 void (*DLLInitObjectScripts)(object *objp, bool do_evt_created);
-void (*DLLg3_StartFrame)(vector *view_pos, matrix *view_matrix, float zoom);
+void (*DLLg3_StartFrame)(simd::float3 *view_pos, vec::matrix *view_matrix, float zoom);
 void (*DLLg3_EndFrame)(void);
-void (*DLLg3_GetViewPosition)(vector *vp);
-void (*DLLg3_GetViewMatrix)(matrix *mat);
-void (*DLLg3_GetUnscaledMatrix)(matrix *mat);
-void (*DLLg3_StartInstanceMatrix)(vector *pos, matrix *orient);
-void (*DLLg3_StartInstanceAngles)(vector *pos, angvec *angles);
+void (*DLLg3_GetViewPosition)(simd::float3 *vp);
+void (*DLLg3_GetViewMatrix)(vec::matrix *mat);
+void (*DLLg3_GetUnscaledMatrix)(vec::matrix *mat);
+void (*DLLg3_StartInstanceMatrix)(simd::float3 *pos, vec::matrix *orient);
+void (*DLLg3_StartInstanceAngles)(simd::float3 *pos, vec::angvec *angles);
 void (*DLLg3_DoneInstance)();
-bool (*DLLg3_CheckNormalFacing)(vector *v, vector *norm);
-uint8_t (*DLLg3_RotatePoint)(g3Point *dest, vector *src);
+bool (*DLLg3_CheckNormalFacing)(simd::float3 *v, simd::float3 *norm);
+uint8_t (*DLLg3_RotatePoint)(g3Point *dest, simd::float3 *src);
 void (*DLLg3_ProjectPoint)(g3Point *point);
-float (*DLLg3_CalcPointDepth)(vector *pnt);
-void (*DLLg3_Point2Vec)(vector *v, int16_t sx, int16_t sy);
+float (*DLLg3_CalcPointDepth)(simd::float3 *pnt);
+void (*DLLg3_Point2Vec)(simd::float3 *v, int16_t sx, int16_t sy);
 uint8_t (*DLLg3_CodePoint)(g3Point *point);
-vector *(*DLLg3_RotateDeltaX)(vector *dest, float dx);
-vector *(*DLLg3_RotateDeltaY)(vector *dest, float dy);
-vector *(*DLLg3_RotateDeltaZ)(vector *dest, float dz);
-vector *(*DLLg3_RotateDeltaVec)(vector *dest, vector *src);
-uint8_t (*DLLg3_AddDeltaVec)(g3Point *dest, g3Point *src, vector *deltav);
+simd::float3 *(*DLLg3_RotateDeltaX)(simd::float3 *dest, float dx);
+simd::float3 *(*DLLg3_RotateDeltaY)(simd::float3 *dest, float dy);
+simd::float3 *(*DLLg3_RotateDeltaZ)(simd::float3 *dest, float dz);
+simd::float3 *(*DLLg3_RotateDeltaVec)(simd::float3 *dest, simd::float3 *src);
+uint8_t (*DLLg3_AddDeltaVec)(g3Point *dest, g3Point *src, simd::float3 *deltav);
 int (*DLLg3_DrawPoly)(int nv, g3Point **pointlist, int bm, int map_type, g3Codes *clip_codes);
 void (*DLLg3_DrawSphere)(ddgr_color color, g3Point *pnt, float rad);
-void (*DLLg3_CheckAndDrawPoly)(int nv, g3Point **pointlist, int bm, vector *norm, vector *pnt);
+void (*DLLg3_CheckAndDrawPoly)(int nv, g3Point **pointlist, int bm, simd::float3 *norm, simd::float3 *pnt);
 void (*DLLg3_DrawLine)(ddgr_color color, g3Point *p0, g3Point *p1);
-void (*DLLg3_DrawBitmap)(vector *pos, float width, float height, int bm, int color);
-void (*DLLg3_DrawRotatedBitmap)(vector *pos, angle rot_angle, float width, float height, int bm,
+void (*DLLg3_DrawBitmap)(simd::float3 *pos, float width, float height, int bm, int color);
+void (*DLLg3_DrawRotatedBitmap)(simd::float3 *pos, angle rot_angle, float width, float height, int bm,
                                              int color);
 void (*DLLg3_DrawBox)(ddgr_color color, g3Point *pnt, float rad);
-void (*DLLg3_SetCustomClipPlane)(uint8_t state, vector *pnt, vector *normal);
+void (*DLLg3_SetCustomClipPlane)(uint8_t state, simd::float3 *pnt, simd::float3 *normal);
 void (*DLLg3_SetFarClipZ)(float z);
 g3Point **(*DLLg3_ClipPolygon)(g3Point **pointlist, int *nv, g3Codes *cc);
 void (*DLLg3_FreeTempPoints)(g3Point **pointlist, int nv);
-void (*DLLg3_GetMatrixScale)(vector *matrix_scale);
+void (*DLLg3_GetMatrixScale)(simd::float3 *matrix_scale);
 void (*DLLg3_SetTriangulationTest)(int state);
 void (*DLLg3_DrawSpecialLine)(g3Point *p0, g3Point *p1);
-void (*DLLg3_DrawPlanarRotatedBitmap)(vector *pos, vector *norm, angle rot_angle, float width,
+void (*DLLg3_DrawPlanarRotatedBitmap)(simd::float3 *pos, simd::float3 *norm, vec::angle rot_angle, float width,
                                                    float height, int bm);
 void (*DLLPlayerStopSounds)(int slot);
 int (*DLLFindArg)(const char *which);
 int (*DLLFireWeaponFromObject)(object *obj, int weapon_num, int gun_num, bool f_force_forward,
                                             bool f_force_target);
-int (*DLLCreateAndFireWeapon)(vector *pos, vector *dir, object *parent, int weapon_num);
+int (*DLLCreateAndFireWeapon)(simd::float3 *pos, simd::float3 *dir, object *parent, int weapon_num);
 void (*DLLSelectNextCameraView)(int window);
 bool (*Inven_Add)(Inventory *inven, int type, int id, object *parent, int aux_type, int aux_id, int flags,
                                char *description);

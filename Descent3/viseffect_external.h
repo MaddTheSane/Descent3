@@ -93,9 +93,9 @@ struct axis_billboard_info {
 };
 
 struct vis_effect {
-  vector pos;
-  vector end_pos;
-  vector velocity;
+  simd::float3 pos;
+  simd::float3 end_pos;
+  simd::float3 velocity;
   float mass;
   float drag;
   float size;

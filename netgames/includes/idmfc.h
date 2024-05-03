@@ -229,7 +229,7 @@ public:
   //   me_obj = object pointer to the me object
   //   it_obj = object pointer to the it object
   virtual void OnServerCollide(object *me_obj, object *it_obj) = 0;
-  virtual void OnServerCollide(object *me_obj, object *it_obj, vector *point, vector *normal) = 0;
+  virtual void OnServerCollide(object *me_obj, object *it_obj, simd::float3 *point, simd::float3 *normal) = 0;
 
   // DMFCBase::OnServerPlayerChangeSegment
   //
@@ -298,8 +298,8 @@ public:
   // DMFCBase::OnServerWallCollide
   //
   //	Called by the game when their is a collision between an object and a wall
-  virtual void OnServerWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                                   vector *wall_normal, float hit_dot) = 0;
+  virtual void OnServerWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                                   simd::float3 *wall_normal, float hit_dot) = 0;
 
   //	DMFCBase::OnServerObjectKilled
   //
@@ -339,7 +339,7 @@ public:
   //   me_obj = object pointer to the me object
   //   it_obj = object pointer to the it object
   virtual void OnClientCollide(object *me_obj, object *it_obj) = 0;
-  virtual void OnClientCollide(object *me_obj, object *it_obj, vector *point, vector *normal) = 0;
+  virtual void OnClientCollide(object *me_obj, object *it_obj, simd::float3 *point, simd::float3 *normal) = 0;
 
   // DMFCBase::OnClientPlayerChangeSegment (Only called if server tells client to execute)
   //
@@ -413,8 +413,8 @@ public:
   // DMFCBase::OnClientWallCollide
   //
   //	Called by the game when their is a collision between an object and a wall
-  virtual void OnClientWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                                   vector *wall_normal, float hit_dot) = 0;
+  virtual void OnClientWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                                   simd::float3 *wall_normal, float hit_dot) = 0;
 
   //	DMFCBase::OnClientObjectKilled
   //
@@ -1424,7 +1424,8 @@ public:
   virtual void Set_OnServerPlayerKilled(void (*callback)(object *killer_obj, int victim_pnum)) = 0;
   virtual void Set_OnServerPlayerExploded(void (*callback)(int player_num)) = 0;
   virtual void Set_OnServerCollide(void (*callback)(object *me_obj, object *it_obj)) = 0;
-  virtual void Set_OnServerCollide(void (*callback)(object *me_obj, object *it_obj, vector *point, vector *normal)) = 0;
+  virtual void Set_OnServerCollide(void (*callback)(object *me_obj, object *it_obj, simd::float3 *point,
+                                                    simd::float3 *normal)) = 0;
   virtual void Set_OnServerPlayerChangeSegment(void (*callback)(int player_num, int newseg, int oldseg)) = 0;
   virtual void Set_OnServerObjectChangeSegment(void (*callback)(object *obj, int newseg, int oldseg)) = 0;
   virtual void Set_OnServerPlayerEntersGame(void (*callback)(int player_num)) = 0;
@@ -1436,13 +1437,15 @@ public:
   virtual void Set_OnServerObjectShieldsChanged(void (*callback)(object *obj, float amount)) = 0;
   virtual void Set_OnServerIsAddressBanned(bool (*callback)(network_address *addr, const char *tracker_id)) = 0;
   virtual void Set_OnServerWallCollide(void (*callback)(object *obj, float hitspeed, int hitseg, int hitwall,
-                                                        vector *hitpt, vector *wall_normal, float hit_dot)) = 0;
+                                                        simd::float3 *hitpt, simd::float3 *wall_normal,
+                                                        float hit_dot)) = 0;
   virtual void Set_OnServerObjectKilled(void (*callback)(object *obj, object *killer)) = 0;
   virtual void Set_OnServerObjectDestroyed(void (*callback)(object *obj)) = 0;
   virtual void Set_OnClientPlayerKilled(void (*callback)(object *killer_obj, int victim_pnum)) = 0;
   virtual void Set_OnClientPlayerExploded(void (*callback)(int player_num)) = 0;
   virtual void Set_OnClientCollide(void (*callback)(object *me_obj, object *it_obj)) = 0;
-  virtual void Set_OnClientCollide(void (*callback)(object *me_obj, object *it_obj, vector *point, vector *normal)) = 0;
+  virtual void Set_OnClientCollide(void (*callback)(object *me_obj, object *it_obj, simd::float3 *point,
+                                                    simd::float3 *normal)) = 0;
   virtual void Set_OnClientPlayerChangeSegment(void (*callback)(int player_num, int newseg, int oldseg)) = 0;
   virtual void Set_OnClientObjectChangeSegment(void (*callback)(object *obj, int newseg, int oldseg)) = 0;
   virtual void Set_OnClientPlayerEntersGame(void (*callback)(int player_num)) = 0;
@@ -1455,7 +1458,8 @@ public:
   virtual void Set_OnClientLevelStart(void (*callback)(void)) = 0;
   virtual void Set_OnClientLevelEnd(void (*callback)(void)) = 0;
   virtual void Set_OnClientWallCollide(void (*callback)(object *obj, float hitspeed, int hitseg, int hitwall,
-                                                        vector *hitpt, vector *wall_normal, float hit_dot)) = 0;
+                                                        simd::float3 *hitpt, simd::float3 *wall_normal,
+                                                        float hit_dot)) = 0;
   virtual void Set_OnClientObjectKilled(void (*callback)(object *obj, object *killer)) = 0;
   virtual void Set_OnClientObjectDestroyed(void (*callback)(object *obj)) = 0;
   virtual void Set_OnPlayerEntersObserver(void (*callback)(int pnum, object *piggy)) = 0;
@@ -1497,7 +1501,7 @@ public:
   virtual void CallOnServerPlayerKilled(object *killer_obj, int victim_pnum) = 0;
   virtual void CallOnServerPlayerExploded(int player_num) = 0;
   virtual void CallOnServerCollide(object *me_obj, object *it_obj) = 0;
-  virtual void CallOnServerCollide(object *me_obj, object *it_obj, vector *point, vector *normal) = 0;
+  virtual void CallOnServerCollide(object *me_obj, object *it_obj, simd::float3 *point, simd::float3 *normal) = 0;
   virtual void CallOnServerPlayerChangeSegment(int player_num, int newseg, int oldseg) = 0;
   virtual void CallOnServerObjectChangeSegment(object *obj, int newseg, int oldseg) = 0;
   virtual void CallOnServerPlayerEntersGame(int player_num) = 0;
@@ -1508,14 +1512,14 @@ public:
   virtual void CallOnServerLevelEnd(void) = 0;
   virtual void CallOnServerObjectShieldsChanged(object *obj, float amount) = 0;
   virtual bool CallOnServerIsAddressBanned(network_address *addr, const char *tracker_id) = 0;
-  virtual void CallOnServerWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                                       vector *wall_normal, float hit_dot) = 0;
+  virtual void CallOnServerWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                                       simd::float3 *wall_normal, float hit_dot) = 0;
   virtual void CallOnServerObjectKilled(object *obj, object *killer) = 0;
   virtual void CallOnServerObjectDestroyed(object *obj) = 0;
   virtual void CallOnClientPlayerKilled(object *killer_obj, int victim_pnum) = 0;
   virtual void CallOnClientPlayerExploded(int player_num) = 0;
   virtual void CallOnClientCollide(object *me_obj, object *it_obj) = 0;
-  virtual void CallOnClientCollide(object *me_obj, object *it_obj, vector *point, vector *normal) = 0;
+  virtual void CallOnClientCollide(object *me_obj, object *it_obj, simd::float3 *point, simd::float3 *normal) = 0;
   virtual void CallOnClientPlayerChangeSegment(int player_num, int newseg, int oldseg) = 0;
   virtual void CallOnClientObjectChangeSegment(object *obj, int newseg, int oldseg) = 0;
   virtual void CallOnClientPlayerEntersGame(int player_num) = 0;
@@ -1527,8 +1531,8 @@ public:
   virtual void CallOnClientLevelChange(void) = 0;
   virtual void CallOnClientLevelStart(void) = 0;
   virtual void CallOnClientLevelEnd(void) = 0;
-  virtual void CallOnClientWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                                       vector *wall_normal, float hit_dot) = 0;
+  virtual void CallOnClientWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                                       simd::float3 *wall_normal, float hit_dot) = 0;
   virtual void CallOnClientObjectKilled(object *obj, object *killer) = 0;
   virtual void CallOnClientObjectDestroyed(object *obj) = 0;
   virtual void CallOnPlayerEntersObserver(int pnum, object *piggy) = 0;
@@ -1742,8 +1746,8 @@ DLLEXPORT void DLLFUNCCALL IDMFC_GameClose(IDMFC *instance);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnServerPlayerKilled(IDMFC *instance, object *killer_obj, int victim_pnum);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnServerPlayerExploded(IDMFC *instance, int player_num);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnServerCollideA(IDMFC *instance, object *me_obj, object *it_obj);
-DLLEXPORT void DLLFUNCCALL IDMFC_OnServerCollideB(IDMFC *instance, object *me_obj, object *it_obj, vector *point,
-                                                         vector *normal);
+DLLEXPORT void DLLFUNCCALL IDMFC_OnServerCollideB(IDMFC *instance, object *me_obj, object *it_obj, simd::float3 *point,
+                                                  simd::float3 *normal);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnServerPlayerChangeSegment(IDMFC *instance, int player_num, int newseg,
                                                                     int oldseg);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnServerObjectChangeSegment(IDMFC *instance, object *obj, int newseg,
@@ -1758,15 +1762,15 @@ DLLEXPORT void DLLFUNCCALL IDMFC_OnServerObjectShieldsChanged(IDMFC *instance, o
 DLLEXPORT bool DLLFUNCCALL IDMFC_OnServerIsAddressBanned(IDMFC *instance, network_address *addr,
                                                                 char *tracker_id);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnServerWallCollide(IDMFC *instance, object *obj, float hitspeed, int hitseg,
-                                                            int hitwall, vector *hitpt, vector *wall_normal,
+                                                            int hitwall, simd::float3 *hitpt, simd::float3 *wall_normal,
                                                             float hit_dot);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnServerObjectKilled(IDMFC *instance, object *obj, object *killer);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnServerObjectDestroyed(IDMFC *instance, object *obj);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnClientPlayerKilled(IDMFC *instance, object *killer_obj, int victim_pnum);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnClientPlayerExploded(IDMFC *instance, int player_num);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnClientCollideA(IDMFC *instance, object *me_obj, object *it_obj);
-DLLEXPORT void DLLFUNCCALL IDMFC_OnClientCollideB(IDMFC *instance, object *me_obj, object *it_obj, vector *point,
-                                                         vector *normal);
+DLLEXPORT void DLLFUNCCALL IDMFC_OnClientCollideB(IDMFC *instance, object *me_obj, object *it_obj, simd::float3 *point,
+                                                  simd::float3 *normal);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnClientPlayerChangeSegment(IDMFC *instance, int player_num, int newseg,
                                                                     int oldseg);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnClientObjectChangeSegment(IDMFC *instance, object *obj, int newseg,
@@ -1781,7 +1785,7 @@ DLLEXPORT void DLLFUNCCALL IDMFC_OnClientLevelChange(IDMFC *instance);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnClientLevelStart(IDMFC *instance);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnClientLevelEnd(IDMFC *instance);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnClientWallCollide(IDMFC *instance, object *obj, float hitspeed, int hitseg,
-                                                            int hitwall, vector *hitpt, vector *wall_normal,
+                                                            int hitwall, simd::float3 *hitpt, simd::float3 *wall_normal,
                                                             float hit_dot);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnClientObjectKilled(IDMFC *instance, object *obj, object *killer);
 DLLEXPORT void DLLFUNCCALL IDMFC_OnClientObjectDestroyed(IDMFC *instance, object *obj);
@@ -1974,7 +1978,7 @@ DLLEXPORT void DLLFUNCCALL IDMFC_Set_OnServerCollideA(IDMFC *instance,
                                                              void (*callback)(object *me_obj, object *it_obj));
 DLLEXPORT void DLLFUNCCALL IDMFC_Set_OnServerCollideB(IDMFC *instance,
                                                              void (*callback)(object *me_obj, object *it_obj,
-                                                                              vector *point, vector *normal));
+                                                                              simd::float3 *point, simd::float3 *normal));
 DLLEXPORT void DLLFUNCCALL IDMFC_Set_OnServerPlayerChangeSegment(IDMFC *instance,
                                                                         void (*callback)(int player_num, int newseg,
                                                                                          int oldseg));
@@ -1994,8 +1998,8 @@ DLLEXPORT void DLLFUNCCALL IDMFC_Set_OnServerIsAddressBanned(IDMFC *instance,
                                                                                      char *tracker_id));
 DLLEXPORT void DLLFUNCCALL IDMFC_Set_OnServerWallCollide(IDMFC *instance,
                                                                 void (*callback)(object *obj, float hitspeed,
-                                                                                 int hitseg, int hitwall, vector *hitpt,
-                                                                                 vector *wall_normal, float hit_dot));
+                                                                                 int hitseg, int hitwall, simd::float3 *hitpt,
+                                                                                 simd::float3 *wall_normal, float hit_dot));
 DLLEXPORT void DLLFUNCCALL IDMFC_Set_OnServerObjectKilled(IDMFC *instance,
                                                                  void (*callback)(object *obj, object *killer));
 DLLEXPORT void DLLFUNCCALL IDMFC_Set_OnServerObjectDestroyed(IDMFC *instance, void (*callback)(object *obj));
@@ -2006,7 +2010,7 @@ DLLEXPORT void DLLFUNCCALL IDMFC_Set_OnClientCollideA(IDMFC *instance,
                                                              void (*callback)(object *me_obj, object *it_obj));
 DLLEXPORT void DLLFUNCCALL IDMFC_Set_OnClientCollideB(IDMFC *instance,
                                                              void (*callback)(object *me_obj, object *it_obj,
-                                                                              vector *point, vector *normal));
+                                                                              simd::float3 *point, simd::float3 *normal));
 DLLEXPORT void DLLFUNCCALL IDMFC_Set_OnClientPlayerChangeSegment(IDMFC *instance,
                                                                         void (*callback)(int player_num, int newseg,
                                                                                          int oldseg));
@@ -2026,8 +2030,8 @@ DLLEXPORT void DLLFUNCCALL IDMFC_Set_OnClientLevelStart(IDMFC *instance, void (*
 DLLEXPORT void DLLFUNCCALL IDMFC_Set_OnClientLevelEnd(IDMFC *instance, void (*callback)(void));
 DLLEXPORT void DLLFUNCCALL IDMFC_Set_OnClientWallCollide(IDMFC *instance,
                                                                 void (*callback)(object *obj, float hitspeed,
-                                                                                 int hitseg, int hitwall, vector *hitpt,
-                                                                                 vector *wall_normal, float hit_dot));
+                                                                                 int hitseg, int hitwall, simd::float3 *hitpt,
+                                                                                 simd::float3 *wall_normal, float hit_dot));
 DLLEXPORT void DLLFUNCCALL IDMFC_Set_OnClientObjectKilled(IDMFC *instance,
                                                                  void (*callback)(object *obj, object *killer));
 DLLEXPORT void DLLFUNCCALL IDMFC_Set_OnClientObjectDestroyed(IDMFC *instance, void (*callback)(object *obj));
@@ -2067,7 +2071,7 @@ DLLEXPORT void DLLFUNCCALL IDMFC_CallOnServerPlayerKilled(IDMFC *instance, objec
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnServerPlayerExploded(IDMFC *instance, int player_num);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnServerCollideA(IDMFC *instance, object *me_obj, object *it_obj);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnServerCollideB(IDMFC *instance, object *me_obj, object *it_obj,
-                                                             vector *point, vector *normal);
+                                                      simd::float3 *point, simd::float3 *normal);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnServerPlayerChangeSegment(IDMFC *instance, int player_num, int newseg,
                                                                         int oldseg);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnServerObjectChangeSegment(IDMFC *instance, object *obj, int newseg,
@@ -2082,15 +2086,15 @@ DLLEXPORT void DLLFUNCCALL IDMFC_CallOnServerObjectShieldsChanged(IDMFC *instanc
 DLLEXPORT bool DLLFUNCCALL IDMFC_CallOnServerIsAddressBanned(IDMFC *instance, network_address *addr,
                                                                     char *tracker_id);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnServerWallCollide(IDMFC *instance, object *obj, float hitspeed,
-                                                                int hitseg, int hitwall, vector *hitpt,
-                                                                vector *wall_normal, float hit_dot);
+                                                                int hitseg, int hitwall, simd::float3 *hitpt,
+                                                         simd::float3 *wall_normal, float hit_dot);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnServerObjectKilled(IDMFC *instance, object *obj, object *killer);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnServerObjectDestroyed(IDMFC *instance, object *obj);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnClientPlayerKilled(IDMFC *instance, object *killer_obj, int victim_pnum);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnClientPlayerExploded(IDMFC *instance, int player_num);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnClientCollideA(IDMFC *instance, object *me_obj, object *it_obj);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnClientCollideB(IDMFC *instance, object *me_obj, object *it_obj,
-                                                             vector *point, vector *normal);
+                                                      simd::float3 *point, simd::float3 *normal);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnClientPlayerChangeSegment(IDMFC *instance, int player_num, int newseg,
                                                                         int oldseg);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnClientObjectChangeSegment(IDMFC *instance, object *obj, int newseg,
@@ -2105,8 +2109,8 @@ DLLEXPORT void DLLFUNCCALL IDMFC_CallOnClientLevelChange(IDMFC *instance);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnClientLevelStart(IDMFC *instance);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnClientLevelEnd(IDMFC *instance);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnClientWallCollide(IDMFC *instance, object *obj, float hitspeed,
-                                                                int hitseg, int hitwall, vector *hitpt,
-                                                                vector *wall_normal, float hit_dot);
+                                                                int hitseg, int hitwall, simd::float3 *hitpt,
+                                                         simd::float3 *wall_normal, float hit_dot);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnClientObjectKilled(IDMFC *instance, object *obj, object *killer);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnClientObjectDestroyed(IDMFC *instance, object *obj);
 DLLEXPORT void DLLFUNCCALL IDMFC_CallOnPlayerEntersObserver(IDMFC *instance, int pnum, object *piggy);

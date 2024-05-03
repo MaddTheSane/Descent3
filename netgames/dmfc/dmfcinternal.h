@@ -625,7 +625,7 @@ public:
   //   me_obj = object pointer to the me object
   //   it_obj = object pointer to the it object
   virtual void OnServerCollide(object *me_obj, object *it_obj);
-  virtual void OnServerCollide(object *me_obj, object *it_obj, vector *point, vector *normal);
+  virtual void OnServerCollide(object *me_obj, object *it_obj, simd::float3 *point, simd::float3 *normal);
 
   // DMFCBase::OnServerPlayerChangeSegment
   //
@@ -694,8 +694,8 @@ public:
   // DMFCBase::OnServerWallCollide
   //
   //	Called by the game when their is a collision between an object and a wall
-  virtual void OnServerWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                                   vector *wall_normal, float hit_dot);
+  virtual void OnServerWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                                   simd::float3 *wall_normal, float hit_dot);
 
   //	DMFCBase::OnServerObjectKilled
   //
@@ -735,7 +735,7 @@ public:
   //   me_obj = object pointer to the me object
   //   it_obj = object pointer to the it object
   virtual void OnClientCollide(object *me_obj, object *it_obj);
-  virtual void OnClientCollide(object *me_obj, object *it_obj, vector *point, vector *normal);
+  virtual void OnClientCollide(object *me_obj, object *it_obj, simd::float3 *point, simd::float3 *normal);
 
   // DMFCBase::OnClientPlayerChangeSegment (Only called if server tells client to execute)
   //
@@ -809,8 +809,8 @@ public:
   // DMFCBase::OnClientWallCollide
   //
   //	Called by the game when their is a collision between an object and a wall
-  virtual void OnClientWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                                   vector *wall_normal, float hit_dot);
+  virtual void OnClientWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                                   simd::float3 *wall_normal, float hit_dot);
 
   //	DMFCBase::OnClientObjectKilled
   //
@@ -2172,7 +2172,7 @@ public:
   void Set_OnServerPlayerKilled(void (*callback)(object *killer_obj, int victim_pnum));
   void Set_OnServerPlayerExploded(void (*callback)(int player_num));
   void Set_OnServerCollide(void (*callback)(object *me_obj, object *it_obj));
-  void Set_OnServerCollide(void (*callback)(object *me_obj, object *it_obj, vector *point, vector *normal));
+  void Set_OnServerCollide(void (*callback)(object *me_obj, object *it_obj, simd::float3 *point, simd::float3 *normal));
   void Set_OnServerPlayerChangeSegment(void (*callback)(int player_num, int newseg, int oldseg));
   void Set_OnServerObjectChangeSegment(void (*callback)(object *obj, int newseg, int oldseg));
   void Set_OnServerPlayerEntersGame(void (*callback)(int player_num));
@@ -2183,14 +2183,14 @@ public:
   void Set_OnServerLevelEnd(void (*callback)(void));
   void Set_OnServerObjectShieldsChanged(void (*callback)(object *obj, float amount));
   void Set_OnServerIsAddressBanned(bool (*callback)(network_address *addr, const char *tracker_id));
-  void Set_OnServerWallCollide(void (*callback)(object *obj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                                                vector *wall_normal, float hit_dot));
+  void Set_OnServerWallCollide(void (*callback)(object *obj, float hitspeed, int hitseg, int hitwall,
+                                                simd::float3 *hitpt, simd::float3 *wall_normal, float hit_dot));
   void Set_OnServerObjectKilled(void (*callback)(object *obj, object *killer));
   void Set_OnServerObjectDestroyed(void (*callback)(object *obj));
   void Set_OnClientPlayerKilled(void (*callback)(object *killer_obj, int victim_pnum));
   void Set_OnClientPlayerExploded(void (*callback)(int player_num));
   void Set_OnClientCollide(void (*callback)(object *me_obj, object *it_obj));
-  void Set_OnClientCollide(void (*callback)(object *me_obj, object *it_obj, vector *point, vector *normal));
+  void Set_OnClientCollide(void (*callback)(object *me_obj, object *it_obj, simd::float3 *point, simd::float3 *normal));
   void Set_OnClientPlayerChangeSegment(void (*callback)(int player_num, int newseg, int oldseg));
   void Set_OnClientObjectChangeSegment(void (*callback)(object *obj, int newseg, int oldseg));
   void Set_OnClientPlayerEntersGame(void (*callback)(int player_num));
@@ -2202,8 +2202,8 @@ public:
   void Set_OnClientLevelChange(void (*callback)(void));
   void Set_OnClientLevelStart(void (*callback)(void));
   void Set_OnClientLevelEnd(void (*callback)(void));
-  void Set_OnClientWallCollide(void (*callback)(object *obj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                                                vector *wall_normal, float hit_dot));
+  void Set_OnClientWallCollide(void (*callback)(object *obj, float hitspeed, int hitseg, int hitwall,
+                                                simd::float3 *hitpt, simd::float3 *wall_normal, float hit_dot));
   void Set_OnClientObjectKilled(void (*callback)(object *obj, object *killer));
   void Set_OnClientObjectDestroyed(void (*callback)(object *obj));
   void Set_OnPlayerEntersObserver(void (*callback)(int pnum, object *piggy));
@@ -2236,7 +2236,7 @@ public:
   void CallOnServerPlayerKilled(object *killer_obj, int victim_pnum);
   void CallOnServerPlayerExploded(int player_num);
   void CallOnServerCollide(object *me_obj, object *it_obj);
-  void CallOnServerCollide(object *me_obj, object *it_obj, vector *point, vector *normal);
+  void CallOnServerCollide(object *me_obj, object *it_obj, simd::float3 *point, simd::float3 *normal);
   void CallOnServerPlayerChangeSegment(int player_num, int newseg, int oldseg);
   void CallOnServerObjectChangeSegment(object *obj, int newseg, int oldseg);
   void CallOnServerPlayerEntersGame(int player_num);
@@ -2247,14 +2247,14 @@ public:
   void CallOnServerLevelEnd(void);
   void CallOnServerObjectShieldsChanged(object *obj, float amount);
   bool CallOnServerIsAddressBanned(network_address *addr, const char *tracker_id);
-  void CallOnServerWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, vector *hitpt, vector *wall_normal,
-                               float hit_dot);
+  void CallOnServerWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                               simd::float3 *wall_normal, float hit_dot);
   void CallOnServerObjectKilled(object *obj, object *killer);
   void CallOnServerObjectDestroyed(object *obj);
   void CallOnClientPlayerKilled(object *killer_obj, int victim_pnum);
   void CallOnClientPlayerExploded(int player_num);
   void CallOnClientCollide(object *me_obj, object *it_obj);
-  void CallOnClientCollide(object *me_obj, object *it_obj, vector *point, vector *normal);
+  void CallOnClientCollide(object *me_obj, object *it_obj, simd::float3 *point, simd::float3 *normal);
   void CallOnClientPlayerChangeSegment(int player_num, int newseg, int oldseg);
   void CallOnClientObjectChangeSegment(object *obj, int newseg, int oldseg);
   void CallOnClientPlayerEntersGame(int player_num);
@@ -2266,8 +2266,8 @@ public:
   void CallOnClientLevelChange(void);
   void CallOnClientLevelStart(void);
   void CallOnClientLevelEnd(void);
-  void CallOnClientWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, vector *hitpt, vector *wall_normal,
-                               float hit_dot);
+  void CallOnClientWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                               simd::float3 *wall_normal, float hit_dot);
   void CallOnClientObjectKilled(object *obj, object *killer);
   void CallOnClientObjectDestroyed(object *obj);
   void CallOnPlayerEntersObserver(int pnum, object *piggy);
@@ -2306,7 +2306,7 @@ private:
   void (*UserOnServerPlayerKilled)(object *killer_obj, int victim_pnum);
   void (*UserOnServerPlayerExploded)(int player_num);
   void (*UserOnServerCollide)(object *me_obj, object *it_obj);
-  void (*UserOnServerCollide2)(object *me_obj, object *it_obj, vector *point, vector *normal);
+  void (*UserOnServerCollide2)(object *me_obj, object *it_obj, simd::float3 *point, simd::float3 *normal);
   void (*UserOnServerPlayerChangeSegment)(int player_num, int newseg, int oldseg);
   void (*UserOnServerObjectChangeSegment)(object *obj, int newseg, int oldseg);
   void (*UserOnServerPlayerEntersGame)(int player_num);
@@ -2317,14 +2317,14 @@ private:
   void (*UserOnServerLevelEnd)(void);
   void (*UserOnServerObjectShieldsChanged)(object *obj, float amount);
   bool (*UserOnServerIsAddressBanned)(network_address *addr, const char *tracker_id);
-  void (*UserOnServerWallCollide)(object *obj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                                  vector *wall_normal, float hit_dot);
+  void (*UserOnServerWallCollide)(object *obj, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                                  simd::float3 *wall_normal, float hit_dot);
   void (*UserOnServerObjectKilled)(object *obj, object *killer);
   void (*UserOnServerObjectDestroyed)(object *obj);
   void (*UserOnClientPlayerKilled)(object *killer_obj, int victim_pnum);
   void (*UserOnClientPlayerExploded)(int player_num);
   void (*UserOnClientCollide)(object *me_obj, object *it_obj);
-  void (*UserOnClientCollide2)(object *me_obj, object *it_obj, vector *point, vector *normal);
+  void (*UserOnClientCollide2)(object *me_obj, object *it_obj, simd::float3 *point, simd::float3 *normal);
   void (*UserOnClientPlayerChangeSegment)(int player_num, int newseg, int oldseg);
   void (*UserOnClientObjectChangeSegment)(object *obj, int newseg, int oldseg);
   void (*UserOnClientPlayerEntersGame)(int player_num);
@@ -2336,8 +2336,8 @@ private:
   void (*UserOnClientLevelChange)(void);
   void (*UserOnClientLevelStart)(void);
   void (*UserOnClientLevelEnd)(void);
-  void (*UserOnClientWallCollide)(object *obj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                                  vector *wall_normal, float hit_dot);
+  void (*UserOnClientWallCollide)(object *obj, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                                  simd::float3 *wall_normal, float hit_dot);
   void (*UserOnClientObjectKilled)(object *obj, object *killer);
   void (*UserOnClientObjectDestroyed)(object *obj);
   void (*UserOnPlayerEntersObserver)(int pnum, object *piggy);

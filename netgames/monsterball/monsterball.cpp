@@ -231,10 +231,10 @@ int unpack_pstat(tPlayerStat *user_info, uint8_t *data) {
 }
 
 struct weapon_collide_info {
-  vector rotvel;
-  vector velocity;
-  vector pos;
-  matrix orient;
+  simd::float3 rotvel;
+  simd::float3 velocity;
+  simd::float3 pos;
+  vec::matrix orient;
   float mass;
   float size;
 };
@@ -244,7 +244,7 @@ struct {
   int objhandle;
   int owner_handle;
   int icon;
-  vector pos;
+  simd::float3 pos;
 } Monsterball_info;
 
 //////////////////////////////////
@@ -303,10 +303,10 @@ static void GetLastHitInfo(uint8_t *data);
 
 static void HandlePickupPowerball(object *owner);
 static void HandleLosePowerball(bool play_sound);
-static void HandleMonsterballCollideWithObject(object *ball, object *player, vector *point, vector *normal);
-static void HandleMonsterballCollideWithWeapon(object *ball, weapon_collide_info *winfo, vector *point, vector *normal);
-static void bump_object(object *object0, vector *rotvel, vector *velocity, vector *pos, matrix *orient, float mass,
-                        float size, vector *collision_point, vector *collision_normal, float rot_scale,
+static void HandleMonsterballCollideWithObject(object *ball, object *player, simd::float3 *point, simd::float3 *normal);
+static void HandleMonsterballCollideWithWeapon(object *ball, weapon_collide_info *winfo, simd::float3 *point, simd::float3 *normal);
+static void bump_object(object *object0, simd::float3 *rotvel, simd::float3 *velocity, simd::float3 *pos, vec::matrix *orient, float mass,
+                        float size, simd::float3 *collision_point, simd::float3 *collision_normal, float rot_scale,
                         float vel_scale);
 static void DoMonsterballScoreEffect(void);
 static void OnClientPlayerEntersGame(int player_num);
@@ -645,7 +645,7 @@ void OnServerGameCreated(void) {
   }
 }
 
-void OnServerCollide(object *me_obj, object *it_obj, vector *point, vector *normal) {
+void OnServerCollide(object *me_obj, object *it_obj, simd::float3 *point, simd::float3 *normal) {
   if (!me_obj || !it_obj) {
     DMFCBase->OnServerCollide(me_obj, it_obj, point, normal);
     return;
@@ -801,7 +801,7 @@ void HandlePickupPowerball(object *owner) {
   Monsterball_info.owner_handle = owner->handle;
 }
 
-void OnClientCollide(object *me_obj, object *it_obj, vector *point, vector *normal) {
+void OnClientCollide(object *me_obj, object *it_obj, simd::float3 *point, simd::float3 *normal) {
   // three things can happen in here
   // 1) The collision is between the ball (with no owner) and a player
   // 2) The collision is between the owner and another player or weapon
@@ -1897,7 +1897,7 @@ void OnTimerScoreKill(void) {
 
 // -------------------------------------------------------------------------
 
-void HandleMonsterballCollideWithObject(object *ball, object *player, vector *point, vector *normal) {
+void HandleMonsterballCollideWithObject(object *ball, object *player, simd::float3 *point, simd::float3 *normal) {
   static int sound = -1;
   if (sound == -1)
     sound = DLLFindSoundName(IGNORE_TABLE(MONSTERBALL_SND_HIT));
@@ -1908,7 +1908,8 @@ void HandleMonsterballCollideWithObject(object *ball, object *player, vector *po
   //	&player->pos, &player->orient, player->mtype.phys_info.mass, player->size,point,normal,1.0f,1.0f);
 }
 
-void HandleMonsterballCollideWithWeapon(object *ball, weapon_collide_info *winfo, vector *point, vector *normal) {
+void HandleMonsterballCollideWithWeapon(object *ball, weapon_collide_info *winfo, simd::float3 *point,
+                                        simd::float3 *normal) {
   static int sound = -1;
   if (sound == -1)
     sound = DLLFindSoundName(IGNORE_TABLE(MONSTERBALL_SND_HIT));
@@ -1919,8 +1920,9 @@ void HandleMonsterballCollideWithWeapon(object *ball, weapon_collide_info *winfo
               normal, -0.3f, 5.0f);
 }
 
-void bump_object(object *object0, vector *rotvel, vector *velocity, vector *pos, matrix *orient, float mass, float size,
-                 vector *collision_point, vector *collision_normal, float rot_scalar, float vel_scalar) {
+void bump_object(object *object0, simd::float3 *rotvel, simd::float3 *velocity, simd::float3 *pos, vec::matrix *orient,
+                 float mass, float size, simd::float3 *collision_point, simd::float3 *collision_normal,
+                 float rot_scalar, float vel_scalar) {
   object *t = NULL;
   object *other = NULL;
 
@@ -1937,25 +1939,25 @@ void bump_object(object *object0, vector *rotvel, vector *velocity, vector *pos,
   ASSERT(std::isfinite(object0->mtype.phys_info.velocity.y));
   ASSERT(std::isfinite(object0->mtype.phys_info.velocity.z));
 
-  vector r1 = *collision_point - object0->pos;
-  vector r2 = *collision_point - (*pos);
-  vector w1;
-  vector w2;
-  vector n1;
-  vector n2;
+  simd::float3 r1 = *collision_point - object0->pos;
+  simd::float3 r2 = *collision_point - (*pos);
+  simd::float3 w1;
+  simd::float3 w2;
+  simd::float3 n1;
+  simd::float3 n2;
   float temp1;
   float temp2;
 
   float j;
 
-  matrix o_t1 = object0->orient;
-  matrix o_t2 = *orient;
+  vec::matrix o_t1 = object0->orient;
+  vec::matrix o_t2 = *orient;
 
   DLLvm_TransposeMatrix(&o_t1);
   DLLvm_TransposeMatrix(&o_t2);
 
-  vector cmp1 = object0->mtype.phys_info.rotvel * o_t1;
-  vector cmp2 = (*rotvel) * o_t2;
+  simd::float3 cmp1 = object0->mtype.phys_info.rotvel * o_t1;
+  simd::float3 cmp2 = (*rotvel) * o_t2;
 
   DLLConvertEulerToAxisAmount(&cmp1, &n1, &temp1);
   DLLConvertEulerToAxisAmount(&cmp2, &n2, &temp2);
@@ -1979,8 +1981,8 @@ void bump_object(object *object0, vector *rotvel, vector *velocity, vector *pos,
     w2.z = 0;
   }
 
-  vector p1 = object0->mtype.phys_info.velocity + w1;
-  vector p2 = (*velocity) + w2;
+  simd::float3 p1 = object0->mtype.phys_info.velocity + w1;
+  simd::float3 p2 = (*velocity) + w2;
   float v_rel;
 
   float m1 = object0->mtype.phys_info.mass;
@@ -1988,15 +1990,15 @@ void bump_object(object *object0, vector *rotvel, vector *velocity, vector *pos,
 
   ASSERT(m1 != 0.0f && m2 != 0.0f);
 
-  v_rel = *collision_normal * (p1 - p2);
+  v_rel = simd::dot(*collision_normal, (p1 - p2));
 
   float e;
   e = vel_scalar;
 
-  vector c1;
-  vector c2;
-  vector cc1;
-  vector cc2;
+  simd::float3 c1;
+  simd::float3 c2;
+  simd::float3 cc1;
+  simd::float3 cc2;
   float cv1;
   float cv2;
 
@@ -2017,14 +2019,14 @@ void bump_object(object *object0, vector *rotvel, vector *velocity, vector *pos,
   DLLvm_CrossProduct(&cc1, &c1, &r1);
   DLLvm_CrossProduct(&cc2, &c2, &r2);
 
-  cv1 = (*collision_normal) * c1;
-  cv2 = (*collision_normal) * c2;
+  cv1 = simd::dot(*collision_normal, c1);
+  cv2 = simd::dot(*collision_normal, c2);
 
   j = (-(1.0f + e)) * v_rel;
   j /= (1 / m1 + 1 / m2 + cv1 + cv2);
 
   // apply the force to the player
-  vector new_vel;
+  simd::float3 new_vel;
   new_vel = ((j * (*collision_normal)) / m1);
 
   // make sure the velocity falls within a valid range
@@ -2038,7 +2040,7 @@ void bump_object(object *object0, vector *rotvel, vector *velocity, vector *pos,
 
   object0->mtype.phys_info.velocity += new_vel;
 
-  vector jcn = j * (*collision_normal);
+  simd::float3 jcn = j * (*collision_normal);
 
   DLLvm_CrossProduct(&c1, &r1, &jcn);
 
@@ -2046,7 +2048,7 @@ void bump_object(object *object0, vector *rotvel, vector *velocity, vector *pos,
 
   temp1 = DLLvm_NormalizeVector(&n1);
 
-  vector txx1;
+  simd::float3 txx1;
   DLLConvertAxisAmountToEuler(&n1, &temp1, &txx1);
 
   float rotscale1;
@@ -2092,11 +2094,11 @@ void DoMonsterballScoreEffect(void) {
   if (!DLLObjGet(Monsterball_info.objhandle, &Monsterball))
     return;
 
-  vector start_pos, end_pos;
+  simd::float3 start_pos, end_pos;
   int start_room, end_room;
   bool doing_start = false;
 
-  vector m_pos, i_pos;
+  simd::float3 m_pos, i_pos;
   int m_room, i_room;
 
   m_pos = Monsterball->pos;
@@ -2117,7 +2119,7 @@ void DoMonsterballScoreEffect(void) {
 
   for (int q = 0; q < 2; q++) {
     ////////////////////////////////
-    vector check_pos;
+    simd::float3 check_pos;
     fvi_query fq;
     fvi_info hit_data;
     int hit_type;

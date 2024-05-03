@@ -380,8 +380,8 @@ int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo
 //============================================
 
 float Obj_GetObjDist(int me, int it, bool f_sub_rads) {
-  vector me_pos;
-  vector it_pos;
+  simd::float3 me_pos;
+  simd::float3 it_pos;
   float dist;
 
   Obj_Value(me, VF_GET, OBJV_V_POS, &me_pos);
@@ -541,14 +541,14 @@ bool MercEndBoss::DoNotify(int me, tOSIRISEventInfo *data) {
       SetMode(me, MERCENDBOSS_MATTER);
       break;
     case AIN_SCRIPTED_ORIENT: {
-      vector uvec = {0.0f, 1.0f, 0.0f};
-      vector fvec = {-1.0f, 0.0f, 0.0f};
+      simd::float3 uvec = simd_make_float3(0.0f, 1.0f, 0.0f);
+      simd::float3 fvec = simd_make_float3(-1.0f, 0.0f, 0.0f);
       if (AI_TurnTowardsVectors(me, &fvec, &uvec)) {
         memory->f_oriented = true;
       }
     } break;
     case AIN_SCRIPTED_GOAL:
-      vector zv = {0.0f, 0.0f, 0.0f};
+      simd::float3 zv = {0.0f, 0.0f, 0.0f};
       AI_Value(me, VF_SET, AIV_V_MOVEMENT_DIR, &zv);
       break;
     }
@@ -556,7 +556,7 @@ bool MercEndBoss::DoNotify(int me, tOSIRISEventInfo *data) {
   case MERCENDBOSS_DEATH: {
     // NOTE:  I am also doing the rotational stuff here...  So, no need to make a separate AIN_SCRIPTED_ORIENT event
     if (data->evt_ai_notify.goal_num == 0 && data->evt_ai_notify.notify_type == AIN_SCRIPTED_GOAL) {
-      vector rvel;
+      simd::float3 rvel;
       Obj_Value(me, VF_GET, OBJV_V_ROTVELOCITY, &rvel);
 
       rvel.x -= 0.1f * DEATH_ROT_ACC * Game_GetFrameTime();
@@ -565,7 +565,7 @@ bool MercEndBoss::DoNotify(int me, tOSIRISEventInfo *data) {
 
       Obj_Value(me, VF_SET, OBJV_V_ROTVELOCITY, &rvel);
 
-      vector dir = Zero_vector;
+      simd::float3 dir = Zero_vector;
       AI_Value(me, VF_SET, AIV_V_MOVEMENT_DIR, &dir);
     }
   }
@@ -667,7 +667,7 @@ void MercEndBoss::SetMode(int me, char mode) {
     AI_Value(me, VF_CLEAR_FLAGS, AIV_I_FLAGS, &flags);
     AI_Value(memory->turret_object, VF_CLEAR_FLAGS, AIV_I_FLAGS, &flags);
 
-    vector vel = {0.0f, 0.0f, 0.0f};
+    simd::float3 vel = simd_make_float3(0.0f, 0.0f, 0.0f);
     Obj_Value(me, VF_SET, OBJV_V_VELOCITY, &vel);
 
     AI_AddGoal(me, AIG_SCRIPTED, 0, 1000.0f, -1, GF_NONFLUSHABLE | GF_ORIENT_SCRIPTED, NULL);
@@ -705,8 +705,8 @@ void MercEndBoss::DoInit(int me) {
   memory->turret_object = CreateAndAttach(me, "FinalbossBIGGUN", OBJ_BUILDING, 0, 0, true, true);
 
   int proom;
-  vector ppos;
-  matrix porient;
+  simd::float3 ppos;
+  vec::matrix porient;
   msafe_struct mstruct;
 
   Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &proom);
@@ -864,7 +864,7 @@ void MercEndBoss::DoFrame(int me) {
       memory->last_spark_time = Game_GetTime();
 
       int room;
-      vector pos;
+      simd::float3 pos;
 
       Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
       Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
@@ -919,12 +919,12 @@ void MercEndBoss::DoFrame(int me) {
                          Scrpt_FindTextureName("endbossbeamweapon2"), 3.1111f, 1, 255, 255, 255, true);
       }
 
-      vector pos;
-      matrix orient;
-      vector start_pos;
-      vector end_pos;
-      vector collision_pos;
-      vector collision_normal;
+      simd::float3 pos;
+      vec::matrix orient;
+      simd::float3 start_pos;
+      simd::float3 end_pos;
+      simd::float3 collision_pos;
+      simd::float3 collision_normal;
       int num_iterations = 0;
       int num_ignore = 0;
       int ignore_list[100];
@@ -954,7 +954,7 @@ void MercEndBoss::DoFrame(int me) {
         ignore_list[num_ignore++] = memory->combine_object;
         ignore_list[num_ignore++] = -1;
 
-        vector saved_start = start_pos;
+        simd::float3 saved_start = start_pos;
 
         do {
           Obj_Value(me, VF_SET, OBJV_PI_HACK_FVI_IGNORE_LIST, ignore_list);
@@ -985,15 +985,16 @@ void MercEndBoss::DoFrame(int me) {
 
               //						if(ray.hit_wallnorm * orient.fvec <= 0.0f)
               //						{
-              vector bf_pos = ray.hit_point + (orient.fvec * 3.0f);
-              //							vector bf_pos = ray.hit_point + (orient.fvec *
-              //-9.0f);
+              simd::float3 bf_pos = ray.hit_point + (orient.fvec * 3.0f);
+              //							simd::float3 bf_pos = ray.hit_point +
+              //(orient.fvec * -9.0f);
               Obj_Create(OBJ_POWERUP, memory->wallhit_id, 76, &bf_pos);
               //							//mprintf(0, "HERE X\n");
               //						}
               //						else
               //						{
-              //							vector bf_pos = ray.hit_point + (orient.fvec
+              //							simd::float3 bf_pos = ray.hit_point +
+              //(orient.fvec
               //* 9.0f); 							Obj_Create(OBJ_POWERUP,
               // memory->wallhit_id, 76, &bf_pos);
               ///							//mprintf(0, "HERE X\n");
@@ -1017,12 +1018,12 @@ void MercEndBoss::DoFrame(int me) {
           if (fate != HIT_NONE) {
             start_pos = ray.hit_point + (orient.fvec * 5.0f);
 
-            if (ray.hit_wallnorm * orient.fvec <= 0.0f) {
-              vector bf_pos = ray.hit_point + (orient.fvec * -9.0f);
+            if (simd::dot(ray.hit_wallnorm, orient.fvec) <= 0.0f) {
+              simd::float3 bf_pos = ray.hit_point + (orient.fvec * -9.0f);
               Obj_Create(OBJ_POWERUP, memory->wallhit_id, 76, &bf_pos);
               // mprintf(0, "HERE X\n");
             } else {
-              vector bf_pos = ray.hit_point + (orient.fvec * 9.0f);
+              simd::float3 bf_pos = ray.hit_point + (orient.fvec * 9.0f);
               Obj_Create(OBJ_POWERUP, memory->wallhit_id, 76, &bf_pos);
               // mprintf(0, "HERE X\n");
             }
@@ -1041,12 +1042,12 @@ void MercEndBoss::DoFrame(int me) {
           if (fate != HIT_NONE) {
             end_pos = ray.hit_point - (orient.fvec * 5.0f);
 
-            if (ray.hit_wallnorm * orient.fvec <= 0.0f) {
-              vector bf_pos = ray.hit_point + (orient.fvec * -9.0f);
+            if (simd::dot(ray.hit_wallnorm, orient.fvec) <= 0.0f) {
+              simd::float3 bf_pos = ray.hit_point + (orient.fvec * -9.0f);
               Obj_Create(OBJ_POWERUP, memory->wallhit_id, 76, &bf_pos);
               // mprintf(0, "HERE X\n");
             } else {
-              vector bf_pos = ray.hit_point + (orient.fvec * 9.0f);
+              simd::float3 bf_pos = ray.hit_point + (orient.fvec * 9.0f);
               Obj_Create(OBJ_POWERUP, memory->wallhit_id, 76, &bf_pos);
               // mprintf(0, "HERE X\n");
             }
@@ -1180,10 +1181,10 @@ int16_t Gun::CallEvent(int event, tOSIRISEventInfo *data) {
         ;
       {
         int room;
-        vector pos;
-        vector dir;
-        matrix orient;
-        vector velocity;
+        simd::float3 pos;
+        simd::float3 dir;
+        vec::matrix orient;
+        simd::float3 velocity;
 
         Obj_Value(data->me_handle, VF_GET, OBJV_I_ROOMNUM, &room);
 

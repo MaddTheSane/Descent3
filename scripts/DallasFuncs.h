@@ -190,7 +190,7 @@ extern void aComplexCinematicQuickExit(float Start, float End);
 extern void aComplexCinematicEndTrans(int End);
 extern void aComplexCinematicStartTrans(bool Enable);
 extern void aComplexCinematicCameraOnPath(int Path);
-extern void aComplexCinematicCameraAtPoint(vector *Position, int Room);
+extern void aComplexCinematicCameraAtPoint(simd::float3 *Position, int Room);
 extern void aComplexCinematicCameraAtStoredPt(int Room);
 extern void aComplexCinematicScreenMode(int Mode);
 extern void aComplexCinematicTextMode(int Mode);

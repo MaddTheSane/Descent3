@@ -618,8 +618,8 @@ poly_model Poly_models[MAX_POLY_MODELS];
 
 g3Point Robot_points[MAX_POLYGON_VECS];
 
-vector Interp_pos_instance_vec = {0, 0, 0};
-vector Instance_vec_stack[MAX_SUBOBJECTS];
+simd::float3 Interp_pos_instance_vec = {0, 0, 0};
+simd::float3 Instance_vec_stack[MAX_SUBOBJECTS];
 int Instance_vec_cnt = 0;
 
 #ifdef _DEBUG
@@ -650,7 +650,7 @@ float Polylighting_static_green;
 float Polylighting_static_blue;
 lightmap_object *Polylighting_lightmap_object;
 
-vector *Polymodel_light_direction, Polymodel_fog_plane, Polymodel_specular_pos, Polymodel_fog_portal_vert,
+simd::float3 *Polymodel_light_direction, Polymodel_fog_plane, Polymodel_specular_pos, Polymodel_fog_portal_vert,
     Polymodel_bump_pos;
 
 static inline void RecursiveAssignWB(poly_model *pm, int sm_index, int wb_index);
@@ -658,13 +658,13 @@ static void FindWBSubobjects(poly_model *pm);
 /// Sets aside a polymodel for use.
 /// Errors and returns -1 if none free.
 static int AllocPolyModel();
-static void ReadModelVector(vector *vec, CFILE *infile);
+static void ReadModelVector(simd::float3 *vec, CFILE *infile);
 static void ReadModelStringLen(char *ptr, int len, CFILE *infile);
 /// Given a modelnumber, opens the original pof file and attempts to rematch that
 /// models textures with the bitmaps with have in memory.
 static int ReloadModelTextures(int modelnum);
 static void SetPolymodelProperties(bsp_info *subobj, char *props);
-static void MinMaxSubmodel(poly_model *pm, bsp_info *sm, vector offset);
+static void MinMaxSubmodel(poly_model *pm, bsp_info *sm, simd::float3 offset);
 static void FindMinMaxForModel(poly_model *pm);
 static int ReadNewModelFile(int polynum, CFILE *infile);
 static void SetNormalizedTimeObjTimed(object *obj, float *normalized_time);
@@ -673,7 +673,7 @@ static void FreeAllModels();
 /// Given a model pointer and an array of floats that go from 0..1, calculate the interpolated
 /// position/angle of each corresponding subobject.
 static void SetModelAnglesAndPosTimed(poly_model *po, float *normalized_time, uint32_t subobj_flags);
-static void BuildModelAngleMatrix(matrix *mat, angle ang, vector *axis);
+static void BuildModelAngleMatrix(vec::matrix *mat, angle ang, simd::float3 *axis);
 
 void WBClearInfo(poly_model *pm) { pm->num_wbs = 0; }
 
@@ -882,7 +882,7 @@ void FreePolyModel(int i) {
   Poly_models[i].flags |= PMF_NOT_RESIDENT;
 }
 
-void ReadModelVector(vector *vec, CFILE *infile) {
+void ReadModelVector(simd::float3 *vec, CFILE *infile) {
   vec->x = cf_ReadFloat(infile);
   vec->y = cf_ReadFloat(infile);
   vec->z = cf_ReadFloat(infile);
@@ -975,7 +975,7 @@ int ReloadModelTextures(int modelnum) {
   return 1;
 }
 
-void BuildModelAngleMatrix(matrix *mat, angle ang, vector *axis) {
+void BuildModelAngleMatrix(vec::matrix *mat, vec::angle ang, simd::float3 *axis) {
   float x, y, z;
   float s, c, t;
 
@@ -1227,7 +1227,7 @@ void SetPolymodelProperties(bsp_info *subobj, char *props) {
   }
 }
 
-void MinMaxSubmodel(poly_model *pm, bsp_info *sm, vector offset) {
+void MinMaxSubmodel(poly_model *pm, bsp_info *sm, simd::float3 offset) {
 
   offset += sm->offset;
   // Get max
@@ -1252,11 +1252,11 @@ void MinMaxSubmodel(poly_model *pm, bsp_info *sm, vector offset) {
 
 void FindMinMaxForModel(poly_model *pm) {
 
-  vector zero_vec;
+  simd::float3 zero_vec;
 
   ASSERT(!(pm->flags & PMF_NOT_RESIDENT));
 
-  vm_MakeZero(&zero_vec);
+  vec::vm_MakeZero(&zero_vec);
   pm->mins.x = pm->mins.y = pm->mins.z = 90000;
   pm->maxs.x = pm->maxs.y = pm->maxs.z = -90000;
 
@@ -1347,7 +1347,7 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
       }
 
       // Adjust min/maxs to be based on zero
-      /*vector temp_vec=pm->maxs-pm->mins;
+      /*simd::float3 temp_vec=pm->maxs-pm->mins;
 
       temp_vec/=2;
 
@@ -1390,7 +1390,7 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
       else {
         // for old models, hack in 0,0,0, which says the geometric center is
         // equal to pivot point, which is not always true.
-        vm_MakeZero(&pm->submodel[n].geometric_center);
+        vec::vm_MakeZero(&pm->submodel[n].geometric_center);
       }
 
       pm->submodel[n].name[0] = '\0';
@@ -1406,7 +1406,7 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
       if (pm->submodel[n].name[0] == '\0')
         strcpy(pm->submodel[n].name, "unknown object name");
 
-      memset(&pm->submodel[n].angs, 0, sizeof(angvec));
+      memset(&pm->submodel[n].angs, 0, sizeof(vec::angvec));
 
       // Skip freespace chunks
       int n_chunks = cf_ReadInt(infile);
@@ -1419,8 +1419,8 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
       ASSERT(nverts < MAX_POLYGON_VECS);
 
       if (nverts) {
-        pm->submodel[n].verts = (vector *)mem_malloc(nverts * sizeof(vector));
-        pm->submodel[n].vertnorms = (vector *)mem_malloc(nverts * sizeof(vector));
+        pm->submodel[n].verts = (simd::float3 *)mem_malloc(nverts * sizeof(simd::float3));
+        pm->submodel[n].vertnorms = (simd::float3 *)mem_malloc(nverts * sizeof(simd::float3));
         pm->submodel[n].alpha = (float *)mem_malloc(nverts * sizeof(float));
         ASSERT(pm->submodel[n].verts);
         ASSERT(pm->submodel[n].vertnorms);
@@ -1475,8 +1475,8 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
 
       if (nfaces) {
         pm->submodel[n].faces = (polyface *)mem_malloc(nfaces * sizeof(polyface));
-        pm->submodel[n].face_min = (vector *)mem_malloc(nfaces * sizeof(vector));
-        pm->submodel[n].face_max = (vector *)mem_malloc(nfaces * sizeof(vector));
+        pm->submodel[n].face_min = (simd::float3 *)mem_malloc(nfaces * sizeof(simd::float3));
+        pm->submodel[n].face_max = (simd::float3 *)mem_malloc(nfaces * sizeof(simd::float3));
         ASSERT(pm->submodel[n].faces);
       } else {
         pm->submodel[n].faces = nullptr;
@@ -1487,7 +1487,7 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
       // Find out how much space we'll need
       bsp_info *sm = &pm->submodel[n];
 
-      vector tvec;
+      simd::float3 tvec;
       int current_count = 0;
 
       int save_position = cftell(infile);
@@ -1572,9 +1572,9 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
 
         for (t = 0; t < pm->submodel[n].faces[i].nverts; t++) {
           int val;
-          vector *min_ptr = &pm->submodel[n].face_min[i];
-          vector *max_ptr = &pm->submodel[n].face_max[i];
-          vector *v_ptr;
+          simd::float3 *min_ptr = &pm->submodel[n].face_min[i];
+          simd::float3 *max_ptr = &pm->submodel[n].face_max[i];
+          simd::float3 *v_ptr;
 
           val = cf_ReadInt(infile);
           pm->submodel[n].faces[i].vertnums[t] = val;
@@ -1669,7 +1669,7 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
 
       if (num_normals) {
         for (i = 0; i < num_normals; i++) {
-          vector temp;
+          simd::float3 temp;
           a_bank *bank = &pm->attach_slots[i];
 
           cf_ReadInt(infile);
@@ -1802,9 +1802,11 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
           pm->submodel[i].num_key_angles = nframes;
         }
 
-        pm->submodel[i].keyframe_axis = (vector *)mem_malloc((pm->submodel[i].num_key_angles + 1) * sizeof(vector));
+        pm->submodel[i].keyframe_axis =
+            (simd::float3 *)mem_malloc((pm->submodel[i].num_key_angles + 1) * sizeof(simd::float3));
         pm->submodel[i].keyframe_angles = (int *)mem_malloc((pm->submodel[i].num_key_angles + 1) * sizeof(int));
-        pm->submodel[i].keyframe_matrix = (matrix *)mem_malloc((pm->submodel[i].num_key_angles + 1) * sizeof(matrix));
+        pm->submodel[i].keyframe_matrix =
+            (vec::matrix *)mem_malloc((pm->submodel[i].num_key_angles + 1) * sizeof(vec::matrix));
         if (timed) {
           pm->submodel[i].rot_start_time = (int *)mem_malloc((pm->submodel[i].num_key_angles + 1) * sizeof(int));
           ASSERT(pm->submodel[i].rot_start_time != nullptr);
@@ -1824,7 +1826,7 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
         ASSERT(pm->submodel[i].keyframe_matrix != nullptr);
 
         for (t = 0; t < pm->submodel[i].num_key_angles; t++) {
-          vector *axis;
+          simd::float3 *axis;
           float mag;
 
           if (timed)
@@ -1833,7 +1835,7 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
           ReadModelVector(&pm->submodel[i].keyframe_axis[t + 0], infile);
           axis = &pm->submodel[i].keyframe_axis[t + 0];
 
-          mag = vm_GetMagnitude(axis);
+          mag = vec::vm_GetMagnitude(axis);
           if (mag > 0)
             pm->submodel[i].keyframe_axis[t] /= mag;
 
@@ -1892,7 +1894,7 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
         } else
           pm->submodel[i].num_key_pos = nframes;
 
-        pm->submodel[i].keyframe_pos = (vector *)mem_malloc((pm->submodel[i].num_key_pos + 1) * sizeof(vector));
+        pm->submodel[i].keyframe_pos = (simd::float3 *)mem_malloc((pm->submodel[i].num_key_pos + 1) * sizeof(simd::float3));
         ASSERT(pm->submodel[i].keyframe_pos != nullptr);
 
         if (timed) {
@@ -1922,7 +1924,7 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
 
   // Build animation keyframe matrices
 
-  matrix base_matrix, dest_matrix, temp_matrix;
+  vec::matrix base_matrix, dest_matrix, temp_matrix;
   int cur_angle;
   int parent;
 
@@ -1962,26 +1964,26 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
     // Figure out the size of this facing subobject
     if (pm->submodel[i].flags & SOF_FACING) {
       ASSERT(pm->submodel[i].num_faces == 1); // This facing has more than one face
-      vector vecs[30];
-      vector avg;
+      simd::float3 vecs[30];
+      simd::float3 avg;
 
       for (int newt = 0; newt < pm->submodel[i].faces[0].nverts; newt++) {
         vecs[newt] = pm->submodel[i].verts[pm->submodel[i].faces[0].vertnums[newt]];
       }
 
-      pm->submodel[i].rad = (sqrt(vm_GetCentroid(&avg, vecs, pm->submodel[i].faces[0].nverts)) / 2);
+      pm->submodel[i].rad = (sqrt(vec::vm_GetCentroid(&avg, vecs, pm->submodel[i].faces[0].nverts)) / 2);
 
       pm->flags |= PMF_FACING;
     }
 
     if (pm->submodel[i].flags & (SOF_GLOW | SOF_THRUSTER)) {
       ASSERT(pm->submodel[i].num_faces == 1); // This glow has more than one face
-      vector vecs[30];
+      simd::float3 vecs[30];
 
       for (t = 0; t < pm->submodel[i].faces[0].nverts; t++)
         vecs[t] = pm->submodel[i].verts[pm->submodel[i].faces[0].vertnums[t]];
 
-      vm_GetNormal(&pm->submodel[i].glow_info->normal, &vecs[0], &vecs[1], &vecs[2]);
+      vec::vm_GetNormal(&pm->submodel[i].glow_info->normal, &vecs[0], &vecs[1], &vecs[2]);
 
       pm->flags |= PMF_FACING; // Set this so we know when to draw
     }
@@ -2034,7 +2036,6 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
   FindMinMaxForModel(pm);
 
   // adjust positional interpolation frames
-
 
   FindWBSubobjects(pm);
 
@@ -2237,7 +2238,7 @@ int FindPolyModelName(const std::filesystem::path &name) {
 }
 
 // Sets a positional instance
-void StartPolyModelPosInstance(vector *posvec) {
+void StartPolyModelPosInstance(simd::float3 *posvec) {
 
   Interp_pos_instance_vec = *posvec;
 
@@ -2250,7 +2251,7 @@ void DonePolyModelPosInstance() {
   Instance_vec_cnt--;
 
   if (Instance_vec_cnt == 0)
-    memset(&Interp_pos_instance_vec, 0, sizeof(vector));
+    memset(&Interp_pos_instance_vec, 0, sizeof(simd::float3));
   else
     Interp_pos_instance_vec = Instance_vec_stack[Instance_vec_cnt];
 }
@@ -2433,7 +2434,7 @@ void SetModelAngles(poly_model *po, const float *normalized_angles) {
         // Find out which keyframe we're at
 
         cur_state = normalized_angles[i] / state_time;
-        matrix dest_matrix;
+        vec::matrix dest_matrix;
 
         // Find out how far into that keyframe we are
         cur_state_time = normalized_angles[i] - ((float)cur_state * state_time);
@@ -2466,8 +2467,8 @@ void SetModelAngles(poly_model *po, const float *normalized_angles) {
         ASSERT(fdiff >= 0 && fdiff <= 1);
 
         // fdiff now equals 0 to 1
-        matrix temp_matrix;
-        vector temp_vec;
+        vec::matrix temp_matrix;
+        simd::float3 temp_vec;
         if (po->new_style)
           temp_vec = po->submodel[i].keyframe_axis[1];
         else
@@ -2476,7 +2477,7 @@ void SetModelAngles(poly_model *po, const float *normalized_angles) {
         BuildModelAngleMatrix(&temp_matrix, fdiff * 65535, &temp_vec);
         vm_ExtractAnglesFromMatrix(&po->submodel[i].angs, &temp_matrix);
       } else if (po->submodel[i].flags & SOF_TURRET) {
-        matrix temp_matrix;
+        vec::matrix temp_matrix;
         if (po->new_style)
           BuildModelAngleMatrix(&temp_matrix, normalized_angles[i] * 65535, &po->submodel[i].keyframe_axis[1]);
         else
@@ -2496,8 +2497,8 @@ void SetModelAngles(poly_model *po, const float *normalized_angles) {
         ASSERT(fdiff >= 0 && fdiff <= 1);
 
         // fdiff now equals 0 to 1
-        matrix temp_matrix;
-        vector temp_vec;
+        vec::matrix temp_matrix;
+        simd::float3 temp_vec;
         if (po->new_style)
           temp_vec = po->submodel[i].keyframe_axis[1];
         else
@@ -2513,7 +2514,7 @@ void SetModelAngles(poly_model *po, const float *normalized_angles) {
         float fdiff = flrot - introt;
 
         // fdiff now equals 0 to 1
-        matrix temp_matrix;
+        vec::matrix temp_matrix;
         if (po->new_style)
           BuildModelAngleMatrix(&temp_matrix, fdiff * 65535, &po->submodel[i].keyframe_axis[0]);
         else
@@ -2555,9 +2556,9 @@ void SetModelInterpPos(poly_model *po, const float *normalized_pos) {
 
       // Now do a parametric adjustment on the positions
 
-      vector total_delta_pos = {0, 0, 0};
-      vector subpos;
-      vector final_pos;
+      simd::float3 total_delta_pos = {0, 0, 0};
+      simd::float3 subpos;
+      simd::float3 final_pos;
 
       // If we're already at the high point of the interpolation then just
       // stuff some values
@@ -2569,7 +2570,8 @@ void SetModelInterpPos(poly_model *po, const float *normalized_pos) {
       if (cur_state == 0)
         po->submodel[i].mod_pos = normal_state_time * po->submodel[i].keyframe_pos[1];
       else {
-        vm_SubVectors(&subpos, &po->submodel[i].keyframe_pos[cur_state + 1], &po->submodel[i].keyframe_pos[cur_state]);
+        vec::vm_SubVectors(&subpos, &po->submodel[i].keyframe_pos[cur_state + 1],
+                           &po->submodel[i].keyframe_pos[cur_state]);
         final_pos = po->submodel[i].keyframe_pos[cur_state] + (subpos * normal_state_time);
         po->submodel[i].mod_pos = final_pos;
       }
@@ -2605,7 +2607,7 @@ void SetModelAnglesAndPosTimed(poly_model *po, float *normalized_time, uint32_t 
         continue;
 
       if (sm->num_key_pos <= 1) {
-        vm_MakeZero(&sm->mod_pos);
+        vec::vm_MakeZero(&sm->mod_pos);
         goto do_angles;
       }
 
@@ -2630,8 +2632,8 @@ void SetModelAnglesAndPosTimed(poly_model *po, float *normalized_time, uint32_t 
         float this_tick = current_tick - sm->pos_start_time[current_frame];
         normal_state_time = (float)this_tick / (float)ticks_between_frames;
 
-        vector subpos;
-        vm_SubVectors(&subpos, &sm->keyframe_pos[current_frame + 1], &sm->keyframe_pos[current_frame]);
+        simd::float3 subpos;
+        vec::vm_SubVectors(&subpos, &sm->keyframe_pos[current_frame + 1], &sm->keyframe_pos[current_frame]);
         sm->mod_pos = sm->keyframe_pos[current_frame] + (subpos * normal_state_time);
       }
 
@@ -2669,7 +2671,7 @@ void SetModelAnglesAndPosTimed(poly_model *po, float *normalized_time, uint32_t 
 
           // Now do a parametric adjustment on the angles
 
-          matrix dest_matrix =
+          vec::matrix dest_matrix =
               sm->keyframe_matrix[current_frame] +
               ((sm->keyframe_matrix[current_frame + 1] - sm->keyframe_matrix[current_frame]) * normal_state_time);
 
@@ -2687,8 +2689,8 @@ void SetModelAnglesAndPosTimed(poly_model *po, float *normalized_time, uint32_t 
           ASSERT(fdiff >= 0 && fdiff <= 1);
 
           // fdiff now equals 0 to 1
-          matrix temp_matrix;
-          vector temp_vec;
+          vec::matrix temp_matrix;
+          simd::float3 temp_vec;
           if (po->new_style)
             temp_vec = po->submodel[i].keyframe_axis[1];
           else
@@ -2697,7 +2699,7 @@ void SetModelAnglesAndPosTimed(poly_model *po, float *normalized_time, uint32_t 
           BuildModelAngleMatrix(&temp_matrix, fdiff * 65535, &temp_vec);
           vm_ExtractAnglesFromMatrix(&po->submodel[i].angs, &temp_matrix);
         } else if (po->submodel[i].flags & SOF_TURRET) {
-          matrix temp_matrix;
+          vec::matrix temp_matrix;
           if (po->new_style)
             BuildModelAngleMatrix(&temp_matrix, normalized_time[i] * 65535, &po->submodel[i].keyframe_axis[1]);
           else
@@ -2734,15 +2736,15 @@ void SetModelAnglesAndPos(poly_model *po, float *normalized_time, uint32_t subob
   }
 }
 
-static vector Instance_fog_plane_stack[MAX_SUBOBJECTS];
-static vector Instance_fog_portal_vert_stack[MAX_SUBOBJECTS];
-static vector Instance_light_stack[MAX_SUBOBJECTS];
-static vector Instance_specular_pos[MAX_SUBOBJECTS];
-static vector Instance_bump_pos[MAX_SUBOBJECTS];
+static simd::float3 Instance_fog_plane_stack[MAX_SUBOBJECTS];
+static simd::float3 Instance_fog_portal_vert_stack[MAX_SUBOBJECTS];
+static simd::float3 Instance_light_stack[MAX_SUBOBJECTS];
+static simd::float3 Instance_specular_pos[MAX_SUBOBJECTS];
+static simd::float3 Instance_bump_pos[MAX_SUBOBJECTS];
 
 static int Instance_light_cnt = 0;
 
-void StartLightInstance(vector *pos, matrix *orient) {
+void StartLightInstance(simd::float3 *pos, vec::matrix *orient) {
   int gouraud = 0, specular = 0, fogged = 0, bumped = 0;
 
   if (Polymodel_light_type == POLYMODEL_LIGHTING_GOURAUD)
@@ -2769,14 +2771,14 @@ void StartLightInstance(vector *pos, matrix *orient) {
 
   Instance_light_cnt++;
 
-  vector temp_vec;
+  simd::float3 temp_vec;
 
   if (gouraud) {
     vm_MatrixMulVector(&temp_vec, Polymodel_light_direction, orient);
     *Polymodel_light_direction = temp_vec;
   }
   if (fogged) {
-    vector tempv = Polymodel_fog_portal_vert - *pos;
+    simd::float3 tempv = Polymodel_fog_portal_vert - *pos;
     vm_MatrixMulVector(&temp_vec, &tempv, orient);
     Polymodel_fog_portal_vert = temp_vec;
 
@@ -2784,13 +2786,13 @@ void StartLightInstance(vector *pos, matrix *orient) {
     Polymodel_fog_plane = temp_vec;
   }
   if (specular) {
-    vector tempv = Polymodel_specular_pos - *pos;
+    simd::float3 tempv = Polymodel_specular_pos - *pos;
     vm_MatrixMulVector(&temp_vec, &tempv, orient);
     Polymodel_specular_pos = temp_vec;
   }
 
   if (bumped) {
-    vector tempv = Polymodel_bump_pos - *pos;
+    simd::float3 tempv = Polymodel_bump_pos - *pos;
     vm_MatrixMulVector(&temp_vec, &tempv, orient);
     Polymodel_bump_pos = temp_vec;
   }
@@ -2819,7 +2821,7 @@ void DoneLightInstance() {
 // an animation state we are
 
 // This is the static light version
-void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normalized_time, int flags, float r, float g,
+void DrawPolygonModel(simd::float3 *pos, vec::matrix *orient, int model_num, float *normalized_time, int flags, float r, float g,
                       float b, uint32_t f_render_sub, uint8_t use_effect, uint8_t overlay) {
   poly_model *po;
 
@@ -2872,11 +2874,11 @@ void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normali
         if (i != 0) {
           // if submodel, rotate around its center point, not pivot point
 
-          vector ofs = (po->submodel[i].min + po->submodel[i].max) / 2;
-          vector save_offset = po->submodel[i].offset;
-          vm_MakeZero(&po->submodel[i].offset);
-          vm_MakeZero(&po->submodel[i].mod_pos);
-          memset(&po->submodel[i].angs, 0, sizeof(angvec));
+          simd::float3 ofs = (po->submodel[i].min + po->submodel[i].max) / 2;
+          simd::float3 save_offset = po->submodel[i].offset;
+          vec::vm_MakeZero(&po->submodel[i].offset);
+          vec::vm_MakeZero(&po->submodel[i].mod_pos);
+          memset(&po->submodel[i].angs, 0, sizeof(vec::angvec));
           ofs *= -1;
 
           po->submodel[i].offset = ofs;
@@ -2894,10 +2896,10 @@ void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normali
 }
 
 // This draws a gouraud shaded version
-void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normalized_time, int flags, vector *lightdir,
+void DrawPolygonModel(simd::float3 *pos, vec::matrix *orient, int model_num, float *normalized_time, int flags, simd::float3 *lightdir,
                       float r, float g, float b, uint32_t f_render_sub, uint8_t use_effect, uint8_t overlay) {
   poly_model *po;
-  vector light_vec = *lightdir;
+  simd::float3 light_vec = *lightdir;
 
   Polymodel_use_effect = use_effect;
 
@@ -2949,11 +2951,11 @@ void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normali
         if (i != 0) {
           // if submodel, rotate around its center point, not pivot point
 
-          vector ofs = (po->submodel[i].min + po->submodel[i].max) / 2;
-          vector save_offset = po->submodel[i].offset;
-          vm_MakeZero(&po->submodel[i].offset);
-          vm_MakeZero(&po->submodel[i].mod_pos);
-          memset(&po->submodel[i].angs, 0, sizeof(angvec));
+          simd::float3 ofs = (po->submodel[i].min + po->submodel[i].max) / 2;
+          simd::float3 save_offset = po->submodel[i].offset;
+          vec::vm_MakeZero(&po->submodel[i].offset);
+          vec::vm_MakeZero(&po->submodel[i].mod_pos);
+          memset(&po->submodel[i].angs, 0, sizeof(vec::angvec));
           ofs *= -1;
 
           po->submodel[i].offset = ofs;
@@ -2971,7 +2973,7 @@ void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normali
 }
 
 // This draws a lightmap shaded version
-void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normalized_time, int flags,
+void DrawPolygonModel(simd::float3 *pos, vec::matrix *orient, int model_num, float *normalized_time, int flags,
                       lightmap_object *lm_object, uint32_t f_render_sub, uint8_t use_effect, uint8_t overlay) {
   poly_model *po;
 
@@ -3018,11 +3020,11 @@ void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normali
         if (i != 0) {
           // if submodel, rotate around its center point, not pivot point
 
-          vector ofs = (po->submodel[i].min + po->submodel[i].max) / 2;
-          vector save_offset = po->submodel[i].offset;
-          vm_MakeZero(&po->submodel[i].offset);
-          vm_MakeZero(&po->submodel[i].mod_pos);
-          memset(&po->submodel[i].angs, 0, sizeof(angvec));
+          simd::float3 ofs = (po->submodel[i].min + po->submodel[i].max) / 2;
+          simd::float3 save_offset = po->submodel[i].offset;
+          vec::vm_MakeZero(&po->submodel[i].offset);
+          vec::vm_MakeZero(&po->submodel[i].mod_pos);
+          memset(&po->submodel[i].angs, 0, sizeof(vec::angvec));
           ofs *= -1;
 
           po->submodel[i].offset = ofs;
@@ -3120,8 +3122,8 @@ int CountFacesInPolymodel(poly_model *pm) {
 
 // Given an object, a submodel, and a vertex number, calculates the world position
 // of that point
-void GetPolyModelPointInWorld(vector *dest, poly_model *pm, vector *wpos, matrix *orient, int subnum, vector *pos,
-                              vector *norm) {
+void GetPolyModelPointInWorld(simd::float3 *dest, poly_model *pm, simd::float3 *wpos, vec::matrix *orient, int subnum,
+                              simd::float3 *pos, simd::float3 *norm) {
   bsp_info *sm = &pm->submodel[subnum];
   float normalized_time[MAX_SUBOBJECTS];
   int i;
@@ -3136,21 +3138,21 @@ void GetPolyModelPointInWorld(vector *dest, poly_model *pm, vector *wpos, matrix
 
   SetModelAnglesAndPos(pm, normalized_time);
 
-  vector pnt = *pos;
+  simd::float3 pnt = *pos;
   int mn = subnum;
-  vector cur_norm;
+  simd::float3 cur_norm;
 
   if (norm != nullptr)
     cur_norm = *norm;
 
-  matrix m;
+  vec::matrix m;
 
   // Instance up the tree for this gun
   while (mn != -1) {
-    vector tpnt;
+    simd::float3 tpnt;
 
-    vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
-    vm_TransposeMatrix(&m);
+    vec::vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
+    vec::vm_TransposeMatrix(&m);
 
     tpnt = pnt * m;
 
@@ -3164,7 +3166,7 @@ void GetPolyModelPointInWorld(vector *dest, poly_model *pm, vector *wpos, matrix
 
   // now instance for the entire object
   m = *orient;
-  vm_TransposeMatrix(&m);
+  vec::vm_TransposeMatrix(&m);
 
   if (norm != nullptr)
     *norm = (cur_norm * m);
@@ -3172,8 +3174,8 @@ void GetPolyModelPointInWorld(vector *dest, poly_model *pm, vector *wpos, matrix
   *dest += (*wpos);
 }
 
-void GetPolyModelPointInWorld(vector *dest, poly_model *pm, vector *wpos, matrix *orient, int subnum,
-                              float *normalized_time, vector *pos, vector *norm) {
+void GetPolyModelPointInWorld(simd::float3 *dest, poly_model *pm, simd::float3 *wpos, vec::matrix *orient, int subnum,
+                              float *normalized_time, simd::float3 *pos, simd::float3 *norm) {
   bsp_info *sm = &pm->submodel[subnum];
 
   ASSERT(!(pm->flags & PMF_NOT_RESIDENT));
@@ -3183,21 +3185,21 @@ void GetPolyModelPointInWorld(vector *dest, poly_model *pm, vector *wpos, matrix
 
   SetModelAnglesAndPos(pm, normalized_time);
 
-  vector pnt = *pos;
+  simd::float3 pnt = *pos;
   int mn = subnum;
-  vector cur_norm;
+  simd::float3 cur_norm;
 
   if (norm != nullptr)
     cur_norm = *norm;
 
-  matrix m;
+  vec::matrix m;
 
   // Instance up the tree for this gun
   while (mn != -1) {
-    vector tpnt;
+    simd::float3 tpnt;
 
-    vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
-    vm_TransposeMatrix(&m);
+    vec::vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
+    vec::vm_TransposeMatrix(&m);
 
     tpnt = pnt * m;
 
@@ -3211,7 +3213,7 @@ void GetPolyModelPointInWorld(vector *dest, poly_model *pm, vector *wpos, matrix
 
   // now instance for the entire object
   m = *orient;
-  vm_TransposeMatrix(&m);
+  vec::vm_TransposeMatrix(&m);
 
   if (norm != nullptr)
     *norm = (cur_norm * m);

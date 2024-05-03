@@ -87,9 +87,9 @@ extern int Physics_player_verbose;
 extern uint8_t Default_player_terrain_leveling;
 extern uint8_t Default_player_room_leveling;
 
-bool PhysicsDoSimRot(object *obj, float frame_time, matrix *orient, vector *rotforce, vector *rotvel, angle *turn_roll);
-void PhysicsDoSimLinear(const object &obj, const vector &pos, const vector &force, vector &velocity,
-                        vector &movementVec, vector &movementPos, float simTime, int count);
+bool PhysicsDoSimRot(object *obj, float frame_time, vec::matrix *orient, simd::float3 *rotforce, vector *rotvel, angle *turn_roll);
+void PhysicsDoSimLinear(const object &obj, const simd::float3 &pos, const simd::float3 &force, simd::float3 &velocity,
+                        simd::float3 &movementVec, simd::float3 &movementPos, float simTime, int count);
 
 extern int Physics_NumLinked;
 extern int PhysicsLinkList[MAX_OBJECTS];

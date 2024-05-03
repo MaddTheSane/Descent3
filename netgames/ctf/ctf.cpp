@@ -592,7 +592,7 @@ void OnInterval(void) {
       // check the time out values
       if (DMFCBase->GetGametime() >= Flag_timeout_timers[i]) {
         // the timeout has expired, move home!
-        vector home_pos;
+        simd::float3 home_pos;
         int home, objnum;
 
         Flag_timeout_timers[i] = 0;
@@ -772,7 +772,7 @@ void OnClientLevelStart(void) {
     return;
   }
 
-  vector vpos;
+  simd::float3 vpos;
   int objnum;
   int flagid, goalroom;
 
@@ -877,7 +877,7 @@ void OnClientCollide(uint8_t *data) {
   // Did player collide with his own team's flag?
   if (fteam == pteam) {
     int16_t flag_count = 0;
-    vector fpos;
+    simd::float3 fpos;
     int groom;
     int flagcount;
     int flagmask;
@@ -1047,7 +1047,7 @@ void OnClientCollide(uint8_t *data) {
     // since the player collided with his own team's flag we need to move the flag back home
     FlagAtHome[pteam] = true;
     HasFlag[pteam] = -1;
-    vector home_pos;
+    simd::float3 home_pos;
     int home = GoalRooms[pteam];
 
     if ((home >= 0) && (home <= DMFCBase->GetHighestRoomIndex()) && (!ROOMNUM_OUTSIDE(home)) && (dRooms[home].used)) {
@@ -1739,7 +1739,7 @@ void HandlePlayerSpew(int pnum) {
   // 3) Start a timer if the flag spews outside of a base
 
   // If we got here than the player has a flag
-  vector fpos; // used to hold the center pos of the room
+  simd::float3 fpos; // used to hold the center pos of the room
 
   bool play_lose = false; // set true if the player lost a flag (ummm, this is guaranteed)
 

@@ -160,7 +160,7 @@ void AI_SafeSetType(int obj_handle, int ai_type) {
 
   switch (ai_type) {
   case AIT_STALKER: {
-    vector goal_pos;
+    simd::float3 goal_pos;
     int goal_room;
 
     Obj_Value(obj_handle, VF_GET, OBJV_V_POS, &goal_pos);
@@ -171,7 +171,7 @@ void AI_SafeSetType(int obj_handle, int ai_type) {
   } break;
 
   case AIT_EVADER2: {
-    vector goal_pos;
+    simd::float3 goal_pos;
     int goal_room;
     float size, circle_distance;
 
@@ -310,7 +310,7 @@ int CreateAndAttach(int me, const char *child_name, uint8_t child_type, char par
 }
 
 int FindClosestPlayer(int objhandle) {
-  vector objpos, playerpos;
+  simd::float3 objpos, playerpos;
   float closest_dist = FLT_MAX;
   int closest_player = OBJECT_HANDLE_NONE;
   msafe_struct mstruct;
@@ -364,9 +364,9 @@ int FindClosestPlayer(int objhandle) {
 // Shot data structure
 struct tShotData {
   int object_handle;   // IN: the object taking the shot
-  vector start_point;  // IN: the starting point of the shot
+  simd::float3 start_point;  // IN: the starting point of the shot
   int start_room;      //	IN: the room that the starting point is in
-  vector dir;          //	IN: the direction the shot is aimed
+  simd::float3 dir;    //	IN: the direction the shot is aimed
   float max_dist;      //	IN: the maximum distance of the shot
   float shot_radius;   // IN: the radius of the projectile (used for the ray thickness)
   float danger_radius; // IN: the initial danger radius for the scans
@@ -388,13 +388,13 @@ struct tShotPathPositionData {
 static tShotPathPositionData ShotPathPositions[MAX_SHOT_PATH_POSITIONS];
 static int num_shot_path_positions;
 
-static bool ScanShotPathPosition(int obj_handle, vector *pos, int room, float radius, float dist);
+static bool ScanShotPathPosition(int obj_handle, simd::float3 *pos, int room, float radius, float dist);
 static float TraverseShotPath(tShotData *shot_data);
 static int ShotIsClear(float risk_factor);
 static int HasClearShot(tShotData *shot_data);
 
 // Scans area around given shot position for object data
-bool ScanShotPathPosition(int obj_handle, vector *pos, int room, float radius, float dist) {
+bool ScanShotPathPosition(int obj_handle, simd::float3 *pos, int room, float radius, float dist) {
   int scan_objs[MAX_SCAN_SHOT_OBJECTS];
   int n_scan;
   int n, i;
@@ -450,8 +450,8 @@ bool ScanShotPathPosition(int obj_handle, vector *pos, int room, float radius, f
 float TraverseShotPath(tShotData *shot_data) {
   float next_scan_dist, scan_radius;
   float current_path_dist, dist;
-  vector start_pos, end_pos, target_pos;
-  vector shot_dir;
+  simd::float3 start_pos, end_pos, target_pos;
+  simd::float3 shot_dir;
   int start_room, end_room;
   int flags, fate;
   ray_info ray;
@@ -505,7 +505,7 @@ float TraverseShotPath(tShotData *shot_data) {
     // If it hit a wall, change the direction (perfect reflection)
     if (fate == HIT_WALL) {
       // Calculate the bounce dir from the current dir and face normal
-      vector new_dir = (-2.0f * (shot_dir * ray.hit_wallnorm)) * ray.hit_wallnorm + shot_dir;
+      simd::float3 new_dir = (-2.0f * (shot_dir * ray.hit_wallnorm)) * ray.hit_wallnorm + shot_dir;
       shot_dir = new_dir;
 
       // Now, if necessary, cast another ray to finish off the scan dist
@@ -781,10 +781,10 @@ struct alienorganism_data {
   bool energy_beams_on;
 
   // Home Data
-  vector home_pos;
+  simd::float3 home_pos;
   int home_room;
-  vector home_fvec;
-  vector home_uvec;
+  simd::float3 home_fvec;
+  simd::float3 home_uvec;
 
   // Energy effect props
   int pos1_handle;
@@ -797,7 +797,7 @@ struct alienorganism_data {
   int leader_handle;
   int num_teammates;
   teammate_data teammate[ALIEN_MAX_TEAMMATES];
-  vector squad_goal_pos;
+  simd::float3 squad_goal_pos;
   int squad_goal_room;
 
 };
@@ -841,7 +841,7 @@ private:
   bool WillJoinLeader(int me, int leader_handle, int priority);
 
   int FindTeammateID(int tm_handle);
-  int CalcFormationPosition(int me, int tm_ID, vector *pos);
+  int CalcFormationPosition(int me, int tm_ID, simd::float3 *pos);
   void SetSquadieFormationGoal(int me);
   void UpdateSquadieFormationGoal(int me);
   void SetWanderGoal(int me);
@@ -851,8 +851,8 @@ private:
   bool IsOnFire(int me);
 
   bool FindHome(int me);
-  void ProjectBeam(int me, int pos_handle, vector *start_pos, int start_room, vector *beam_dir, matrix *orient,
-                   int beam_flag);
+  void ProjectBeam(int me, int pos_handle, simd::float3 *start_pos, int start_room, simd::float3 *beam_dir,
+                   vec::matrix *orient, int beam_flag);
   void CalcEnergyBeamPositions(int me);
   void UpdateEnergyBeams(int me);
   void UpdateEnergyEffect(int me);
@@ -1259,10 +1259,10 @@ struct alienboss_data {
   bool protected_nest;
 
   // Home Data
-  vector home_pos;
+  simd::float3 home_pos;
   int home_room;
-  vector home_fvec;
-  vector home_uvec;
+  simd::float3 home_fvec;
+  simd::float3 home_uvec;
 
   // Energy effect props
   int pos1_handle;
@@ -1279,7 +1279,7 @@ struct alienboss_data {
   int right_hide_room;
 
   // Teleport values
-  vector dest_pos;
+  simd::float3 dest_pos;
   int dest_room;
   int mode_prior_teleporting;
   bool did_transfer;
@@ -1287,7 +1287,7 @@ struct alienboss_data {
   // Getting Stuck Prevention
   float squared_dist_moved;
   float next_check_if_stuck_time;
-  vector last_pos;
+  simd::float3 last_pos;
 
 };
 
@@ -1756,7 +1756,7 @@ bool AlienOrganism::ReceiveCommand(int me, int it, char command, void *ptr) {
   case ALIEN_COM_GET_GOAL_POS: {
     int tm_id = FindTeammateID(it);
     if (tm_id >= 0) {
-      CalcFormationPosition(me, tm_id, (vector *)ptr);
+      CalcFormationPosition(me, tm_id, (simd::float3 *)ptr);
       return true;
     }
   } break;
@@ -2116,9 +2116,9 @@ int AlienOrganism::FindTeammateID(int tm_handle) {
 }
 
 // Calculates a squad position for given teammate based on leader's mode
-int AlienOrganism::CalcFormationPosition(int me, int tm_ID, vector *pos) {
-  vector me_pos, goal_pos;
-  matrix orient;
+int AlienOrganism::CalcFormationPosition(int me, int tm_ID, simd::float3 *pos) {
+  simd::float3 me_pos, goal_pos;
+  vec::matrix orient;
 
   Obj_Value(me, VF_GET, OBJV_V_POS, &me_pos);
   Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
@@ -2217,7 +2217,7 @@ void AlienOrganism::UpdateSquadieFormationGoal(int me) {
 }
 
 void AlienOrganism::SetWanderGoal(int me) {
-  vector pos;
+  simd::float3 pos;
   int room = 0;
   float dist = 15.0f;
 
@@ -2290,7 +2290,7 @@ void AlienOrganism::UpdateSquad(int me) {
   int scan_objs[25];
   int n_scan;
   int room;
-  vector pos;
+  simd::float3 pos;
   int i;
 
   Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
@@ -2352,7 +2352,7 @@ void AlienOrganism::UpdateSquad(int me) {
 // Checks which of my boys I can see
 void AlienOrganism::UpdateSquadVisibility(int me) {
   int i, flags, fate;
-  vector start_pos, end_pos;
+  simd::float3 start_pos, end_pos;
   int start_room;
   ray_info ray;
 
@@ -2386,11 +2386,11 @@ bool AlienOrganism::IsOnFire(int me) { return (Obj_IsEffect(me, EF_NAPALMED)); }
 #define ALIEN_MAX_BEAM_DIST 30.0f
 #define ALIEN_ATTEMPT_BEAM_DIST 40.0f
 
-void AlienOrganism::ProjectBeam(int me, int pos_handle, vector *start_pos, int start_room, vector *beam_dir,
-                                matrix *orient, int beam_flag) {
+void AlienOrganism::ProjectBeam(int me, int pos_handle, simd::float3 *start_pos, int start_room, simd::float3 *beam_dir,
+                                vec::matrix *orient, int beam_flag) {
   ray_info ray;
   int flags, fate;
-  vector end_pos, landing_pos;
+  simd::float3 end_pos, landing_pos;
   int landing_room;
   float dist;
 
@@ -2422,9 +2422,9 @@ void AlienOrganism::ProjectBeam(int me, int pos_handle, vector *start_pos, int s
 // Calculates positions and moves invisible powerups to them
 void AlienOrganism::CalcEnergyBeamPositions(int me) {
   int start_room;
-  vector beam1_dir, beam2_dir, beam3_dir;
-  vector start_pos;
-  matrix orient;
+  simd::float3 beam1_dir, beam2_dir, beam3_dir;
+  simd::float3 start_pos;
+  vec::matrix orient;
 
   // Get our object's pos and orientation
   Obj_Value(me, VF_GET, OBJV_V_POS, &start_pos);
@@ -2556,7 +2556,7 @@ void AlienOrganism::UpdateEnergyBeams(int me) {
 // Sets the correct energy effect for an alien
 void AlienOrganism::UpdateEnergyEffect(int me) {
   int room;
-  vector pos;
+  simd::float3 pos;
   int weapon_id;
 
   // See if this object has an energy charge
@@ -2586,7 +2586,7 @@ void AlienOrganism::SetMode(int me, char mode) {
 
   int flags;
   char movement_type;
-  vector vel;
+  simd::float3 vel;
 
   // Clear out any goals
   AI_SafeSetType(me, AIT_AIS);
@@ -2613,7 +2613,7 @@ void AlienOrganism::SetMode(int me, char mode) {
 
     ray_info ray;
     int fate;
-    vector end_pos, landing_pos;
+    simd::float3 end_pos, landing_pos;
     int end_room, landing_room;
 
     // If currently landed, set take off velocity
@@ -3071,7 +3071,7 @@ void AlienOrganism::SetMode(int me, char mode) {
 void AlienOrganism::DoTakeoff(int me, float takeoff_speed, float speed_variance) {
   // If currently landed, set take off velocity
   if (IsLandedMode(memory->mode)) {
-    vector vel;
+    simd::float3 vel;
 
     Obj_Value(me, VF_GET, OBJV_V_VELOCITY, &vel);
     vel += (memory->home_uvec * (takeoff_speed + ((float)rand() / (float)RAND_MAX) * speed_variance));
@@ -3151,7 +3151,7 @@ void AlienOrganism::DoInit(int me) {
   Obj_Value(me, VF_GET, OBJV_V_POS, &memory->home_pos);
   Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &memory->home_room);
 
-  matrix orient;
+  vec::matrix orient;
   Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
   memory->home_fvec = orient.fvec;
   vm_VectorNormalize(&memory->home_fvec);
@@ -3211,9 +3211,9 @@ void AlienOrganism::DoInit(int me) {
 bool AlienOrganism::FindHome(int me) {
   int num_attempts;
   bool home_found;
-  vector start_pos, target_pos, landed_pos, home_dir;
+  simd::float3 start_pos, target_pos, landed_pos, home_dir;
   int start_room, landed_room;
-  matrix start_orient;
+  vec::matrix start_orient;
   int flags, fate;
   ray_info ray;
   float size;
@@ -3240,7 +3240,7 @@ bool AlienOrganism::FindHome(int me) {
 
     // Check if it hit a face
     if (fate == HIT_WALL) {
-      matrix temp;
+      vec::matrix temp;
 
       memory->home_pos = ray.hit_face_pnt;
       memory->home_room = ray.hit_face_room;
@@ -3274,7 +3274,7 @@ bool AlienOrganism::FindHome(int me) {
 }
 
 void AlienOrganism::DoSquadieFrame(int me) {
-  vector my_pos;
+  simd::float3 my_pos;
   int type;
 
   // Check if the leader is still alive
@@ -3310,15 +3310,15 @@ void AlienOrganism::DoSquadieFrame(int me) {
     // If squadie is in leader's path, slow down until leader passes
     float slowdown = 1.0f;
     if (dist <= ALIEN_APPROACH_DIST) {
-      matrix leader_orient;
-      vector dir, leader_pos;
+      vec::matrix leader_orient;
+      simd::float3 dir, leader_pos;
 
       // See if we are in front of leader
       Obj_Value(memory->leader_handle, VF_GET, OBJV_M_ORIENT, &leader_orient);
       dir = my_pos - memory->squad_goal_pos;
       vm_VectorNormalize(&dir);
       float dot_prod;
-      if ((dot_prod = leader_orient.fvec * dir) < 0.0f) {
+      if ((dot_prod = simd::dot(leader_orient.fvec, dir)) < 0.0f) {
         slowdown = dist / ALIEN_APPROACH_DIST;
       }
     }
@@ -3348,11 +3348,11 @@ void AlienOrganism::DoSquadieFrame(int me) {
 
 // Processes the AI Frame Interval Event
 void AlienOrganism::DoFrame(int me) {
-  vector uvec;
+  simd::float3 uvec;
   int flags;
   float anim_frame;
   int new_mode;
-  vector vel;
+  simd::float3 vel;
   float last_see_time, last_see_game_time;
   float last_hear_time, last_hear_game_time;
   float last_perceive_time;
@@ -3936,7 +3936,7 @@ bool AlienOrganism::DoNotify(int me, tOSIRISEventInfo *data) {
       memory->energy_charges = 0.0f;
   } else if (data->evt_ai_notify.notify_type == AIN_SCRIPTED_GOAL) {
     // mprintf(0,"Custom goal called.\n");
-    vector my_pos, dir;
+    simd::float3 my_pos, dir;
 
     Obj_Value(me, VF_GET, OBJV_V_POS, &my_pos);
     SendCommand(me, memory->leader_handle, ALIEN_COM_GET_GOAL_POS, &memory->squad_goal_pos);
@@ -4016,7 +4016,7 @@ void AlienOrganism::DoDamage(int me, tOSIRISEVTDAMAGED *damage_data) {
       memory->next_special_damage_time = Game_GetTime() + 0.8f + ((float)rand() / (float)RAND_MAX) * 0.5f;
 
       // Create a frag burst effect
-      vector pos;
+      simd::float3 pos;
       int room;
       Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
       Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
@@ -4038,7 +4038,7 @@ void AlienOrganism::DoDamage(int me, tOSIRISEVTDAMAGED *damage_data) {
 
       // Create sparks
       int room;
-      vector pos;
+      simd::float3 pos;
       Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
       Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
       Game_CreateRandomSparks(30 + int(((float)rand() / (float)RAND_MAX) * 10.0f), &pos, room);
@@ -4143,7 +4143,7 @@ void HeavyTrooper::LaunchGrenade(int me) {
 
   /*
   // Create blast effect
-  vector pos;
+  simd::float3 pos;
   int room;
   Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
   Obj_GetGunPos(me, HT_GRENADE_GUNPOINT, &pos);
@@ -4157,8 +4157,8 @@ void HeavyTrooper::LaunchGrenade(int me) {
 
 // Checks whether the trooper has a clear shot
 bool HeavyTrooper::HasAClearGrenadeShot(int me, bool use_grenade_gunpoint /*=false*/) {
-  vector pos, dir;
-  matrix orient;
+  simd::float3 pos, dir;
+  vec::matrix orient;
   int room;
 
   // Get the current object's room number
@@ -4345,7 +4345,7 @@ void HeavyTrooper::SetMode(int me, char mode) {
   case HT_ARMORED_CIRCLE_BACK: {
     mprintf(0, "Armored circle-back mode set.\n");
 
-    vector pos;
+    simd::float3 pos;
     int room;
 
     // Disable firing capabilities
@@ -4665,7 +4665,7 @@ void HeavyTrooper::DoDamage(int me, tOSIRISEVTDAMAGED *damage_data) {
 
 // Handle smashing into target in armored mode
 void HeavyTrooper::DoCollide(int me, tOSIRISEVTCOLLIDE *collide_data) {
-  vector pos;
+  simd::float3 pos;
   int room;
 
   // Make sure we're in armored attack mode and still have charge left
@@ -4731,8 +4731,8 @@ void Lifter::SetMaxSpeed(int me, float speed) { AI_Value(me, VF_SET, AIV_F_MAX_S
 
 // Checks to see if tractor beam pulling can commence/continue
 bool Lifter::OkToPull(int me, bool initial_check /*=true*/) {
-  matrix orient;
-  vector vec_to_target;
+  vec::matrix orient;
+  simd::float3 vec_to_target;
   int target_handle;
   float fov_angle;
 
@@ -4781,14 +4781,14 @@ bool Lifter::OkToPull(int me, bool initial_check /*=true*/) {
   // NOTE: do my own vec to target here! (chris' doesn't update quick enough)
   AI_Value(me, VF_GET, AIV_V_VEC_TO_TARGET, &vec_to_target);
   vm_VectorNormalize(&vec_to_target);
-  fov_angle = orient.fvec * vec_to_target;
+  fov_angle = simd::dot(orient.fvec, vec_to_target);
   if (fov_angle < 0.7f)
     return false;
 
   // see if anything is in the way
   ray_info ray;
   int flags, fate;
-  vector start_pos, end_pos, landing_pos;
+  simd::float3 start_pos, end_pos, landing_pos;
   int start_room, landing_room;
   float target_size;
 
@@ -4811,11 +4811,11 @@ void Lifter::PullTarget(int me) {
   // see if anything is in the way
   ray_info ray;
   int flags, fate;
-  vector dir, start_pos, my_pos, end_pos, landing_pos;
+  simd::float3 dir, start_pos, my_pos, end_pos, landing_pos;
   int start_room, landing_room;
   float target_size, dist;
   int target_handle;
-  matrix target_orient;
+  vec::matrix target_orient;
   msafe_struct mstruct;
 
   // Make sure we still have a target
@@ -4862,9 +4862,9 @@ void Lifter::PullTarget(int me) {
 
 // Moves the target prop to the appropriate
 void Lifter::MoveTargetProp(int target_handle) {
-  vector target_pos;
+  simd::float3 target_pos;
   int target_room;
-  matrix target_orient;
+  vec::matrix target_orient;
   msafe_struct mstruct;
 
   Obj_Value(target_handle, VF_GET, OBJV_V_POS, &target_pos);
@@ -5095,7 +5095,7 @@ void Lifter::DoInit(int me) {
 
   // Create and setup the beam pulling target prop object
   msafe_struct mstruct;
-  vector pos;
+  simd::float3 pos;
   int room;
 
   Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
@@ -5135,7 +5135,7 @@ bool Lifter::DoNotify(int me, tOSIRISEventInfo *data) {
     if (memory->mode == LIFTER_PULLING) {
       // Create hit sparks
       int room;
-      vector pos;
+      simd::float3 pos;
       Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
       Obj_GetGunPos(me, 1, &pos);
       Game_CreateRandomSparks(20, &pos, room);
@@ -5335,7 +5335,7 @@ void Lifter::DoDamage(int me, tOSIRISEVTDAMAGED *damage_data) {
     if (damage_done_during_pull >= memory->shield_loss_margin) {
       // Create tractor beam device sparks
       int room;
-      vector pos;
+      simd::float3 pos;
       Obj_Value(memory->pull_source_prop, VF_GET, OBJV_I_ROOMNUM, &room);
       Obj_Value(memory->pull_source_prop, VF_GET, OBJV_V_POS, &pos);
       Game_CreateRandomSparks(15, &pos, room);
@@ -5504,7 +5504,7 @@ bool AlienBoss::IsOnFire(int me) { return (Obj_IsEffect(me, EF_NAPALMED)); }
 
 // Sets wandering destination goal for boss
 void AlienBoss::SetWanderGoal(int me) {
-  vector pos;
+  simd::float3 pos;
   int room = 0;
   float dist = 15.0f;
 
@@ -5530,7 +5530,7 @@ void AlienBoss::SetWanderGoal(int me) {
 
 // Sets goal to go to the current wander room
 void AlienBoss::SetWanderRoomGoal(int me) {
-  vector pos;
+  simd::float3 pos;
   int roomnum;
 
   roomnum = memory->wander_rooms[memory->curr_wander_room_index];
@@ -5548,7 +5548,7 @@ void AlienBoss::SetWanderRoomGoal(int me) {
 
 // Sets goal to go to the current wander room
 void AlienBoss::SetProtectNestGoal(int me) {
-  vector pos;
+  simd::float3 pos;
   int roomnum;
 
   // Go to the nest room (first room is list)
@@ -5567,7 +5567,7 @@ void AlienBoss::SetProtectNestGoal(int me) {
 
 // Sets goal to go to the current wander room
 void AlienBoss::SetHideRoomGoal(int me) {
-  vector pos, left_room_pos, right_room_pos, my_pos;
+  simd::float3 pos, left_room_pos, right_room_pos, my_pos;
   int roomnum;
   float left_room_dist;
   float right_room_dist;
@@ -5608,7 +5608,7 @@ void AlienBoss::SetHideRoomGoal(int me) {
 int AlienBoss::DetermineClosestRoom(int me) {
   int j, closest_room;
   float closest_dist, dist;
-  vector my_pos, room_pos;
+  simd::float3 my_pos, room_pos;
 
   // Get current position
   Obj_Value(me, VF_GET, OBJV_V_POS, &my_pos);
@@ -5669,7 +5669,7 @@ void AlienBoss::UpdateHealingEnergyBeams(int me) {
 
     // Create healing sparks
     int room;
-    vector pos;
+    simd::float3 pos;
     Obj_Value(memory->tail_pos_handle, VF_GET, OBJV_I_ROOMNUM, &room);
     Obj_Value(memory->tail_pos_handle, VF_GET, OBJV_V_POS, &pos);
     Game_CreateRandomSparks(5, &pos, room);
@@ -5733,7 +5733,7 @@ void AlienBoss::SetMode(int me, char mode) {
 
   int flags;
   char movement_type;
-  vector vel;
+  simd::float3 vel;
 
   // Clear out any goals
   AI_SafeSetType(me, AIT_AIS);
@@ -5761,7 +5761,7 @@ void AlienBoss::SetMode(int me, char mode) {
 
     ray_info ray;
     int fate;
-    vector end_pos, landing_pos;
+    simd::float3 end_pos, landing_pos;
     int end_room, landing_room;
 
     // If currently landed, set take off velocity
@@ -6151,7 +6151,7 @@ void AlienBoss::SetMode(int me, char mode) {
 void AlienBoss::DoTakeoff(int me, float takeoff_speed, float speed_variance) {
   // If currently landed, set take off velocity
   if (memory->mode == AB_HEALING || memory->mode == AB_WAITING) {
-    vector vel;
+    simd::float3 vel;
     int flags;
 
     Obj_Value(me, VF_GET, OBJV_V_VELOCITY, &vel);
@@ -6232,7 +6232,7 @@ void AlienBoss::DoInit(int me) {
   Obj_Value(me, VF_GET, OBJV_V_POS, &memory->home_pos);
   Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &memory->home_room);
 
-  matrix orient;
+  vec::matrix orient;
   Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
   memory->home_fvec = orient.fvec;
   vm_VectorNormalize(&memory->home_fvec);
@@ -6298,8 +6298,8 @@ void AlienBoss::DoCustomLookups(void) {
 
 // Checks to see if tractor beam pulling can commence/continue
 bool AlienBoss::OkToStartSpecialAttack(int me) {
-  matrix orient;
-  vector vec_to_target;
+  vec::matrix orient;
+  simd::float3 vec_to_target;
   int target_handle;
   float fov_angle;
 
@@ -6324,7 +6324,7 @@ bool AlienBoss::OkToStartSpecialAttack(int me) {
   // NOTE: do my own vec to target here! (chris' doesn't update quick enough)
   AI_Value(me, VF_GET, AIV_V_VEC_TO_TARGET, &vec_to_target);
   vm_VectorNormalize(&vec_to_target);
-  fov_angle = orient.fvec * vec_to_target;
+  fov_angle = simd::dot(orient.fvec, vec_to_target);
   if (fov_angle < 0.7f)
     return false;
 
@@ -6333,8 +6333,8 @@ bool AlienBoss::OkToStartSpecialAttack(int me) {
 
 // Checks to see if tractor beam pulling can commence/continue
 bool AlienBoss::DoStingAttack(int me) {
-  matrix orient;
-  vector vec_to_target;
+  vec::matrix orient;
+  simd::float3 vec_to_target;
   int target_handle;
   float fov_angle;
 
@@ -6355,14 +6355,14 @@ bool AlienBoss::DoStingAttack(int me) {
   // NOTE: do my own vec to target here! (chris' doesn't update quick enough)
   AI_Value(me, VF_GET, AIV_V_VEC_TO_TARGET, &vec_to_target);
   vm_VectorNormalize(&vec_to_target);
-  fov_angle = orient.fvec * vec_to_target;
+  fov_angle = simd::dot(orient.fvec, vec_to_target);
   if (fov_angle < 0.7f)
     return false;
 
   // see if anything is in the way
   ray_info ray;
   int flags, fate;
-  vector start_pos, end_pos, landing_pos;
+  simd::float3 start_pos, end_pos, landing_pos;
   int start_room, landing_room;
   float target_size;
 
@@ -6500,7 +6500,7 @@ void AlienBoss::DoFrame(int me) {
       SetMode(me, memory->mode_prior_teleporting);
       break;
     } else if (!memory->did_transfer && memory->mode_time > 1.0f) {
-      vector pos;
+      simd::float3 pos;
       int room;
 
       // Do effect before
@@ -6679,9 +6679,9 @@ void AlienBoss::DoFrame(int me) {
     // Wait until the fire frame is up
     if (anim_frame == AB_ATTACK_END_FRAME) {
       // Create a frag burst effect
-      vector pos;
+      simd::float3 pos;
       int room;
-      matrix orient;
+      vec::matrix orient;
 
       Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
       Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
@@ -6711,7 +6711,7 @@ void AlienBoss::DoFrame(int me) {
 
   // If necessary, check if we're stuck
   if (ModeIsStuckSensitive(memory->mode)) {
-    vector curr_pos, dist_vec;
+    simd::float3 curr_pos, dist_vec;
 
     // Update the values
     Obj_Value(me, VF_GET, OBJV_V_POS, &curr_pos);
@@ -6849,7 +6849,7 @@ bool AlienBoss::DoNotify(int me, tOSIRISEventInfo *data) {
   } else if (data->evt_ai_notify.notify_type == AIN_MELEE_HIT) {
     // Create hit sparks
     int room;
-    vector pos;
+    simd::float3 pos;
     Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
     Obj_GetGunPos(me, 0, &pos);
     Game_CreateRandomSparks(30, &pos, room);
@@ -6883,7 +6883,7 @@ void AlienBoss::DoDamage(int me, tOSIRISEVTDAMAGED *damage_data) {
       memory->next_special_damage_time = Game_GetTime() + 0.8f + ((float)rand() / (float)RAND_MAX) * 0.5f;
 
       // Create a frag burst effect
-      vector pos;
+      simd::float3 pos;
       int room;
       Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
       Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
@@ -6905,7 +6905,7 @@ void AlienBoss::DoDamage(int me, tOSIRISEVTDAMAGED *damage_data) {
 
       // Create sparks
       int room;
-      vector pos;
+      simd::float3 pos;
       Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
       Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
       Game_CreateRandomSparks(30 + int(((float)rand() / (float)RAND_MAX) * 10.0f), &pos, room);
@@ -7119,8 +7119,8 @@ void SecurityCamera::DoFrame(int me) {
       memory->next_activity_time = Game_GetTime() + SC_TRACK_INTERVAL;
 
       // Track the current target
-      vector local_vec_to_target, world_vec_to_target, dir, local_fvec;
-      matrix orient;
+      simd::float3 local_vec_to_target, world_vec_to_target, dir, local_fvec;
+      vec::matrix orient;
       double theta;
       float frame_offset, dot, curr_frame, dest_frame, anim_time, next_frame;
 
@@ -7139,7 +7139,7 @@ void SecurityCamera::DoFrame(int me) {
       local_fvec.x = 0.0f;
       local_fvec.y = 0.0f;
       local_fvec.z = 1.0f;
-      dot = dir * local_fvec;
+      dot = simd::dot(dir, local_fvec);
       if (dot < -1.0f)
         dot = -1.0f;
       if (dot > 1.0f)
@@ -7337,8 +7337,8 @@ void CrowdControl::DoFrame(int me) {
 
     // Make sure the object we're following still exists
     if (!memory->disable_check && qObjExists(memory->follow_handle)) {
-      vector my_vel, my_pos, leader_pos, leader_dir;
-      matrix my_orient;
+      simd::float3 my_vel, my_pos, leader_pos, leader_dir;
+      vec::matrix my_orient;
       float my_max_speed, dist, new_speed;
 
       Obj_Value(me, VF_GET, OBJV_V_VELOCITY, &my_vel);
@@ -7347,10 +7347,10 @@ void CrowdControl::DoFrame(int me) {
       Obj_Value(memory->follow_handle, VF_GET, OBJV_V_POS, &leader_pos);
 
       // It's ok to move in reverse, or away from leader
-      ok_to_move_normally = ((my_vel * my_orient.fvec) <= 0.0f) ? true : false;
+      ok_to_move_normally = (simd::dot(my_vel, my_orient.fvec) <= 0.0f) ? true : false;
       if (!ok_to_move_normally) {
         leader_dir = leader_pos - my_pos;
-        ok_to_move_normally = ((my_vel * leader_dir) <= 0.0f) ? true : false;
+        ok_to_move_normally = (simd::dot(my_vel, leader_dir) <= 0.0f) ? true : false;
       }
 
       // Check to see if we're too close to leader (so we can slow down and stop)

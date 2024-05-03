@@ -421,8 +421,8 @@ extern uint32_t check_point_to_face(simd::float3 *colp, simd::float3 *face_norma
 extern int check_vector_to_sphere_1(simd::float3 *intp, float *col_dist, const simd::float3 *p0, const simd::float3 *p1,
                                     simd::float3 *sphere_pos, float sphere_rad, bool f_correcting, bool f_init_collisions);
 
-extern int check_line_to_face(simd::float3 *newp, simd::float3 *colp, float *col_dist, simd::float3 *wall_norm, const vector *p0,
-                              const vector *p1, simd::float3 *face_normal, simd::float3 **vertex_ptr_list, const int nv,
+extern int check_line_to_face(simd::float3 *newp, simd::float3 *colp, float *col_dist, simd::float3 *wall_norm, const simd::float3 *p0,
+                              const simd::float3 *p1, simd::float3 *face_normal, simd::float3 **vertex_ptr_list, const int nv,
                               const float rad);
 extern void InitFVI();
 

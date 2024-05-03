@@ -213,7 +213,7 @@ extern float Room_light_val;
 extern int Room_fog_plane_check;
 extern float Room_fog_distance;
 extern float Room_fog_eye_distance;
-extern vector Room_fog_plane, Room_fog_portal_vert;
+extern simd::float3 Room_fog_plane, Room_fog_portal_vert;
 
 struct face;
 
@@ -298,13 +298,13 @@ void PostUpdateAllLightGlows();
 void ResetLightGlows();
 
 // Gets the dynamic light value for this position
-void GetRoomDynamicScalar(vector *pos, room *rp, float *r, float *g, float *b);
+void GetRoomDynamicScalar(simd::float3 *pos, room *rp, float *r, float *g, float *b);
 
 // Sorts our texture states using the quicksort algorithm
 void SortStates(state_limited_element *state_array, int cellcount);
 
 // Sets up fog if this room is fogged
-void SetupRoomFog(room *rp, vector *eye, matrix *orient, int viewer_room);
+void SetupRoomFog(room *rp, simd::float3 *eye, vec::matrix *orient, int viewer_room);
 
 // Draw the specified face
 // Parameters:	rp - pointer to the room the face is un

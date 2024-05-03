@@ -59,31 +59,33 @@ struct angvec {
 };
 
 #define IDENTITY_MATRIX                                                                                                \
-{                                                                                                                    \
-{1.0, 0, 0}, {0, 1.0, 0}, { 0, 0, 1.0 }                                                                            \
-}
+  {                                                                                                                    \
+    {1.0, 0, 0}, {0, 1.0, 0}, { 0, 0, 1.0 }                                                                            \
+  }
 
 typedef simd::float3 vector;
-//typedef struct {
-//  float x, y, z;
-//} vector;
+// typedef struct {
+//   float x, y, z;
+// } vector;
 
-//typedef struct vector4 {
-//  float x, y, z, kat_pad;
-//} vector4;
+// typedef struct vector4 {
+//   float x, y, z, kat_pad;
+// } vector4;
 
 typedef simd::float4 vector4;
 
 typedef struct {
-	float xyz[3];
+  float xyz[3];
 } vector_array;
 
+// TODO: replace with simd::float3x3
 typedef struct {
-	simd::float3 rvec, uvec, fvec;
+  simd::float3 rvec, uvec, fvec;
 } matrix;
 
+// TODO: replace with simd::float4x3
 typedef struct {
-	simd::float4 rvec, uvec, fvec;
+  simd::float4 rvec, uvec, fvec;
 } matrix4;
 
 // Zero's out a vector
@@ -294,10 +296,10 @@ static inline vector operator*(vector v, matrix m) {
   return result;
 }
 
-static inline float vm_Dot3Vector(float x, float y, float z, vector *v) { return simd::dot(simd_make_float3(x, y, z), *v); }
+static inline float vm_Dot3Vector(float x, float y, float z, simd::float3 *v) { return simd::dot(simd_make_float3(x, y, z), *v); }
 
 #define vm_GetSurfaceNormal vm_GetNormal
 
-}
+} // namespace vec
 
 #endif

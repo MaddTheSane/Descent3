@@ -309,8 +309,8 @@ $$END
 int qCustomCreateObjectAtObject(int type, int id, int handle) {
   int handletype;
   int room;
-  vector pos;
-  matrix orient;
+  simd::float3 pos;
+  vec::matrix orient;
 
   if ((type != OBJ_ROBOT && type != OBJ_CLUTTER && type != OBJ_BUILDING && type != OBJ_POWERUP) || (id < 0))
     return OBJECT_HANDLE_NONE;

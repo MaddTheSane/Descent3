@@ -345,7 +345,7 @@ int FindPolyModelName(const std::filesystem::path &name);
 // an animation state we are
 
 // This one is for static lighting - ie 1 light value for the entire model
-void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normalized_time, int flags, float r, float g,
+void DrawPolygonModel(simd::float3 *pos, vec::matrix *orient, int model_num, float *normalized_time, int flags, float r, float g,
                       float b, uint32_t f_render_sub = 0xFFFFFFFF, uint8_t use_effect = 0, uint8_t overlay = 0);
 
 // This one is for gouraud shading - the lightdir is the normalized light direction, and lightscalar is a 0-1 scalar to
@@ -396,10 +396,10 @@ int RenderPolygonModel(poly_model *, uint32_t f_render_sub = 0xFFFFFFFF);
 void RenderSubmodel(poly_model *pm, bsp_info *sm, uint32_t f_render_sub);
 
 //	returns point within polymodel/submodel in world coordinates.
-void GetPolyModelPointInWorld(simd::float3 *dest, poly_model *pm, simd::float3 *wpos, vec::matrix *orient, int subnum, vector *pos,
-                              vector *norm = nullptr);
+void GetPolyModelPointInWorld(simd::float3 *dest, poly_model *pm, simd::float3 *wpos, vec::matrix *orient, int subnum, simd::float3 *pos,
+                              simd::float3 *norm = nullptr);
 void GetPolyModelPointInWorld(simd::float3 *dest, poly_model *pm, simd::float3 *wpos, vec::matrix *orient, int subnum,
-                              float *normalized_time, vector *pos, vector *norm = nullptr);
+                              float *normalized_time, simd::float3 *pos, simd::float3 *norm = nullptr);
 
 // Returns 1 if this submodel shouldn't be rendered
 int IsNonRenderableSubmodel(poly_model *pm, int submodelnum);
@@ -420,6 +420,6 @@ void FreePolymodelData(int i);
 void SetModelAnglesAndPos(poly_model *po, float *normalized_time, uint32_t subobj_flags = 0xFFFFFFFF);
 
 extern void DoneLightInstance();
-extern void StartLightInstance(vector *, matrix *);
+extern void StartLightInstance(simd::float3 *, vec::matrix *);
 
 #endif

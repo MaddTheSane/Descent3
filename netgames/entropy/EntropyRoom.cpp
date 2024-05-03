@@ -97,7 +97,7 @@ int SpewObjectInRoom(int type, int id, int roomnum) {
   if (DMFCBase->GetLocalRole() != LR_SERVER)
     return -1;
 
-  vector vpos;
+  simd::float3 vpos;
   int objnum;
 
   DLLComputeRoomCenter(&vpos, &dRooms[roomnum]);

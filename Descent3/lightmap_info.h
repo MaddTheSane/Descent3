@@ -57,7 +57,7 @@
 struct lightmap_info {
   uint8_t xspacing, yspacing;
   uint16_t lm_handle;
-  vector upper_left, normal;
+  simd::float3 upper_left, normal;
   uint8_t width, height, x1, y1;
   uint8_t used;
 

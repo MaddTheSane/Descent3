@@ -136,7 +136,7 @@ room *dRooms;
 ////////////////////////////////////////////////////
 struct tPlayerPos {
   float total_time;
-  vector last_pos;
+  simd::float3 last_pos;
 };
 
 struct tPlayerStat { // Overall scores (throughout the game)
@@ -193,7 +193,7 @@ static void SaveStatsToFile(char *filename);
 static void OnLabSpewTimer(void);
 void RemoveVirusFromPlayer(int player_num, bool remove_all);
 static bool ScanForLaboratory(int team, int *newlab);
-static bool CompareDistanceTravel(vector *curr_pos, vector *last_pos);
+static bool CompareDistanceTravel(simd::float3 *curr_pos, simd::float3 *last_pos);
 static void OnDisconnectSaveStatsToFile(void);
 static void OnLevelEndSaveStatsToFile(void);
 static void OnGetTokenString(char *src, char *dest, int dest_size);
@@ -1056,11 +1056,11 @@ void DoPlayerInEnemy(int pnum, float time) {
 
   if (TimeInRoom[pnum].total_time == 0) {
     // update player position
-    memcpy(&TimeInRoom[pnum].last_pos, &dObjects[dPlayers[pnum].objnum].pos, sizeof(vector));
+    memcpy(&TimeInRoom[pnum].last_pos, &dObjects[dPlayers[pnum].objnum].pos, sizeof(simd::float3));
   }
 
-  vector curr_pos;
-  memcpy(&curr_pos, &dObjects[dPlayers[pnum].objnum].pos, sizeof(vector));
+  simd::float3 curr_pos;
+  memcpy(&curr_pos, &dObjects[dPlayers[pnum].objnum].pos, sizeof(simd::float3));
 
   if (!CompareDistanceTravel(&curr_pos, &TimeInRoom[pnum].last_pos)) {
     // the player has moved!!!
@@ -1828,8 +1828,8 @@ bool ScanForLaboratory(int team, int *newlab) {
   return false;
 }
 
-bool CompareDistanceTravel(vector *curr_pos, vector *last_pos) {
-  vector result;
+bool CompareDistanceTravel(simd::float3 *curr_pos, simd::float3 *last_pos) {
+  simd::float3 result;
   float a, b, c, bc, dist;
 
   result.x = curr_pos->x - last_pos->x;
@@ -1863,7 +1863,7 @@ bool CompareDistanceTravel(vector *curr_pos, vector *last_pos) {
   dist = a + bc + (bc / 2);
 
   if (dist > 5) {
-    memcpy(last_pos, curr_pos, sizeof(vector));
+    memcpy(last_pos, curr_pos, sizeof(simd::float3));
     return false;
   } else {
     return true;

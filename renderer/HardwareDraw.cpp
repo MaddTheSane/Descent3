@@ -298,7 +298,7 @@ void g3_DrawBitmap(simd::float3 *pos, float width, float height, int bm, int col
 // Draws a bitmap that has been rotated about its center.  Angle of rotation is passed as 'rot_angle'
 void g3_DrawRotatedBitmap(simd::float3 *pos, vec::angle rot_angle, float width, float height, int bm, int color) {
   // get the view orientation
-  simd::float3 viewOrient;
+  vec::matrix viewOrient;
   g3_GetUnscaledMatrix(&viewOrient);
 
   vec::matrix rot_matrix;

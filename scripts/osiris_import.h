@@ -79,19 +79,20 @@ OSIRISEXTERN Obj_GetTimeLived_fp Obj_GetTimeLived;
 
 //	void Obj_GetGunPos(int objhandle,int gun_number,vector *gun_pnt,vector *gun_normal);
 //	returns information about a gunpoint of an object
-typedef void (*Obj_GetGunPos_fp)(int objhandle, int gun_number, vector *gun_pnt, vector *gun_normal);
+typedef void (*Obj_GetGunPos_fp)(int objhandle, int gun_number, simd::float3 *gun_pnt, simd::float3 *gun_normal);
 OSIRISEXTERN Obj_GetGunPos_fp Obj_GetGunPosFP;
 
-static inline void Obj_GetGunPos(int objhandle, int gun_number, vector *gun_pnt, vector *gun_normal = NULL) {
+static inline void Obj_GetGunPos(int objhandle, int gun_number, simd::float3 *gun_pnt, simd::float3 *gun_normal = NULL) {
   Obj_GetGunPosFP(objhandle, gun_number, gun_pnt, gun_normal);
 }
 
-//	void Obj_GetGroundPos(int objhandle,int ground_number,vector *ground_pnt,vector *ground_normal);
+//	void Obj_GetGroundPos(int objhandle,int ground_number,simd::float3 *ground_pnt,simd::float3 *ground_normal);
 //	returns information about a groundpoint of an object
-typedef void (*Obj_GetGroundPos_fp)(int objhandle, int ground_number, vector *ground_pnt, vector *ground_normal);
+typedef void (*Obj_GetGroundPos_fp)(int objhandle, int ground_number, simd::float3 *ground_pnt,
+                                    simd::float3 *ground_normal);
 OSIRISEXTERN Obj_GetGroundPos_fp Obj_GetGroundPosFP;
-static inline void Obj_GetGroundPos(int objhandle, int ground_number, vector *ground_pnt,
-                                    vector *ground_normal = NULL) {
+static inline void Obj_GetGroundPos(int objhandle, int ground_number, simd::float3 *ground_pnt,
+                                    simd::float3 *ground_normal = NULL) {
   Obj_GetGroundPosFP(objhandle, ground_number, ground_pnt, ground_normal);
 }
 
@@ -151,7 +152,7 @@ OSIRISEXTERN Obj_UnattachChildren_fp Obj_UnattachChildren;
 
 //	int FVI_RayCast(int objhandle,vector *p0,vector *p1,int start_roomnum,float rad,int flags,ray_info *ri);
 //	Shoots out a ray, returns its fate
-typedef int (*FVI_RayCast_fp)(int objhandle, vector *p0, vector *p1, int start_roomnum, float rad, int flags,
+typedef int (*FVI_RayCast_fp)(int objhandle, simd::float3 *p0, simd::float3 *p1, int start_roomnum, float rad, int flags,
                               ray_info *ri);
 OSIRISEXTERN FVI_RayCast_fp FVI_RayCast;
 
@@ -191,15 +192,15 @@ static inline void Matcen_Value(int matcen_handle, char op, char vtype, void *pt
 }
 
 //	uint8_t AI_TurnTowardsVectors(int objhandle,vector *fvec,vector *uvec);
-typedef uint8_t (*AI_TurnTowardsVectors_fp)(int objhandle, vector *fvec, vector *uvec);
+typedef uint8_t (*AI_TurnTowardsVectors_fp)(int objhandle, simd::float3 *fvec, simd::float3 *uvec);
 OSIRISEXTERN AI_TurnTowardsVectors_fp AI_TurnTowardsVectors;
 
 //	void AI_SetType(int objhandle,int type);
 typedef void (*AI_SetType_fp)(int objhandle, int type);
 OSIRISEXTERN AI_SetType_fp AI_SetType;
 
-//	vector AI_FindHidePos(int hideobjhandle,int viewobjhandle,float time,int *hide_room);
-typedef vector (*AI_FindHidePos_fp)(int hideobjhandle, int viewobjhandle, float time, int *hide_room);
+//	simd::float3 AI_FindHidePos(int hideobjhandle,int viewobjhandle,float time,int *hide_room);
+typedef simd::float3 (*AI_FindHidePos_fp)(int hideobjhandle, int viewobjhandle, float time, int *hide_room);
 OSIRISEXTERN AI_FindHidePos_fp AI_FindHidePos;
 
 //	int AI_GoalAddEnabler(int objhandle,int goal_index,int enabler_type,float percent,float interval,void *ptr);
@@ -222,8 +223,8 @@ static inline int AI_FindObjOfType(int objhandle, int type, int id, bool f_ignor
                                    int parent_handle = OBJECT_HANDLE_NONE) {
   return AI_FindObjOfTypeFP(objhandle, type, id, f_ignore_init_room, parent_handle);
 }
-//	vector AI_GetRoomPathPoint(int roomnum);
-typedef vector (*AI_GetRoomPathPoint_fp)(int roomnum);
+//	simd::float3 AI_GetRoomPathPoint(int roomnum);
+typedef simd::float3 (*AI_GetRoomPathPoint_fp)(int roomnum);
 OSIRISEXTERN AI_GetRoomPathPoint_fp AI_GetRoomPathPoint;
 
 //	int AI_FindEnergyCenter(int objhandle);
@@ -382,11 +383,11 @@ typedef void (*MSafe_DoPowerup_fp)(msafe_struct *mstruct);
 OSIRISEXTERN MSafe_DoPowerup_fp MSafe_DoPowerup;
 
 // int Obj_Create()(uint8_t type,uint16_t id,int roomnum,vector *pos,const matrix *orient,int parent_handle)
-typedef int (*Obj_Create_fp)(uint8_t type, uint16_t id, int roomnum, vector *pos, const matrix *orient, int parent_handle,
-                             vector *initial_velocity);
+typedef int (*Obj_Create_fp)(uint8_t type, uint16_t id, int roomnum, simd::float3 *pos, const vec::matrix *orient, int parent_handle,
+                             simd::float3 *initial_velocity);
 OSIRISEXTERN Obj_Create_fp Obj_CreateFP;
-static inline int Obj_Create(uint8_t type, uint16_t id, int roomnum, vector *pos, const matrix *orient = NULL,
-                             int parent_handle = 0, vector *initial_velocity = NULL) {
+static inline int Obj_Create(uint8_t type, uint16_t id, int roomnum, simd::float3 *pos, const vec::matrix *orient = NULL,
+                             int parent_handle = 0, simd::float3 *initial_velocity = NULL) {
   return Obj_CreateFP(type, id, roomnum, pos, orient, parent_handle, initial_velocity);
 }
 // float Game_GetTime() (void)
@@ -507,11 +508,11 @@ static inline bool AI_GoalValue(int obj_handle, char g_index, char op, char vtyp
   return AI_GoalValueFP(obj_handle, g_index, op, vtype, ptr, index);
 }
 
-typedef int (*AI_GetNearbyObjs_fp)(vector *pos, int init_roomnum, float rad, int *object_handle_list, int max_elements,
-                                   bool f_lightmap_only, bool f_only_players_and_ais,
+typedef int (*AI_GetNearbyObjs_fp)(simd::float3 *pos, int init_roomnum, float rad, int *object_handle_list,
+                                   int max_elements, bool f_lightmap_only, bool f_only_players_and_ais,
                                    bool f_include_non_collide_objects, bool f_stop_at_closed_doors);
 OSIRISEXTERN AI_GetNearbyObjs_fp AI_GetNearbyObjsFP;
-static inline int AI_GetNearbyObjs(vector *pos, int init_roomnum, float rad, int *object_handle_list, int max_elements,
+static inline int AI_GetNearbyObjs(simd::float3 *pos, int init_roomnum, float rad, int *object_handle_list, int max_elements,
                                    bool f_lightmap_only, bool f_only_players_and_ais = true,
                                    bool f_include_non_collide_objects = false, bool f_stop_at_closed_doors = true) {
   return AI_GetNearbyObjsFP(pos, init_roomnum, rad, object_handle_list, max_elements, f_lightmap_only,
@@ -601,10 +602,10 @@ OSIRISEXTERN Scrpt_FindDoorName_fp Scrpt_FindDoorName;
 typedef int (*Scrpt_FindTextureName_fp)(const char *name);
 OSIRISEXTERN Scrpt_FindTextureName_fp Scrpt_FindTextureName;
 
-typedef void (*Game_CreateRandomSparks_fp)(int num_sparks, vector *pos, int roomnum, int which_index,
+typedef void (*Game_CreateRandomSparks_fp)(int num_sparks, simd::float3 *pos, int roomnum, int which_index,
                                            float force_scalar);
 OSIRISEXTERN Game_CreateRandomSparks_fp Game_CreateRandomSparksFP;
-static inline void Game_CreateRandomSparks(int num_sparks, vector *pos, int roomnum, int which_index = -1,
+static inline void Game_CreateRandomSparks(int num_sparks, simd::float3 *pos, int roomnum, int which_index = -1,
                                            float force_scalar = 1.0f) {
   return Game_CreateRandomSparksFP(num_sparks, pos, roomnum, which_index, force_scalar);
 }
@@ -626,10 +627,10 @@ OSIRISEXTERN Game_IsShipEnabled_fp Game_IsShipEnabled;
 //	pathid: path number
 //	point: which path point
 // returns true if operation was successful
-typedef bool (*Path_GetInformation_fp)(int pathid, int point, vector *pos, int *room, matrix *orient);
+typedef bool (*Path_GetInformation_fp)(int pathid, int point, simd::float3 *pos, int *room, vec::matrix *orient);
 OSIRISEXTERN Path_GetInformation_fp Path_GetInformationFP;
-static inline bool Path_GetInformation(int pathid, int point, vector *pos = NULL, int *room = NULL,
-                                       matrix *orient = NULL) {
+static inline bool Path_GetInformation(int pathid, int point, simd::float3 *pos = NULL, int *room = NULL,
+                                       vec::matrix *orient = NULL) {
   return Path_GetInformationFP(pathid, point, pos, room, orient);
 }
 // starts a canned cinematic sequence

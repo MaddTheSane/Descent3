@@ -424,7 +424,7 @@ void DeformTerrainPoint(int x, int z, int change_height) {
 
   for (i = sz; i <= z; i++) {
     for (int t = sx; t <= x; t++) {
-      vector a, b, c;
+      simd::float3 a, b, c;
       terrain_segment *tseg0 = &Terrain_seg[i * TERRAIN_WIDTH + t];
       terrain_segment *tseg1 = &Terrain_seg[(i + 1) * TERRAIN_WIDTH + t];
       terrain_segment *tseg2 = &Terrain_seg[((i + 1) * TERRAIN_WIDTH) + t + 1];
@@ -464,10 +464,10 @@ void DeformTerrainPoint(int x, int z, int change_height) {
 }
 
 void UpdateSingleTerrainLightmap(int which);
-void DeformTerrain(vector *pos, int depth, float size) {
+void DeformTerrain(simd::float3 *pos, int depth, float size) {
   int startx, startz, endx, endz;
   int changed[4] = {0, 0, 0, 0};
-  vector local_pos = *pos;
+  simd::float3 local_pos = *pos;
 
   startx = (pos->x / TERRAIN_SIZE) - (size / TERRAIN_SIZE);
   startz = (pos->z / TERRAIN_SIZE) - (size / TERRAIN_SIZE);
@@ -481,8 +481,8 @@ void DeformTerrain(vector *pos, int depth, float size) {
 
   int i, t;
 
-  vector cur_vec;
-  vector up_vec = {0, 1, 0};
+  simd::float3 cur_vec;
+  simd::float3 up_vec = {0, 1, 0};
 
   local_pos.y = 0;
 
@@ -490,7 +490,7 @@ void DeformTerrain(vector *pos, int depth, float size) {
   cur_vec.y = 0;
   cur_vec.z = startz * TERRAIN_SIZE;
 
-  float max_dist = vm_VectorDistanceQuick(&local_pos, &cur_vec);
+  float max_dist = vec::vm_VectorDistanceQuick(&local_pos, &cur_vec);
 
   for (i = startz; i <= endz; i++, cur_vec.z += TERRAIN_SIZE) {
     cur_vec.x = startx * TERRAIN_SIZE;
@@ -539,9 +539,9 @@ void DeformTerrain(vector *pos, int depth, float size) {
 // Builds normals for the currently loaded terrain
 void BuildTerrainNormals() {
   int i, t, l, z, x;
-  vector a, b, c;
+  simd::float3 a, b, c;
   int simplemul;
-  vector up_norm = {0, 1.0, 0};
+  simd::float3 up_norm = {0, 1.0, 0};
 
   // Set all to be initially up
   for (i = 0; i < TERRAIN_WIDTH * TERRAIN_DEPTH; i++) {
@@ -600,7 +600,7 @@ void GenerateTerrainLight() {
 
   GenerateLightSource();
 
-  vector camera_light = Terrain_sky.lightsource;
+  simd::float3 camera_light = Terrain_sky.lightsource;
 
   vm_NormalizeVector(&camera_light);
 
@@ -695,14 +695,14 @@ void SetupSky(float radius, int flags, uint8_t randit) {
   // Figure out where our points in the inside of the sphere are
   for (i = 0; i < 6; i++) {
     const int increment = 16384 / 5;
-    const angle pitch = (65536 - 16384) + (i * increment);
+    const vec::angle pitch = (65536 - 16384) + (i * increment);
 
     for (t = 0; t < MAX_HORIZON_PIECES; t++) {
-      vector *vec = &Terrain_sky.horizon_vectors[t][i];
+      simd::float3 *vec = &Terrain_sky.horizon_vectors[t][i];
 
-      matrix tempm;
-      vm_AnglesToMatrix(&tempm, pitch, t * jump, 0);
-      vm_ScaleVector(vec, &tempm.fvec, SKY_RADIUS / 2);
+      vec::matrix tempm;
+      vec::vm_AnglesToMatrix(&tempm, pitch, t * jump, 0);
+      vec::vm_ScaleVector(vec, &tempm.fvec, SKY_RADIUS / 2);
 
       vec->y -= MAX_TERRAIN_HEIGHT;
       vec->y += (rad_diff / 4);
@@ -731,8 +731,8 @@ void SetupSky(float radius, int flags, uint8_t randit) {
     return;
 
   for (i = 0; i < MAX_STARS; i++) {
-    vector starvec;
-    matrix tempm;
+    simd::float3 starvec;
+    vec::matrix tempm;
     int p;
     top = ((65536 / 4) * 3);
     int highlimit = MAX_STARS / 8;
@@ -784,7 +784,7 @@ void SetupSky(float radius, int flags, uint8_t randit) {
   }
 
   for (i = 0; i < MAX_SATELLITES; i++) {
-    vector satellitevec;
+    simd::float3 satellitevec;
     matrix tempm;
 
     int p = ps_rand() % (65336 / 8);
@@ -1132,7 +1132,7 @@ void UpdateTerrainLightmaps() {
 void BuildNormalForTerrainSegment(int n) {
   int i, t;
 
-  vector a, b, c;
+  simd::float3 a, b, c;
 
   if (n < 0 || n >= (TERRAIN_WIDTH - 1) * (TERRAIN_DEPTH - 1))
     return;
@@ -1152,7 +1152,7 @@ void BuildNormalForTerrainSegment(int n) {
   c.y = Terrain_seg[(i * TERRAIN_WIDTH) + (t + TERRAIN_WIDTH + 1)].y;
   c.z = (i + 1) * TERRAIN_SIZE;
 
-  vm_GetNormal(&TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + t].normal1, &a, &b, &c);
+  vec::vm_GetNormal(&TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + t].normal1, &a, &b, &c);
 
   a.x = t * TERRAIN_SIZE;
   a.y = Terrain_seg[(i * TERRAIN_WIDTH) + (t)].y;
@@ -1166,13 +1166,13 @@ void BuildNormalForTerrainSegment(int n) {
   c.y = Terrain_seg[(i * TERRAIN_WIDTH) + (t + 1)].y;
   c.z = (i)*TERRAIN_SIZE;
 
-  vm_GetNormal(&TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + t].normal2, &a, &b, &c);
+  vec::vm_GetNormal(&TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + t].normal2, &a, &b, &c);
 }
 
 // Builds the vertex normal for terrain segment n
 void BuildLightingNormalForSegment(int n) {
   int i, t, hback, vback;
-  vector temp;
+  simd::float3 temp;
 
   if (n < 0 || n >= (TERRAIN_WIDTH - 1) * (TERRAIN_DEPTH - 1))
     return;
@@ -1192,11 +1192,11 @@ void BuildLightingNormalForSegment(int n) {
 
   vm_MakeZero(&temp);
 
-  vm_AddVectors(&temp, &temp, &TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + hback].normal2);
-  vm_AddVectors(&temp, &temp, &TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + t].normal2);
-  vm_AddVectors(&temp, &temp, &TerrainNormals[MAX_TERRAIN_LOD - 1][(vback)*TERRAIN_WIDTH + hback].normal1);
-  vm_AddVectors(&temp, &temp, &TerrainNormals[MAX_TERRAIN_LOD - 1][(vback)*TERRAIN_WIDTH + t].normal2);
+  temp += TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + hback].normal2;
+  temp += TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + t].normal2;
+  temp += TerrainNormals[MAX_TERRAIN_LOD - 1][(vback)*TERRAIN_WIDTH + hback].normal1;
+  temp += TerrainNormals[MAX_TERRAIN_LOD - 1][(vback)*TERRAIN_WIDTH + t].normal2;
 
-  vm_AverageVector(&temp, 4);
+  temp /= 4.0f;
   //	vm_NormalizeVectorFast (&temp);
 }

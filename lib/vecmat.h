@@ -161,7 +161,7 @@
 
 namespace vec {
 
-extern const vector Zero_vector;
+extern const simd::float3 Zero_vector;
 extern const matrix Identity_matrix;
 
 // Used for debugging.  It is used in printf's so we do not have to write out the structure 3 times
@@ -172,16 +172,16 @@ extern const matrix Identity_matrix;
 extern void vm_MakeIdentity(matrix *);
 
 // Set a vector to {0,0,0}
-extern void vm_MakeZero(vector *v);
+extern void vm_MakeZero(simd::float3 *v);
 
 // Set an angvec to {0,0,0}
 extern void vm_MakeZero(angvec *a);
 
 // Rotates a vector thru a matrix
-extern void vm_MatrixMulVector(vector *, vector *, matrix *);
+extern void vm_MatrixMulVector(simd::float3 *, simd::float3 *, matrix *);
 
 // Multiply a vector times the transpose of a matrix
-void vm_VectorMulTMatrix(vector *result, vector *v, matrix *m);
+void vm_VectorMulTMatrix(simd::float3 *result, simd::float3 *v, matrix *m);
 
 // Multiplies 2 3x3 matrixes, returning the result in first argument
 extern void vm_MatrixMul(matrix *, matrix *, matrix *);
@@ -190,44 +190,52 @@ extern void vm_MatrixMul(matrix *, matrix *, matrix *);
 void vm_MatrixMulTMatrix(matrix *dest, matrix *src0, matrix *src1);
 
 // Given a vector, returns the magnitude.  Uses sqrt so it's slow
-extern float vm_GetMagnitude(vector *);
+extern float vm_GetMagnitude(simd::float3 *);
 
 // Given a vector, returns an approximation of the magnitude
-extern float vm_GetMagnitudeFast(vector *);
+extern float vm_GetMagnitudeFast(simd::float3 *);
 
-// Returns the dot product of the two given vectors
-extern float vm_DotProduct(const vector *, const vector *);
+/// Returns the dot product of the two given vectors.
+///
+/// Use \c simd::dot() instead.
+extern float vm_DotProduct(const simd::float3 *, const simd::float3 *);
 
-// Returns a perpendicular vector to the two given vectors
-extern void vm_CrossProduct(vector *, vector *, vector *);
+/// Returns a perpendicular vector to the two given vectors
+///
+/// Use \c simd::cross() instead.
+extern void vm_CrossProduct(simd::float3 *, simd::float3 *, simd::float3 *);
 
-// Returns the difference between two vectors
-extern void vm_SubVectors(vector *, const vector *, const vector *);
+/// Returns the difference between two vectors.
+///
+/// Use simple subtract symbol instead.
+extern void vm_SubVectors(simd::float3 *, const simd::float3 *, const simd::float3 *);
 
-// Returns adds two vectors, returns result in first arg
-extern void vm_AddVectors(vector *, vector *, vector *);
+/// Returns adds two vectors, returns result in first arg.
+///
+/// Just use the addition symbol.
+extern void vm_AddVectors(simd::float3 *, simd::float3 *, simd::float3 *);
 
 // Inits vector to 0,0,0
-extern void vm_CenterVector(vector *);
+extern void vm_CenterVector(simd::float3 *);
 
 // Given a vector, divides second arg by vector components
-extern void vm_AverageVector(vector *, int);
+extern void vm_AverageVector(simd::float3 *, int);
 
 // Normalizes a vector
 // Returns the magnitude before normalization
-extern float vm_NormalizeVector(vector *);
+extern float vm_NormalizeVector(simd::float3 *);
 
 // Scales second arg vector by 3rd arg, placing result in first arg
-extern void vm_ScaleVector(vector *, vector *, float);
+extern void vm_ScaleVector(simd::float3 *, simd::float3 *, float);
 
 // Scales all components of vector v by value s adds the result to p and stores result in vector d
-extern void vm_ScaleAddVector(vector *d, vector *p, vector *v, float s);
+extern void vm_ScaleAddVector(simd::float3 *d, simd::float3 *p, simd::float3 *v, float s);
 
 // Divides second vector components by 3rd arg, placing result in first arg.  Useful for parametric lines
-extern void vm_DivVector(vector *, vector *, float);
+extern void vm_DivVector(simd::float3 *, simd::float3 *, float);
 
 // Same as NormalizeVector, but uses approximation
-extern float vm_NormalizeVectorFast(vector *);
+extern float vm_NormalizeVectorFast(simd::float3 *);
 
 // Clears a matrix to zero
 extern void vm_ClearMatrix(matrix *);
@@ -245,13 +253,13 @@ void vm_Orthogonalize(matrix *m);
 // Parameters:	m - filled in with the orienation matrix
 //					fvec,uvec,rvec - pointers to vectors that determine the matrix.
 //						One or two of these must be specified, with the other(s) set to NULL.
-void vm_VectorToMatrix(matrix *m, vector *fvec, vector *uvec = nullptr, vector *rvec = nullptr);
+void vm_VectorToMatrix(matrix *m, simd::float3 *fvec, simd::float3 *uvec = nullptr, simd::float3 *rvec = nullptr);
 
 // Computes a matrix from a vector and and angle of rotation around that vector
 // Parameters:	m - filled in with the computed matrix
 //					v - the forward vector of the new matrix
 //					a - the angle of rotation around the forward vector
-void vm_VectorAngleToMatrix(matrix *m, vector *v, angle a);
+void vm_VectorAngleToMatrix(matrix *m, simd::float3 *v, angle a);
 
 // Given an angle, places sin in 2nd arg, cos in 3rd.  Either can be null
 extern void vm_SinCos(angle, float *, float *);
@@ -262,17 +270,19 @@ extern float vm_GetSlope(float, float, float, float);
 // Calculates the perpendicular vector given three points
 // Parms:	n - the computed perp vector (filled in)
 //			v0,v1,v2 - three clockwise vertices
-void vm_GetPerp(vector *n, vector *a, vector *b, vector *c);
+void vm_GetPerp(simd::float3 *n, simd::float3 *a, simd::float3 *b, simd::float3 *c);
 
 // Calculates the (normalized) surface normal give three points
 // Parms:	n - the computed surface normal (filled in)
 //			v0,v1,v2 - three clockwise vertices
 // Returns the magnitude of the normal before it was normalized.
 // The bigger this value, the better the normal.
-float vm_GetNormal(vector *n, vector *v0, vector *v1, vector *v2);
+float vm_GetNormal(simd::float3 *n, simd::float3 *v0, simd::float3 *v1, simd::float3 *v2);
 
-// Gets the distances (magnitude) between two vectors. Slow.
-extern float vm_VectorDistance(const vector *a, const vector *b);
+/// Gets the distances (magnitude) between two vectors. Slow.
+///
+/// Replace with \c simd::distance
+extern float vm_VectorDistance(const simd::float3 *a, const simd::float3 *b);
 
 // Gets the approx distances (magnitude) between two vectors. Faster.
 extern float vm_VectorDistanceQuick(vector *a, vector *b);
@@ -322,7 +332,7 @@ float vm_ComputeBoundingSphere(vector *center, vector *vecs, int num_verts);
 // Returns the size of the passed in stuff
 float vm_GetCentroidFast(vector *centroid, vector *src, int nv);
 
-}
+} // namespace vec
 
 // Here are the C++ operator overloads -- they do as expected
 extern vec::matrix operator*(vec::matrix src0, vec::matrix src1);

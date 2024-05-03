@@ -481,8 +481,8 @@ struct humonculous_data {
   uint16_t mode;
   uint16_t next_mode;
 
-  vector land_pos;
-  vector land_fvec;
+  simd::float3 land_pos;
+  simd::float3 land_fvec;
   // Note: land_uvec is always {0.0, 1.0, 0.0}
 
   float ground_pnt_offset; // This can be computed at start of level
@@ -503,7 +503,7 @@ class Humonculous : public BaseObjScript {
 private:
   humonculous_data *memory;
 
-  void DetermineDeathPos(int me, vector *dpos, int *droom);
+  void DetermineDeathPos(int me, simd::float3 *dpos, int *droom);
   bool SetMode(int me, uint16_t mode);
   void DoInit(int me);
   void DoInterval(int me);
@@ -660,7 +660,7 @@ struct sparky_data {
 
   int matcen_id;
 
-  matrix orient;
+  vec::matrix orient;
 
   char spin_dir;
   float spin_time;
@@ -790,7 +790,7 @@ struct mantaray_data {
   int teammate[MR_MAX_TEAMMATES];
   float next_update_squad_time;
 
-  vector goal_pos;
+  simd::float3 goal_pos;
   int goal_room;
 
 };
@@ -837,7 +837,7 @@ struct skiff_data {
   int teammate[MR_MAX_TEAMMATES];
   float next_update_squad_time;
 
-  vector goal_pos;
+  simd::float3 goal_pos;
   int goal_room;
 
 };
@@ -1172,7 +1172,7 @@ struct sickle_data {
   int mode;
   float mode_time;
 
-  vector ceiling_pos;
+  simd::float3 ceiling_pos;
 
   float last_fvi_check_time;
   float rot_speed;
@@ -1181,9 +1181,9 @@ struct sickle_data {
   float sleep_rot_speed;
   bool done_turning;
   bool done_moving;
-  vector home_pos;
+  simd::float3 home_pos;
   int home_room;
-  vector home_fvec;
+  simd::float3 home_fvec;
 
 };
 
@@ -1809,7 +1809,7 @@ void SuperThief::SpewEverything(int me) {
   int i;
   int powerup_handle;
   int room;
-  vector pos;
+  simd::float3 pos;
 
   Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
   Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
@@ -1820,7 +1820,7 @@ void SuperThief::SpewEverything(int me) {
 
     for (j = 0; j < memory->stolen_weapons[i].amount; j++) {
       float speed = rand() / (float)RAND_MAX * 20.0f + 5.0f;
-      vector dir;
+      simd::float3 dir;
 
       dir.x = rand() / (float)RAND_MAX - 0.5f;
       dir.y = rand() / (float)RAND_MAX - 0.5f;
@@ -2111,7 +2111,7 @@ void SuperThief::DoInterval(int me) {
   int flags;
   msafe_struct m;
   int room;
-  vector pos;
+  simd::float3 pos;
 
   Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
   Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
@@ -2122,11 +2122,11 @@ void SuperThief::DoInterval(int me) {
   if (memory->laser_on) {
     ray_info ray;
 
-    matrix orient;
+    vec::matrix orient;
     Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
     // Determine real start pos - room
-    vector end_pos = pos;
+    simd::float3 end_pos = pos;
     end_pos += orient.fvec * 2000.0f;
 
     int fvi_flags = FQ_CHECK_OBJS | FQ_IGNORE_POWERUPS | FQ_IGNORE_WEAPONS;
@@ -2405,7 +2405,7 @@ public:
 
 struct barnswallow_data {
   int home_room;
-  vector nest_center;
+  simd::float3 nest_center;
   float nest_rad;
 
   int follower;
@@ -2433,7 +2433,7 @@ private:
   void DoInit(int me);
   bool SendCommand(int me, int it, char command, int value = 0);
   bool ReceiveCommand(int me, int it, gb_com *command);
-  void ComputeNextNestPnt(int me, vector *pos);
+  void ComputeNextNestPnt(int me, simd::float3 *pos);
   bool DoNotify(int me, tOSIRISEventInfo *data);
   void ComputeNest(int me);
   void UpdateFriendList(int me);
@@ -2772,8 +2772,8 @@ int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo
 //============================================
 
 static float Obj_GetObjDist(int me, int it, bool f_sub_rads) {
-  vector me_pos;
-  vector it_pos;
+  simd::float3 me_pos;
+  simd::float3 it_pos;
   float dist;
 
   Obj_Value(me, VF_GET, OBJV_V_POS, &me_pos);
@@ -3112,14 +3112,14 @@ const int16_t hm_valid_next_modes[11] = {
 
 #define H_MELEE_DIST 50.0f
 
-void Humonculous::DetermineDeathPos(int me, vector *dpos, int *droom) {
+void Humonculous::DetermineDeathPos(int me, simd::float3 *dpos, int *droom) {
   float best_dist = 100000000.0f;
   int best_dp;
-  vector dp[6];
+  simd::float3 dp[6];
   int dr[6];
   int i;
 
-  vector mpos;
+  simd::float3 mpos;
   Obj_Value(me, VF_GET, OBJV_V_POS, &mpos);
 
   Obj_Value(Scrpt_FindObjectName("SafeDeath01"), VF_GET, OBJV_V_POS, &dp[0]);
@@ -3171,7 +3171,7 @@ bool Humonculous::DoNotify(int me, tOSIRISEventInfo *data) {
   case HM_ABOUT_TO_FAKE_DEATH:
   case HM_ABOUT_TO_DIE: {
     if (data->evt_ai_notify.notify_type == AIN_SCRIPTED_ORIENT) {
-      vector uvec = Zero_vector;
+      simd::float3 uvec = Zero_vector;
       uvec.y = 1.0f;
 
       if (AI_TurnTowardsVectors(me, &memory->land_fvec, &uvec))
@@ -3188,7 +3188,7 @@ bool Humonculous::DoNotify(int me, tOSIRISEventInfo *data) {
       memory->flags |= HF_AT_FDPOS;
       memory->mode_time = 0.0f;
 
-      vector vel = {0.0f, 0.0f, 0.0f};
+      simd::float3 vel = {0.0f, 0.0f, 0.0f};
       Obj_Value(me, VF_SET, OBJV_V_VELOCITY, &vel);
 
       Obj_SetCustomAnim(me, 167.0f, 210.0f, 6.0f, 0, Sound_FindId("RbtHmclFakeDeath"), -1);
@@ -3198,7 +3198,7 @@ bool Humonculous::DoNotify(int me, tOSIRISEventInfo *data) {
       memory->flags |= HF_AT_RDPOS;
       memory->mode_time = 0.0f;
 
-      vector vel = {0.0f, 0.0f, 0.0f};
+      simd::float3 vel = {0.0f, 0.0f, 0.0f};
       Obj_Value(me, VF_SET, OBJV_V_VELOCITY, &vel);
 
       Obj_SetCustomAnim(me, 242.0f, 350.0f, 15.0f, 0, Sound_FindId("RbtHmclDeath"), -1);
@@ -3272,13 +3272,13 @@ bool Humonculous::SetMode(int me, uint16_t mode) {
     flags = AIF_FIRE;
     AI_Value(me, VF_CLEAR_FLAGS, AIV_I_FLAGS, &flags);
 
-    vector start_pos;
+    simd::float3 start_pos;
     int start_room;
-    vector end_pos;
+    simd::float3 end_pos;
 
     ray_info ray;
 
-    matrix orient;
+    vec::matrix orient;
     Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
     memory->land_fvec = orient.fvec;
@@ -3309,7 +3309,7 @@ bool Humonculous::SetMode(int me, uint16_t mode) {
             FQ_IGNORE_NON_LIGHTMAP_OBJECTS;
     fate = FVI_RayCast(me, &start_pos, &end_pos, start_room, 0.0f, flags, &ray);
 
-    if (ray.hit_wallnorm * orient.rvec > -0.95) {
+    if (simd::dot(ray.hit_wallnorm, orient.rvec) > -0.95) {
       memory->mode = HM_WALL_HIT;
       SetMode(me, HM_MELEE);
       return false;
@@ -3345,7 +3345,7 @@ bool Humonculous::SetMode(int me, uint16_t mode) {
     // Guarantee no wall hits or mid damage stuff after the fake death
     memory->flags |= (HF_HIT_WALL_ASSIGNED | HF_MID_DAMAGE_ASSIGNED);
 
-    vector dpos;
+    simd::float3 dpos;
     int droom;
     DetermineDeathPos(me, &dpos, &droom);
 
@@ -3390,7 +3390,7 @@ bool Humonculous::SetMode(int me, uint16_t mode) {
     float circle_dist = -1.0f;
     AI_Value(me, VF_SET, AIV_F_CIRCLE_DIST, &circle_dist);
 
-    vector dpos;
+    simd::float3 dpos;
     int droom;
     DetermineDeathPos(me, &dpos, &droom);
 
@@ -3447,17 +3447,17 @@ void Humonculous::DoInit(int me) {
   memory->flags = 0;
   memory->next_wall_hit_check_time = Game_GetTime() + 25.0f;
 
-  matrix orient;
-  vector pos;
-  vector g_pos;
-  vector g_norm;
+  vec::matrix orient;
+  simd::float3 pos;
+  simd::float3 g_pos;
+  simd::float3 g_norm;
 
   Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
   Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
   Obj_GetGroundPos(me, 0, &g_pos, &g_norm);
 
-  vector from_ground = pos - g_pos;
-  memory->ground_pnt_offset = fabs(from_ground * orient.uvec);
+  simd::float3 from_ground = pos - g_pos;
+  memory->ground_pnt_offset = fabs(simd::dot(from_ground, orient.uvec));
 
   AI_Value(me, VF_GET, AIV_F_MAX_SPEED, &memory->max_speed);
   AI_Value(me, VF_GET, AIV_F_MAX_DELTA_SPEED, &memory->max_delta_speed);
@@ -3534,7 +3534,7 @@ void Humonculous::DoInterval(int me) {
   switch (memory->mode) {
   case HM_INTRO_CUTSCENE: {
     if (memory->mode_time < H_DOOR_WAIT_TIME && memory->mode_time + Game_GetFrameTime() >= H_DOOR_WAIT_TIME) {
-      vector velocity = Zero_vector;
+      simd::float3 velocity = Zero_vector;
       velocity.y = 65.0f;
 
       Obj_Value(me, VF_SET, OBJV_V_VELOCITY, &velocity);
@@ -3598,13 +3598,13 @@ void Humonculous::DoInterval(int me) {
 
       if (memory->mode_time < 4.53f && memory->mode_time + Game_GetFrameTime() >= 4.53f) {
         int xxx;
-        matrix orient;
+        vec::matrix orient;
         Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
         // Launch joshbots
         for (xxx = 0; xxx < 2; xxx++) {
           int flags = OF_DESTROYABLE;
-          vector vel = orient.fvec * 80.0f;
+          simd::float3 vel = orient.fvec * 80.0f;
 
           Obj_UnattachFromParent(memory->josh[xxx]);
           Obj_Value(memory->josh[xxx], VF_SET, OBJV_V_VELOCITY, &vel);
@@ -3661,9 +3661,9 @@ void Humonculous::DoInterval(int me) {
   case HM_ABOUT_TO_FAKE_DEATH: {
     if (memory->flags & HF_AT_FDPOS) {
       if (memory->mode_time < 6.0f && memory->mode_time + Game_GetFrameTime() >= 6.0f) {
-        vector start_pos;
+        simd::float3 start_pos;
         int start_room;
-        vector end_pos;
+        simd::float3 end_pos;
 
         ray_info ray;
 
@@ -3696,7 +3696,7 @@ void Humonculous::DoInterval(int me) {
         flags = PF_LEVELING;
         Obj_Value(me, VF_CLEAR_FLAGS, OBJV_I_PHYSICS_FLAGS, &flags);
 
-        matrix orient;
+        vec::matrix orient;
         Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
         memory->land_fvec = orient.fvec;
@@ -3716,7 +3716,7 @@ void Humonculous::DoInterval(int me) {
 
   case HM_FAKE_DEATH: {
     if (memory->mode_time > 4.0f) {
-      vector velocity = Zero_vector;
+      simd::float3 velocity = Zero_vector;
       velocity.y = 40.0f;
 
       Obj_Value(me, VF_SET, OBJV_V_VELOCITY, &velocity);
@@ -3731,9 +3731,9 @@ void Humonculous::DoInterval(int me) {
       }
 
       if (memory->mode_time < 12.5f && memory->mode_time + Game_GetFrameTime() >= 12.5f) {
-        vector start_pos;
+        simd::float3 start_pos;
         int start_room;
-        vector end_pos;
+        simd::float3 end_pos;
 
         ray_info ray;
 
@@ -3766,7 +3766,7 @@ void Humonculous::DoInterval(int me) {
         flags = PF_LEVELING;
         Obj_Value(me, VF_CLEAR_FLAGS, OBJV_I_PHYSICS_FLAGS, &flags);
 
-        matrix orient;
+        vec::matrix orient;
         Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
         memory->land_fvec = orient.fvec;
@@ -3779,7 +3779,7 @@ void Humonculous::DoInterval(int me) {
       memory->flags |= HF_AT_RDPOS;
       memory->mode_time = 0.0f;
 
-      vector vel = {0.0f, 0.0f, 0.0f};
+      simd::float3 vel = {0.0f, 0.0f, 0.0f};
       Obj_Value(me, VF_SET, OBJV_V_VELOCITY, &vel);
 
       Obj_SetCustomAnim(me, 242.0f, 350.0f, 15.0f, 0, Sound_FindId("RbtHmclDeath"), -1);
@@ -4000,7 +4000,7 @@ int16_t Flak::CallEvent(int event, tOSIRISEventInfo *data) {
         char ctype = CT_NONE;
         Obj_Value(data->me_handle, VF_SET, OBJV_C_CONTROL_TYPE, &ctype);
 
-        vector vel = {0.0f, 0.0f, 0.0f};
+        simd::float3 vel = {0.0f, 0.0f, 0.0f};
         Obj_Value(data->me_handle, VF_SET, OBJV_V_VELOCITY, &vel);
 
         msafe_struct mstruct;
@@ -4170,7 +4170,7 @@ void Jugg::DoInit(int me) {
 
 void Jugg::DoFrame(int me) {
   float current_anim_frame;
-  matrix orient;
+  vec::matrix orient;
   int flags;
 
   Obj_Value(me, VF_GET, OBJV_F_ANIM_FRAME, &current_anim_frame);
@@ -4299,7 +4299,7 @@ void DTower::DoFrame(int me) {
     }
   } else if (memory->mode_time < 3.0f && memory->mode_time + Game_GetFrameTime() >= 3.0f) {
     int room;
-    vector pos;
+    simd::float3 pos;
 
     Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
     Obj_GetGunPos(me, 1, &pos);
@@ -4312,7 +4312,7 @@ void DTower::DoFrame(int me) {
              0.0f);
     Obj_Burning(me, 10.0f, 5.0f);
 
-    vector vel = {0.0f, 0.0f, 0.0f};
+    simd::float3 vel = {0.0f, 0.0f, 0.0f};
     vel.y = (float)rand() / (float)RAND_MAX * 30.0f + 90.0f;
     vel.x = (float)rand() / (float)RAND_MAX * 16.0f - 8.0f;
     vel.z = (float)rand() / (float)RAND_MAX * 16.0f - 8.0f;
@@ -4384,7 +4384,7 @@ void DCollector::DoFrame(int me) {
 
       Obj_Burning(me, 6.0f, 3.0f);
 
-      vector vel = {0.0f, 0.0f, 0.0f};
+      simd::float3 vel = {0.0f, 0.0f, 0.0f};
       vel.y = (float)rand() / (float)RAND_MAX * 30.0f + 90.0f;
       vel.x = (float)rand() / (float)RAND_MAX * 8.0f - 4.0f;
       vel.z = (float)rand() / (float)RAND_MAX * 8.0f - 4.0f;
@@ -4732,9 +4732,9 @@ bool GuideBot::SetMode(int me, char mode) {
   } break;
   case GBM_BIRTH: {
     int room;
-    vector pos;
-    matrix orient;
-    vector vel;
+    simd::float3 pos;
+    vec::matrix orient;
+    simd::float3 vel;
     int flags;
 
     flags = AIF_AUTO_AVOID_FRIENDS;
@@ -4834,8 +4834,8 @@ bool GuideBot::SetMode(int me, char mode) {
     AI_Value(me, VF_SET, AIV_F_MAX_SPEED, &speed);
 
     int room;
-    vector pos;
-    matrix orient;
+    simd::float3 pos;
+    vec::matrix orient;
 
     Obj_Value(memory->my_player, VF_GET, OBJV_V_POS, &pos);
     Obj_Value(memory->my_player, VF_GET, OBJV_I_ROOMNUM, &room);
@@ -4894,7 +4894,7 @@ bool GuideBot::SetMode(int me, char mode) {
 }
 
 bool GuideBot::InitExtinguish(bool f_player_on_fire) {
-  vector pos;
+  simd::float3 pos;
   int room;
   int scan_objs[25];
   int n_scan;
@@ -5019,7 +5019,7 @@ void GuideBot::AddGetToGoalCommonGoals(int me) {
 bool GuideBot::DoExternalCommands(int me, gb_com *command, int it) {
   int g_robot;
   int roomnum;
-  vector pos;
+  simd::float3 pos;
   int flags;
 
   mprintf(0, "Command %d for GB\n", command->action);
@@ -5103,7 +5103,7 @@ bool GuideBot::DoExternalCommands(int me, gb_com *command, int it) {
         }
       } else if (type == LIT_INTERNAL_ROOM) {
         if (AI_IsDestReachable(me, handle[0])) {
-          vector pnt;
+          simd::float3 pnt;
           Room_Value(handle[0], VF_GET, RMSV_V_PORTAL_PATH_PNT, &pnt);
           AI_AddGoal(me, AIG_GET_TO_POS, 1, 1.0, -1, GF_KEEP_AT_COMPLETION | GF_NOTIFIES, &pnt, handle[0]);
           AI_SetGoalCircleDist(me, 1, 20.0f);
@@ -5119,8 +5119,8 @@ bool GuideBot::DoExternalCommands(int me, gb_com *command, int it) {
         int face = Scrpt_GetTriggerFace(handle[0]);
 
         if (AI_IsDestReachable(me, room)) {
-          vector pnt;
-          vector normal;
+          simd::float3 pnt;
+          simd::float3 normal;
           Room_Value(room, VF_GET, RMSV_V_FACE_CENTER_PNT, &pnt, face);
           Room_Value(room, VF_GET, RMSV_V_FACE_NORMAL, &normal, face);
 
@@ -5328,7 +5328,7 @@ bool GuideBot::DoExternalCommands(int me, gb_com *command, int it) {
         } break;
 
         case GB_POW_ANTIVIRUS: {
-          vector pos;
+          simd::float3 pos;
           int room;
           int n_scan;
           int scan_objs[25];
@@ -5352,7 +5352,7 @@ bool GuideBot::DoExternalCommands(int me, gb_com *command, int it) {
                 ray_info ray;
                 int flags;
                 int fate;
-                vector end_pos;
+                simd::float3 end_pos;
 
                 Obj_Value(scan_objs[i], VF_GET, OBJV_V_POS, &end_pos);
 
@@ -5686,11 +5686,11 @@ bool GuideBot::DoUse(int me) {
 }
 
 bool GuideBot::DoInit(int me, bool f_reinit) {
-  vector fvec;
-  vector vel;
+  simd::float3 fvec;
+  simd::float3 vel;
   bool f_valid;
-  matrix orient;
-  vector pos;
+  vec::matrix orient;
+  simd::float3 pos;
   int room;
   int i;
 
@@ -5714,8 +5714,8 @@ bool GuideBot::DoInit(int me, bool f_reinit) {
 
     // Sets up my invisible helper
     int proom;
-    vector ppos;
-    matrix porient;
+    simd::float3 ppos;
+    vec::matrix porient;
 
     Obj_Value(memory->my_player, VF_GET, OBJV_I_ROOMNUM, &proom);
     Obj_Value(memory->my_player, VF_GET, OBJV_V_POS, &ppos);
@@ -5829,7 +5829,7 @@ bool GuideBot::DoNotify(int me, tOSIRISEventInfo *data) {
       memory->return_time = Game_GetTime();
     }
   } else if (notify->notify_type == AIN_SCRIPTED_ORIENT) {
-    matrix orient;
+    vec::matrix orient;
     Obj_Value(memory->my_player, VF_GET, OBJV_M_ORIENT, &orient);
 
     AI_TurnTowardsVectors(me, &orient.fvec, &orient.uvec);
@@ -5840,7 +5840,7 @@ bool GuideBot::DoNotify(int me, tOSIRISEventInfo *data) {
 
 void GuideBot::DoPowerupCheck(int me) {
   if (memory->next_powerup_check_time <= Game_GetTime() && memory->sub_mode == GBSM_NONE) {
-    vector pos;
+    simd::float3 pos;
     int room;
     int scan_objs[80];
     int n_scan;
@@ -5892,8 +5892,8 @@ void GuideBot::DoFrame(int me) {
   float last_mode_time;
 
   int proom;
-  vector ppos;
-  matrix porient;
+  simd::float3 ppos;
+  vec::matrix porient;
   Obj_Value(memory->my_player, VF_GET, OBJV_I_ROOMNUM, &proom);
   Obj_Value(memory->my_player, VF_GET, OBJV_V_POS, &ppos);
   Obj_Value(memory->my_player, VF_GET, OBJV_M_ORIENT, &porient);
@@ -6021,19 +6021,19 @@ void GuideBot::DoFrame(int me) {
 
       if (memory->flags | GBF_EXTINGUISHING) {
         int flags;
-        vector me_pos;
-        vector it_pos;
-        matrix orient;
+        simd::float3 me_pos;
+        simd::float3 it_pos;
+        vec::matrix orient;
 
         AI_GoalValue(me, 0, VF_GET, AIGV_I_STATUS_REG, &flags);
         Obj_Value(me, VF_GET, OBJV_V_POS, &me_pos);
         Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
         Obj_Value(memory->extinguish_obj_list[0], VF_GET, OBJV_V_POS, &it_pos);
 
-        vector dir_to_goal = it_pos - me_pos;
+        simd::float3 dir_to_goal = it_pos - me_pos;
         vm_VectorNormalize(&dir_to_goal);
 
-        if ((flags & AISR_CIRCLE_DIST) && (dir_to_goal * orient.fvec > 0.4717f) && anim >= 23 && anim <= 33)
+        if ((flags & AISR_CIRCLE_DIST) && (simd::dot(dir_to_goal, orient.fvec) > 0.4717f) && anim >= 23 && anim <= 33)
           memory->extinguish_obj_time += Game_GetFrameTime();
 
         if (memory->extinguish_obj_time > 1.5f) {
@@ -6058,8 +6058,8 @@ void GuideBot::DoFrame(int me) {
     }
   } else if (memory->mode == GBM_RTYPE) {
     int room;
-    vector pos;
-    matrix orient;
+    simd::float3 pos;
+    vec::matrix orient;
 
     Obj_Value(memory->my_player, VF_GET, OBJV_V_POS, &pos);
     Obj_Value(memory->my_player, VF_GET, OBJV_I_ROOMNUM, &room);
@@ -6131,8 +6131,8 @@ void GuideBot::DoFrame(int me) {
 
     memory->time_till_next_pvis_check -= Game_GetFrameTime();
     if (memory->time_till_next_pvis_check <= 0.0f) {
-      vector start_pos;
-      vector end_pos;
+      simd::float3 start_pos;
+      simd::float3 end_pos;
 
       Obj_Value(me, VF_GET, OBJV_V_POS, &start_pos);
       Obj_Value(memory->my_player, VF_GET, OBJV_V_POS, &end_pos);
@@ -6572,9 +6572,9 @@ void Thief::DoSubModeFrame(int me) {
     }
 
     if (anim_frame > 45.0f && memory->last_frame <= 45.0f) {
-      matrix orient;
+      vec::matrix orient;
       Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
-      vector velocity = orient.fvec * 50.0f;
+      simd::float3 velocity = orient.fvec * 50.0f;
 
       Obj_UnattachFromParent(memory->bomb_handle);
 
@@ -6597,7 +6597,7 @@ void Thief::DoSubModeFrame(int me) {
 }
 
 void Thief::SetMode(int me, int new_mode) {
-  vector pos;
+  simd::float3 pos;
   int room = 0;
 
   AI_SetType(me, AIT_AIS);
@@ -6654,7 +6654,7 @@ void Thief::SetMode(int me, int new_mode) {
 void Thief::DoInit(int me) {
 
   int room;
-  vector pos;
+  simd::float3 pos;
   tOSIRISMEMCHUNK ch;
   ch.id = 4;
   ch.size = sizeof(thief_data);
@@ -6743,7 +6743,7 @@ void Thief::DoFrame(int me) {
   if ((flags & OF_AI_DEATH) &&
       !((anim_frame >= 0.0f && anim_frame <= 6.0f) || (anim_frame >= 85.0f && anim_frame <= 140.0f))) {
     int room;
-    vector pos;
+    simd::float3 pos;
     int weapon_id;
 
     Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
@@ -6772,7 +6772,7 @@ void Thief::DoFrame(int me) {
   if (memory->mode == THIEF_DEATH) {
     if (anim_frame > 86 && memory->last_frame <= 86) {
       int room;
-      vector pos;
+      simd::float3 pos;
       int weapon_id;
 
       Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
@@ -6835,7 +6835,7 @@ void Thief::SpewEverything(int me) {
   int i;
   int powerup_handle;
   int room;
-  vector pos;
+  simd::float3 pos;
 
   Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
   Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
@@ -6846,7 +6846,7 @@ void Thief::SpewEverything(int me) {
 
     for (j = 0; j < memory->stolen_weapons[i].amount; j++) {
       float speed = rand() / (float)RAND_MAX * 20.0f + 5.0f;
-      vector dir;
+      simd::float3 dir;
 
       dir.x = rand() / (float)RAND_MAX - 0.5f;
       dir.y = rand() / (float)RAND_MAX - 0.5f;
@@ -6914,7 +6914,7 @@ void Thief::SpewEverything(int me) {
 
     if (id > -1) {
       float speed = rand() / (float)RAND_MAX * 20.0f + 5.0f;
-      vector dir;
+      simd::float3 dir;
 
       dir.x = rand() / (float)RAND_MAX - 0.5f;
       dir.y = rand() / (float)RAND_MAX - 0.5f;
@@ -6994,8 +6994,8 @@ void Sickle::SetMode(int me, char mode) {
     int fate;
 
     int start_room;
-    vector start_pos;
-    vector end_pos;
+    simd::float3 start_pos;
+    simd::float3 end_pos;
 
     int ceiling_room;
     //		mprintf(0, "In mode 5\n");
@@ -7048,7 +7048,7 @@ void Sickle::SetMode(int me, char mode) {
   } break;
   case SICKLE_MELEE: {
     int flags;
-    vector vel;
+    simd::float3 vel;
     char movement_type;
 
     if (memory->mode == SICKLE_LANDED) {
@@ -7108,7 +7108,7 @@ void Sickle::DoInit(int me) {
   flags = PF_POINT_COLLIDE_WALLS;
   Obj_Value(me, VF_CLEAR_FLAGS, OBJV_I_PHYSICS_FLAGS, &flags);
 
-  matrix orient;
+  vec::matrix orient;
   Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
   memory->home_fvec = orient.fvec;
   memory->home_fvec.y = 0.0f;
@@ -7120,16 +7120,16 @@ void Sickle::DoInit(int me) {
 }
 
 void Sickle::DoFrame(int me) {
-  vector uvec;
-  vector start_pos;
-  vector end_pos;
+  simd::float3 uvec;
+  simd::float3 start_pos;
+  simd::float3 end_pos;
   int flags;
   int fate;
   int start_room;
   int ceiling_room;
   float anim_frame;
   int new_mode;
-  vector vel;
+  simd::float3 vel;
   float last_see_time;
   float last_hear_time;
   char movement_type;
@@ -7178,7 +7178,7 @@ void Sickle::DoFrame(int me) {
     memory->done_turning = AI_TurnTowardsVectors(me, &memory->home_fvec, &uvec) != 0;
 
     //		mprintf(0, "Sickle Land on Ceiling %d, %d\n", memory->done_moving?1:0, memory->done_turning?1:0);
-    vector pos;
+    simd::float3 pos;
     Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
     bool f_used;
     AI_GoalValue(me, 2, VF_GET, AIGV_B_USED, &f_used);
@@ -7250,7 +7250,7 @@ void FireAtDist::DoInit(int me) {
 
 void FireAtDist::DoFrame(int me) {
   if (memory->last_test_time + 3.0f < Game_GetTime()) {
-    vector pos;
+    simd::float3 pos;
     int room;
     int scan_objs[200];
     int n_scan;
@@ -7275,7 +7275,7 @@ void FireAtDist::DoFrame(int me) {
       Obj_Value(scan_objs[i], VF_GET, OBJV_I_TYPE, &type);
 
       if (type == OBJ_PLAYER) {
-        vector p_pos;
+        simd::float3 p_pos;
         float cur_dist;
 
         Obj_Value(scan_objs[i], VF_GET, OBJV_V_POS, &p_pos);
@@ -7346,7 +7346,7 @@ void HatePTMC::DoFrame(int me) {
     if (memory->time_till_pulse <= 0.0f) {
       memory->time_till_pulse = (float)rand() / (float)RAND_MAX + 2.0f;
 
-      vector pos;
+      simd::float3 pos;
       int room;
       int scan_objs[50];
       int n_scan;
@@ -7386,19 +7386,19 @@ void HatePTMC::DoFrame(int me) {
             float fov;
             AI_Value(scan_objs[i], VF_GET, AIV_F_FOV, &fov);
 
-            vector p_pos;
+            simd::float3 p_pos;
             int p_room;
-            matrix orient;
+            vec::matrix orient;
 
             Obj_Value(scan_objs[i], VF_GET, OBJV_V_POS, &p_pos);
             Obj_Value(scan_objs[i], VF_GET, OBJV_I_ROOMNUM, &p_room);
 
-            vector dir = p_pos - pos;
+            simd::float3 dir = p_pos - pos;
             float dist = vm_VectorNormalize(&dir);
 
             Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
-            if (p_room == room || dist < 60.0f || orient.fvec * dir >= fov) {
+            if (p_room == room || dist < 60.0f || simd::dot(orient.fvec, dir) >= fov) {
               ray_info ray;
               int flags = FQ_CHECK_OBJS | FQ_IGNORE_POWERUPS | FQ_IGNORE_WEAPONS | FQ_IGNORE_MOVING_OBJECTS |
                           FQ_IGNORE_NON_LIGHTMAP_OBJECTS;
@@ -7522,7 +7522,7 @@ void Tubbs::DoFrame(int me) {
 
 bool Tubbs::DoNotify(int me, tOSIRISEVTAINOTIFY *notify) {
   int room;
-  vector pos;
+  simd::float3 pos;
   int weapon_id;
 
   if (notify->notify_type == AIN_MELEE_ATTACK_FRAME) {
@@ -7652,7 +7652,7 @@ bool OldScratch::DoSteal(int me, int it) {
       {
         int powerup_handle;
         int room;
-        vector pos;
+        simd::float3 pos;
         int j;
         uint16_t id;
 
@@ -7661,7 +7661,7 @@ bool OldScratch::DoSteal(int me, int it) {
 
         for (j = 0; j < amount; j++) {
           float speed = rand() / (float)RAND_MAX * 20.0f + 5.0f;
-          vector dir;
+          simd::float3 dir;
 
           dir.x = rand() / (float)RAND_MAX - 0.5f;
           dir.y = rand() / (float)RAND_MAX - 0.5f;
@@ -7823,7 +7823,7 @@ int16_t OldScratch::CallEvent(int event, tOSIRISEventInfo *data) {
 // BarnSwallow
 //---------------------
 
-void BarnSwallow::ComputeNextNestPnt(int me, vector *pos) {
+void BarnSwallow::ComputeNextNestPnt(int me, simd::float3 *pos) {
   pos->x = (0.5f - (float)rand() / (float)RAND_MAX);
   pos->y = (0.5f - (float)rand() / (float)RAND_MAX);
   pos->z = (0.5f - (float)rand() / (float)RAND_MAX);
@@ -7983,7 +7983,7 @@ void BarnSwallow::ComputeNest(int me) {
   int scan_objs[100];
   int n_scan;
   int i;
-  vector pos;
+  simd::float3 pos;
   int room;
   int type;
   uint16_t id;
@@ -8014,7 +8014,7 @@ void BarnSwallow::ComputeNest(int me) {
 
       // See if we are the same species
       if (type == c_type && id == c_id) {
-        vector c_pos;
+        simd::float3 c_pos;
         Obj_Value(scan_objs[i], VF_GET, OBJV_V_POS, &c_pos);
 
         memory->nest_center += c_pos;
@@ -8029,7 +8029,7 @@ void BarnSwallow::ComputeNest(int me) {
 
   // Determine the farthest distance from the center of the nest
   for (i = 0; i < memory->num_friends; i++) {
-    vector c_pos;
+    simd::float3 c_pos;
     float dist;
     Obj_Value(memory->friends[i], VF_GET, OBJV_V_POS, &c_pos);
     dist = vm_VectorDistance(&memory->nest_center, &c_pos);
@@ -8101,7 +8101,7 @@ void BarnSwallow::DoFrame(int me) {
         int n_powerups = 0;
         int powerups[50];
         int room;
-        vector pos;
+        simd::float3 pos;
 
         Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
         Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
@@ -8218,7 +8218,7 @@ bool BarnSwallow::SetMode(int me, char mode, int it) {
   case BSM_NEST: {
     int room;
     float max_speed;
-    vector pos;
+    simd::float3 pos;
 
     AI_Value(me, VF_GET, AIV_F_MAX_SPEED, &max_speed);
     float update_time = memory->nest_rad / (max_speed) + 0.3f - ((float)rand() / (float)RAND_MAX);
@@ -8260,7 +8260,7 @@ bool BarnSwallow::SetMode(int me, char mode, int it) {
     AI_GoalValue(me, g_index, VF_SET, AIGV_F_CIRCLE_DIST, &dist);
   } break;
   case BSM_ATTACK_CIRCLE_BACK: {
-    vector pos;
+    simd::float3 pos;
     int room;
 
     AI_Value(me, VF_SET_FLAGS, AIV_I_FLAGS, &f_attack_flags);
@@ -8349,7 +8349,7 @@ void GBPowerup::DoInit(int me) {
 
 void GBPowerup::DoFrame(int me) {
   if (memory->next_check_time <= Game_GetTime()) {
-    vector pos;
+    simd::float3 pos;
     int room;
     int scan_objs[25];
     int n_scan;
@@ -8369,7 +8369,7 @@ void GBPowerup::DoFrame(int me) {
       Obj_Value(scan_objs[i], VF_GET, OBJV_US_ID, &id);
 
       if (type == OBJ_ROBOT && (id == ROBOT_GUIDEBOT || id == ROBOT_GUIDEBOTRED)) {
-        vector g_pos;
+        simd::float3 g_pos;
         Obj_Value(scan_objs[i], VF_GET, OBJV_V_POS, &g_pos);
 
         float dist = vm_VectorDistance(&pos, &g_pos);
@@ -8432,7 +8432,7 @@ int16_t GBPowerup::CallEvent(int event, tOSIRISEventInfo *data) {
 bool Sparky::DoNotify(int me_handle, tOSIRISEventInfo *data) {
   // NOTE:  I am also doing the rotational stuff here...  So, no need to make a separate AIN_SCRIPTED_ORIENT event
   if (data->evt_ai_notify.goal_num == 0 && data->evt_ai_notify.notify_type == AIN_SCRIPTED_GOAL) {
-    vector rvel;
+    simd::float3 rvel;
     Obj_Value(me_handle, VF_GET, OBJV_V_ROTVELOCITY, &rvel);
 
     if (memory->spin_dir == SPARKY_ROT_LEFT) {
@@ -8443,7 +8443,7 @@ bool Sparky::DoNotify(int me_handle, tOSIRISEventInfo *data) {
 
     Obj_Value(me_handle, VF_SET, OBJV_V_ROTVELOCITY, &rvel);
 
-    vector dir = Zero_vector;
+    simd::float3 dir = Zero_vector;
     AI_Value(me_handle, VF_SET, AIV_V_MOVEMENT_DIR, &dir);
   }
 
@@ -8522,10 +8522,10 @@ void Sparky::DoFrame(int me) {
 
   if (memory->mode == SPARKY_NORMAL) {
     char spin_dir;
-    matrix orient;
+    vec::matrix orient;
     Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
-    float dot = orient.rvec * memory->orient.rvec;
+    float dot = simd::dot(orient.rvec, memory->orient.rvec);
     if (dot < -1.0f)
       dot = -1.0f;
     else if (dot > 1.0f)
@@ -8536,7 +8536,7 @@ void Sparky::DoFrame(int me) {
     float aps = (ang * 65535.0f) / (Game_GetFrameTime() * (2.0f * PI));
 
     if (aps >= MIN_MALF_SPEED) {
-      float tdot = memory->orient.rvec * orient.fvec;
+      float tdot = simd::dot(memory->orient.rvec, orient.fvec);
       if (tdot < 0.0f)
         spin_dir = SPARKY_ROT_LEFT;
       else if (tdot > 0.0f)
@@ -8570,7 +8570,7 @@ void Sparky::DoFrame(int me) {
       memory->last_spark_time = Game_GetTime();
 
       int room;
-      vector pos;
+      simd::float3 pos;
 
       Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
       Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
@@ -8754,7 +8754,7 @@ void Hellion::SetMode(int me, char mode) {
     flags = AIF_FIRE;
     AI_Value(me, VF_CLEAR_FLAGS, AIV_I_FLAGS, &flags);
 
-    vector vel = {0.0f, 0.0f, 0.0f};
+    simd::float3 vel = {0.0f, 0.0f, 0.0f};
     Obj_Value(me, VF_SET, OBJV_V_VELOCITY, &vel);
 
     float circle_dist = -1.0f;
@@ -8787,8 +8787,8 @@ void Hellion::DoInit(int me) {
   RemapAlert(me, 1.0f, 10.0f, 1.0f);
 
   int proom;
-  vector ppos;
-  matrix porient;
+  simd::float3 ppos;
+  vec::matrix porient;
 
   Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &proom);
   Obj_Value(me, VF_GET, OBJV_V_POS, &ppos);
@@ -8870,11 +8870,11 @@ void Hellion::DoFrame(int me) {
   }
 
   if (memory->last_frame >= 140.0f && memory->last_frame <= 179.0f && memory->last_frame < 146.0f && frame >= 146.0f) {
-    matrix orient;
+    vec::matrix orient;
     Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
     int room;
-    vector pos;
+    simd::float3 pos;
     int weapon_id;
 
     Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
@@ -8882,7 +8882,7 @@ void Hellion::DoFrame(int me) {
 
     pos += orient.uvec * 10.0f;
 
-    matrix new_orient;
+    vec::matrix new_orient;
 
     new_orient.fvec = -orient.uvec;
     new_orient.rvec = orient.rvec;
@@ -8908,14 +8908,14 @@ void Hellion::DoFrame(int me) {
       memory->laser_time_left = 0.0f;
     }
 
-    vector normal;
-    vector pos;
+    simd::float3 normal;
+    simd::float3 pos;
     int room;
-    vector end_pos;
+    simd::float3 end_pos;
 
     for (i = 0; i < 2; i++) {
       int my_room;
-      vector my_pos;
+      simd::float3 my_pos;
 
       Obj_Value(me, VF_GET, OBJV_V_POS, &my_pos);
       Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &my_room);
@@ -8924,11 +8924,11 @@ void Hellion::DoFrame(int me) {
       int rfate = FVI_RayCast(me, &my_pos, &pos, my_room, 0.0f, 0, &ray);
       room = ray.hit_room;
 
-      matrix orient;
+      vec::matrix orient;
       Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
       // Determine real start pos - room
-      vector end_pos = pos;
+      simd::float3 end_pos = pos;
       end_pos += normal * 2000.0f;
 
       int fvi_flags = FQ_CHECK_OBJS | FQ_IGNORE_POWERUPS | FQ_IGNORE_WEAPONS;
@@ -9092,7 +9092,7 @@ void Hellion::DoFrame(int me) {
         AI_Value(me, VF_CLEAR_FLAGS, AIV_I_FLAGS, &flags);
 
         /*				int room;
-                                        vector pos;
+                                        simd::float3 pos;
                                         int weapon_id;
 
                                         Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
@@ -9207,8 +9207,8 @@ bool MantaRay::ReceiveCommand(int me, int it, char command, void *ptr) {
     int i;
     for (i = 0; i < memory->num_teammates; i++) {
       if (memory->teammate[i] == it) {
-        vector goal_pos;
-        matrix orient;
+        simd::float3 goal_pos;
+        vec::matrix orient;
         Obj_Value(me, VF_GET, OBJV_V_POS, &goal_pos);
         Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
@@ -9231,7 +9231,7 @@ bool MantaRay::ReceiveCommand(int me, int it, char command, void *ptr) {
           break;
         }
 
-        *(vector *)ptr = goal_pos;
+        *(simd::float3 *)ptr = goal_pos;
         return true;
       }
     }
@@ -9285,7 +9285,7 @@ void MantaRay::UpdateSquad(int me) {
   int scan_objs[25];
   int n_scan;
   int room;
-  vector pos;
+  simd::float3 pos;
   int i;
 
   Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
@@ -9372,7 +9372,7 @@ void MantaRay::SetMode(int me, char mode) {
 
   switch (mode) {
   case MRM_NORMAL: {
-    vector pos;
+    simd::float3 pos;
     int room = 0;
     float dist = 15.0f;
 
@@ -9402,7 +9402,7 @@ void MantaRay::SetMode(int me, char mode) {
   } break;
 
   case MRM_ATTACK_CIRCLE_BACK: {
-    vector pos;
+    simd::float3 pos;
     int room = 0;
 
     AI_Value(me, VF_SET_FLAGS, AIV_I_FLAGS, &f_attack_flags);
@@ -9458,7 +9458,7 @@ void MantaRay::DoSquadieFrame(int me) {
   float cd = .1f;
   AI_GoalValue(me, 2, VF_SET, AIGV_F_CIRCLE_DIST, &cd);
 
-  vector my_pos;
+  simd::float3 my_pos;
   Obj_Value(me, VF_GET, OBJV_V_POS, &my_pos);
 
   float dist = vm_VectorDistance(&my_pos, &memory->goal_pos);
@@ -9506,9 +9506,9 @@ void MantaRay::DoFrame(int me) {
 
   //	if(memory->flags & MRF_LEADER)
   //	{
-  //		vector pos;
+  //		simd::float3 pos;
   //		Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
-  //		vector gpos;
+  //		simd::float3 gpos;
   //		int groom;
 
   //		float cd;
@@ -9628,8 +9628,8 @@ bool Skiff::ReceiveCommand(int me, int it, char command, void *ptr) {
     int i;
     for (i = 0; i < memory->num_teammates; i++) {
       if (memory->teammate[i] == it) {
-        vector goal_pos;
-        matrix orient;
+        simd::float3 goal_pos;
+        vec::matrix orient;
         Obj_Value(me, VF_GET, OBJV_V_POS, &goal_pos);
         Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
@@ -9652,7 +9652,7 @@ bool Skiff::ReceiveCommand(int me, int it, char command, void *ptr) {
           break;
         }
 
-        *(vector *)ptr = goal_pos;
+        *(simd::float3 *)ptr = goal_pos;
         return true;
       }
     }
@@ -9706,7 +9706,7 @@ void Skiff::UpdateSquad(int me) {
   int scan_objs[25];
   int n_scan;
   int room;
-  vector pos;
+  simd::float3 pos;
   int i;
 
   Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
@@ -9780,7 +9780,7 @@ void Skiff::SetMode(int me, char mode) {
 
   switch (mode) {
   case MRM_NORMAL: {
-    vector pos;
+    simd::float3 pos;
     int room = 0;
     float dist = 15.0f;
 
@@ -9810,7 +9810,7 @@ void Skiff::SetMode(int me, char mode) {
   } break;
 
   case MRM_ATTACK_CIRCLE_BACK: {
-    vector pos;
+    simd::float3 pos;
     int room = 0;
 
     AI_Value(me, VF_SET_FLAGS, AIV_I_FLAGS, &f_attack_flags);
@@ -9871,7 +9871,7 @@ void Skiff::DoSquadieFrame(int me) {
   SendCommand(me, memory->leader_handle, MRC_GET_GOAL_ROOM, &memory->goal_room);
   AI_GoalValue(me, 2, VF_SET, AIGV_I_ROOMNUM, &memory->goal_room);
 
-  vector my_pos;
+  simd::float3 my_pos;
   Obj_Value(me, VF_GET, OBJV_V_POS, &my_pos);
 
   float dist = vm_VectorDistance(&my_pos, &memory->goal_pos);
@@ -10023,7 +10023,7 @@ void SpyHunter::SetMode(int me, char mode) {
 
   switch (mode) {
   case SHM_NORMAL: {
-    vector pos;
+    simd::float3 pos;
     int room = 0;
     float dist = 5.0f;
 
@@ -10088,13 +10088,13 @@ bool SpyHunter::DoNotify(int me, tOSIRISEventInfo *data) {
 
   if (memory->mode == SHM_BOMB_ATTACK && notify->notify_type == AIN_BUMPED_OBJ) {
     int room;
-    vector pos;
+    simd::float3 pos;
 
     Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
     Obj_GetGunPos(me, 0, &pos);
 
     if (!memory->f_hit_by_emd) {
-      vector velocity;
+      simd::float3 velocity;
       Obj_Value(me, VF_GET, OBJV_V_VELOCITY, &velocity);
 
       int weapon_id = Wpn_FindID("FragBarrel");
@@ -10198,7 +10198,7 @@ bool Sniper::DoNotify(int me_handle, tOSIRISEventInfo *data) { return true; }
 void Sniper::SetMode(int me, char mode) {
   switch (mode) {
   case SNIPER_SNIPE: {
-    vector pos;
+    simd::float3 pos;
     int room = 0;
 
     int flags = GF_NOTIFIES;
@@ -10335,7 +10335,7 @@ bool SniperNoRun::DoNotify(int me_handle, tOSIRISEventInfo *data) { return true;
 void SniperNoRun::SetMode(int me, char mode) {
   switch (mode) {
   case SNIPER_SNIPE: {
-    vector pos;
+    simd::float3 pos;
     int room = 0;
 
     int flags = GF_NOTIFIES;
@@ -10469,7 +10469,7 @@ bool EvaderModA::DoNotify(int me_handle, tOSIRISEventInfo *data) { return true; 
 void EvaderModA::SetMode(int me, char mode) {
   switch (mode) {
   case EMA_GET_BEHIND: {
-    vector pos;
+    simd::float3 pos;
     int vec;
 
     int flags = GF_NOTIFIES | GF_ORIENT_TARGET;
@@ -10587,7 +10587,7 @@ bool FlameRAS::DoNotify(int me_handle, tOSIRISEventInfo *data) { return true; }
 void FlameRAS::SetMode(int me, char mode) {
   switch (mode) {
   case EMA_GET_BEHIND: {
-    vector pos;
+    simd::float3 pos;
     int vec;
 
     int flags = GF_NOTIFIES | GF_ORIENT_TARGET;
@@ -10729,8 +10729,8 @@ void Seeker::DoInit(int me) {
   humon_seeker_id = Obj_FindID("HumonSeeker");
 
   if (humon_seeker_id == id) {
-    vector velocity;
-    matrix orient;
+    simd::float3 velocity;
+    vec::matrix orient;
     Obj_Value(me, VF_GET, OBJV_V_VELOCITY, &velocity);
     Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
@@ -10750,7 +10750,7 @@ void Seeker::DoInit(int me) {
 
 void Seeker::DoCollide(int me) {
   int room;
-  vector pos;
+  simd::float3 pos;
   int weapon_id;
 
   Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
@@ -10852,8 +10852,8 @@ int16_t BettyBomb::CallEvent(int event, tOSIRISEventInfo *data) {
 
     if (parent != OBJECT_HANDLE_NONE && child_id != -1) {
       int child_handle;
-      matrix orient, o, otemp, o1;
-      vector vel, pos, v, vtemp;
+      vec::matrix orient, o, otemp, o1;
+      simd::float3 vel, pos, v, vtemp;
       int room;
 
       Obj_Value(parent, VF_GET, OBJV_M_ORIENT, &orient);
@@ -10943,7 +10943,7 @@ int16_t BettyScript::CallEvent(int event, tOSIRISEventInfo *data) {
     DoInit(data->me_handle);
 
     int parent, type;
-    vector vel;
+    simd::float3 vel;
 
     parent = GetObjectParent(data->me_handle);
 
@@ -10968,14 +10968,14 @@ int16_t BettyScript::CallEvent(int event, tOSIRISEventInfo *data) {
   } break;
   case EVT_COLLIDE: {
     float velmag;
-    vector vel;
+    simd::float3 vel;
 
     if (GetObjectType(data->evt_collide.it_handle) == OBJ_PLAYER) {
 
       if (!memory->explode) {
         memory->explode = true;
 
-        matrix orient;
+        vec::matrix orient;
         Obj_Value(data->me_handle, VF_GET, OBJV_M_ORIENT, &orient);
 
         Obj_Value(data->me_handle, VF_GET, OBJV_V_VELOCITY, &vel);
@@ -10983,7 +10983,7 @@ int16_t BettyScript::CallEvent(int event, tOSIRISEventInfo *data) {
         velmag = velmag / 4;
 
         int room;
-        vector pos;
+        simd::float3 pos;
         int weapon_id;
 
         Obj_Value(data->me_handle, VF_GET, OBJV_I_ROOMNUM, &room);
@@ -10998,7 +10998,7 @@ int16_t BettyScript::CallEvent(int event, tOSIRISEventInfo *data) {
   } break;
   case EVT_INTERVAL: {
     float time, velmag, scale;
-    vector vel;
+    simd::float3 vel;
 
     time = data->evt_interval.game_time;
 
@@ -11038,7 +11038,7 @@ int16_t BettyScript::CallEvent(int event, tOSIRISEventInfo *data) {
 //------------------
 
 void ChaffScript::DoInit(int handle) {
-  vector vel, v, pos;
+  simd::float3 vel, v, pos;
 
   int count, chaffcount;
   int chunk_id, room;
@@ -11058,7 +11058,7 @@ void ChaffScript::DoInit(int handle) {
   chunk_id = Obj_FindID("ChaffChunk");
 
   if (parent != OBJECT_HANDLE_NONE && chunk_id != -1) {
-    matrix orient;
+    vec::matrix orient;
     Obj_Value(handle, VF_GET, OBJV_M_ORIENT, &orient);
 
     Obj_Value(parent, VF_GET, OBJV_V_VELOCITY, &vel);
@@ -11121,7 +11121,7 @@ void ChaffChunkScript::DoInit(int handle) {
   memory->lifeleft = 30.0f;
 
   int parent;
-  vector vel;
+  simd::float3 vel;
   parent = GetObjectParent(handle);
 
   if (parent != OBJECT_HANDLE_NONE) {
@@ -11137,14 +11137,14 @@ void ChaffChunkScript::DoInterval(int handle, float frametime) {
   memory->lifeleft -= frametime;
   if (!memory->killme && memory->lifeleft < 0) {
     int weapon_id;
-    matrix orient;
+    vec::matrix orient;
 
     memory->killme = true;
 
     Obj_Value(handle, VF_GET, OBJV_M_ORIENT, &orient);
 
     int room;
-    vector pos;
+    simd::float3 pos;
 
     Obj_Value(handle, VF_GET, OBJV_I_ROOMNUM, &room);
     Obj_Value(handle, VF_GET, OBJV_V_POS, &pos);
@@ -11163,7 +11163,7 @@ void ChaffChunkScript::DoInterval(int handle, float frametime) {
 
 void ChaffChunkScript::DoCollide(tOSIRISEventInfo *data) {
   int weapon_id;
-  matrix orient;
+  vec::matrix orient;
 
   if (!memory->killme) {
     memory->killme = true;
@@ -11171,7 +11171,7 @@ void ChaffChunkScript::DoCollide(tOSIRISEventInfo *data) {
     Obj_Value(data->me_handle, VF_GET, OBJV_M_ORIENT, &orient);
 
     int room;
-    vector pos;
+    simd::float3 pos;
 
     Obj_Value(data->me_handle, VF_GET, OBJV_I_ROOMNUM, &room);
     Obj_Value(data->me_handle, VF_GET, OBJV_V_POS, &pos);
@@ -11219,7 +11219,7 @@ void ProxMine::DoInit(int me) {
 
 void ProxMine::DoCollide(int me) {
   int room;
-  vector pos;
+  simd::float3 pos;
   int weapon_id;
 
   Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);

@@ -98,10 +98,10 @@ static uint8_t triangulated_faces[MAX_FACES_PER_ROOM];
 static uint8_t FacingPass = 0;
 static int Multicolor_texture = -1;
 
-static vector Fog_plane;
+static simd::float3 Fog_plane;
 static float Fog_distance, Fog_eye_distance;
-static vector Fog_view_pos, Specular_view_pos, Bump_view_pos;
-static matrix Unscaled_bumpmap_matrix;
+static simd::float3 Fog_view_pos, Specular_view_pos, Bump_view_pos;
+static vec::matrix Unscaled_bumpmap_matrix;
 
 static int ModelFaceSortFunc(const int16_t *a, const int16_t *b);
 static inline void RenderSubmodelFace(poly_model *pm, bsp_info *sm, int facenum);
@@ -110,10 +110,10 @@ static inline void RenderSubmodelFaceFogged(poly_model *pm, bsp_info *sm, int fa
 static inline void RenderSubmodelFaceSpecular(poly_model *pm, bsp_info *sm, int facenum);
 
 /// Draws a glowing cone of light.
-static void DrawGlowEffect(vector *pos, float r, float g, float b, vector *norm, float size);
+static void DrawGlowEffect(simd::float3 *pos, float r, float g, float b, simd::float3 *norm, float size);
 
 /// Draws a glowing cone of light that represents thrusters
-static void DrawThrusterEffect(vector *pos, float r, float g, float b, vector *norm, float size, float length);
+static void DrawThrusterEffect(simd::float3 *pos, float r, float g, float b, simd::float3 *norm, float size, float length);
 
 static void RenderSubmodelFacesSorted(poly_model *pm, bsp_info *sm);
 static void RenderSubmodelFacesUnsorted(poly_model *pm, bsp_info *sm);
@@ -121,7 +121,7 @@ static void RenderSubmodelFacesUnsorted(poly_model *pm, bsp_info *sm);
 /// Rotates all of the points of a submodel, plus supplies color info.
 static void RotateModelPoints(poly_model *pm, bsp_info *sm);
 
-static float ComputeDefaultSizeFunc(int handle, float *size_ptr, vector *offset_ptr, bool f_use_all_frames);
+static float ComputeDefaultSizeFunc(int handle, float *size_ptr, simd::float3 *offset_ptr, bool f_use_all_frames);
 
 int ModelFaceSortFunc(const int16_t *a, const int16_t *b) {
   float az, bz;
@@ -249,26 +249,26 @@ inline void RenderSubmodelFace(poly_model *pm, bsp_info *sm, int facenum) {
           Polymodel_light_type == POLYMODEL_LIGHTING_GOURAUD) {
         p->p3_flags |= PF_UV2;
 
-        vector vert = sm->verts[fp->vertnums[t]];
+        simd::float3 vert = sm->verts[fp->vertnums[t]];
 
-        vector vertnorm;
+        simd::float3 vertnorm;
 
         if (smooth)
           vertnorm = sm->vertnorms[fp->vertnums[t]];
         else
           vertnorm = fp->normal;
 
-        vector subvec = Bump_view_pos - vert;
-        vm_NormalizeVectorFast(&subvec);
+        simd::float3 subvec = Bump_view_pos - vert;
+        vec::vm_NormalizeVectorFast(&subvec);
 
-        vector incident_norm = vert - Polymodel_bump_pos;
-        vm_NormalizeVectorFast(&incident_norm);
+        simd::float3 incident_norm = vert - Polymodel_bump_pos;
+        vec::vm_NormalizeVectorFast(&incident_norm);
 
-        float d = incident_norm * vertnorm;
-        vector upvec = d * vertnorm;
+        float d = simd::dot(incident_norm, vertnorm);
+        simd::float3 upvec = d * vertnorm;
         incident_norm -= (2 * upvec);
 
-        float dotp = (subvec * incident_norm);
+        float dotp = simd::dot(subvec, incident_norm);
 
         if (dotp < 0)
           dotp = 0;
@@ -410,15 +410,15 @@ inline void RenderSubmodelFace(poly_model *pm, bsp_info *sm, int facenum) {
                     lightmap_info *lmi_ptr=&LightmapInfo[lmi_handle];
                     int w=lmi_w (lmi_handle);
                     int h=lmi_h (lmi_handle);
-                    vector rvec=lfp->rvec*lmi_ptr->xspacing;
-                    vector uvec=lfp->uvec*lmi_ptr->yspacing;
+                    simd::float3 rvec=lfp->rvec*lmi_ptr->xspacing;
+                    simd::float3 uvec=lfp->uvec*lmi_ptr->yspacing;
                     uint16_t *src_data=(uint16_t *)lm_data(lmi_ptr->lm_handle);
 
                     for (int i=0;i<w*h;i++)
                     {
                             int t;
                             g3Point epoints[20];
-                            vector evec[20];
+                            simd::float3 evec[20];
                             int y=i/w;
                             int x=i%w;
 
@@ -520,22 +520,22 @@ inline void RenderSubmodelFaceFogged(poly_model *pm, bsp_info *sm, int facenum) 
     float mag;
 
     if (Polymodel_effect.fog_plane_check == 1) {
-      mag = vm_DotProduct(&Fog_plane, &sm->verts[fp->vertnums[t]]) + Fog_distance;
+      mag = simd::dot(Fog_plane, sm->verts[fp->vertnums[t]]) + Fog_distance;
     } else {
-      vector *vec = &sm->verts[fp->vertnums[t]];
+      simd::float3 *vec = &sm->verts[fp->vertnums[t]];
 
       // Now we must generate the split point. This is simply
       // an equation in the form Origin + t*Direction
 
-      float dist = (*vec * Polymodel_fog_plane) + Fog_distance;
+      float dist = simd::dot(*vec, Polymodel_fog_plane) + Fog_distance;
 
-      vector subvec = *vec - Fog_view_pos;
+      simd::float3 subvec = *vec - Fog_view_pos;
 
       float t = Fog_eye_distance / (Fog_eye_distance - dist);
-      vector portal_point = Fog_view_pos + (t * subvec);
+      simd::float3 portal_point = Fog_view_pos + (t * subvec);
 
-      float eye_distance = -(vm_DotProduct(&Fog_plane, &portal_point));
-      mag = vm_DotProduct(&Fog_plane, vec) + eye_distance;
+      float eye_distance = -(simd::dot(Fog_plane, portal_point));
+      mag = simd::dot(Fog_plane, *vec) + eye_distance;
     }
 
     float scalar = mag / Polymodel_effect.fog_depth;
@@ -570,9 +570,9 @@ inline void RenderSubmodelFaceSpecular(poly_model *pm, bsp_info *sm, int facenum
 
   for (t = 0; t < fp->nverts; t++) {
     g3Point *p = &Robot_points[fp->vertnums[t]];
-    vector vert = sm->verts[fp->vertnums[t]];
+    simd::float3 vert = sm->verts[fp->vertnums[t]];
 
-    vector vertnorm;
+    simd::float3 vertnorm;
 
     if (smooth)
       vertnorm = sm->vertnorms[fp->vertnums[t]];
@@ -584,17 +584,17 @@ inline void RenderSubmodelFaceSpecular(poly_model *pm, bsp_info *sm, int facenum
     p->p3_flags |= PF_RGBA;
     p->p3_a = 0.0;
 
-    vector subvec = Specular_view_pos - vert;
-    vm_NormalizeVectorFast(&subvec);
+    simd::float3 subvec = Specular_view_pos - vert;
+    vec::vm_NormalizeVectorFast(&subvec);
 
-    vector incident_norm = vert - Polymodel_specular_pos;
-    vm_NormalizeVectorFast(&incident_norm);
+    simd::float3 incident_norm = vert - Polymodel_specular_pos;
+    vec::vm_NormalizeVectorFast(&incident_norm);
 
-    float d = incident_norm * vertnorm;
-    vector upvec = d * vertnorm;
+    float d = simd::dot(incident_norm, vertnorm);
+    simd::float3 upvec = d * vertnorm;
     incident_norm -= (2 * upvec);
 
-    float dotp = subvec * incident_norm;
+    float dotp = simd::dot(subvec, incident_norm);
 
     if (dotp < 0)
       continue;
@@ -621,10 +621,10 @@ inline void RenderSubmodelFaceSpecular(poly_model *pm, bsp_info *sm, int facenum
 #define MAX_PARTS 100
 
 // Draws a glowing cone of light that represents thrusters
-void DrawThrusterEffect(vector *pos, float r, float g, float b, vector *norm, float size, float length) {
-  vector cur_pos = *pos;
+void DrawThrusterEffect(simd::float3 *pos, float r, float g, float b, simd::float3 *norm, float size, float length) {
+  simd::float3 cur_pos = *pos;
   float cur_length = 0;
-  vector glow_pos[MAX_PARTS];
+  simd::float3 glow_pos[MAX_PARTS];
   float glow_size[MAX_PARTS];
   int total_parts = 0;
 
@@ -674,7 +674,7 @@ void DrawThrusterEffect(vector *pos, float r, float g, float b, vector *norm, fl
 }
 
 // Draws a glowing cone of light
-void DrawGlowEffect(vector *pos, float r, float g, float b, vector *norm, float size) {
+void DrawGlowEffect(simd::float3 *pos, float r, float g, float b, simd::float3 *norm, float size) {
   if (!UseHardware)
     return; // No software stuff here!
 
@@ -742,7 +742,7 @@ void RenderSubmodelFacesUnsorted(poly_model *pm, bsp_info *sm) {
   int modelnum = sm - pm->submodel;
   int16_t alpha_faces[MAX_FACES_PER_ROOM], num_alpha_faces = 0;
   int rcount = 0;
-  vector view_pos;
+  simd::float3 view_pos;
 
   g3_GetViewPosition(&view_pos);
   g3_GetUnscaledMatrix(&Unscaled_bumpmap_matrix);
@@ -759,13 +759,13 @@ void RenderSubmodelFacesUnsorted(poly_model *pm, bsp_info *sm) {
     rend_SetZBias(-.5);
 
   for (i = 0; i < sm->num_faces; i++) {
-    vector tempv;
+    simd::float3 tempv;
     polyface *fp = &sm->faces[i];
     texture *texp;
 
     // Check to see if this face even faces us!
     tempv = view_pos - sm->verts[fp->vertnums[0]];
-    if ((tempv * fp->normal) < 0)
+    if (simd::dot(tempv, fp->normal) < 0)
       continue;
 
     if (fp->texnum != -1) {
@@ -821,7 +821,7 @@ void RenderSubmodelFacesUnsorted(poly_model *pm, bsp_info *sm) {
       if (!g3_CheckNormalFacing(&sm->verts[fp->vertnums[0]], &fp->normal))
         continue;
 
-      /*	vector subvec=sm->verts[fp->vertnums[0]]-Polymodel_specular_pos;
+      /*	simd::float3 subvec=sm->verts[fp->vertnums[0]]-Polymodel_specular_pos;
               if ((fp->normal * subvec)> 0)
                       continue;*/
 
@@ -835,17 +835,17 @@ void RenderSubmodelFacesUnsorted(poly_model *pm, bsp_info *sm) {
 
   // Draw fog if need be
   if (Polymodel_use_effect && Polymodel_effect.type & PEF_FOGGED_MODEL) {
-    matrix mat;
+    vec::matrix mat;
 
     g3_GetUnscaledMatrix(&mat);
     g3_GetViewPosition(&Fog_view_pos);
     Fog_plane = mat.fvec;
 
     if (Polymodel_effect.fog_plane_check == 1)
-      Fog_distance = -(vm_DotProduct(&Fog_plane, &Fog_view_pos));
+      Fog_distance = -(simd::dot(Fog_plane, Fog_view_pos));
     else {
-      Fog_distance = -(vm_DotProduct(&Polymodel_fog_plane, &Polymodel_fog_portal_vert));
-      Fog_eye_distance = (Fog_view_pos * Polymodel_fog_plane) + Fog_distance;
+      Fog_distance = -(simd::dot(Polymodel_fog_plane, Polymodel_fog_portal_vert));
+      Fog_eye_distance = simd::dot(Fog_view_pos, Polymodel_fog_plane) + Fog_distance;
     }
 
     rend_SetOverlayType(OT_NONE);
@@ -880,7 +880,7 @@ void RotateModelPoints(poly_model *pm, bsp_info *sm) {
   if (Polymodel_light_type == POLYMODEL_LIGHTING_STATIC) {
     if ((Polymodel_use_effect && (Polymodel_effect.type & PEF_DEFORM)) || (sm->flags & SOF_JITTER)) {
       for (int i = 0; i < sm->nverts; i++) {
-        vector vec = sm->verts[i];
+        simd::float3 vec = sm->verts[i];
 
         float val = ((ps_rand() % 1000) - 500.0) / 500.0;
         vec *= 1.0 + (Polymodel_effect.deform_range * val);
@@ -894,7 +894,7 @@ void RotateModelPoints(poly_model *pm, bsp_info *sm) {
   } else if (Polymodel_light_type == POLYMODEL_LIGHTING_LIGHTMAP) {
     if ((Polymodel_use_effect && (Polymodel_effect.type & PEF_DEFORM)) || (sm->flags & SOF_JITTER)) {
       for (int i = 0; i < sm->nverts; i++) {
-        vector vec = sm->verts[i];
+        simd::float3 vec = sm->verts[i];
         float val = ((ps_rand() % 1000) - 500.0) / 500.0;
         vec *= 1.0 + (Polymodel_effect.deform_range * val);
 
@@ -916,14 +916,14 @@ void RotateModelPoints(poly_model *pm, bsp_info *sm) {
     if (Polymodel_use_effect && Polymodel_effect.type & PEF_COLOR) {
       if ((Polymodel_use_effect && (Polymodel_effect.type & PEF_DEFORM)) || (sm->flags & SOF_JITTER)) {
         for (int i = 0; i < sm->nverts; i++) {
-          vector vec = sm->verts[i];
+          simd::float3 vec = sm->verts[i];
           float val = ((ps_rand() % 1000) - 500.0) / 500.0;
           vec *= 1.0 + (Polymodel_effect.deform_range * val);
 
           g3_RotatePoint(&Robot_points[i], &vec);
 
-          vector normvec = sm->vertnorms[i];
-          val = (-vm_DotProduct(Polymodel_light_direction, &normvec) + 1.0) / 2;
+          simd::float3 normvec = sm->vertnorms[i];
+          val = (-simd::dot(*Polymodel_light_direction, normvec) + 1.0) / 2;
 
           Robot_points[i].p3_r = Polymodel_effect.r * val * Polylighting_static_red;
           Robot_points[i].p3_g = Polymodel_effect.g * val * Polylighting_static_green;
@@ -932,14 +932,14 @@ void RotateModelPoints(poly_model *pm, bsp_info *sm) {
       } else {
         if ((Polymodel_use_effect && (Polymodel_effect.type & PEF_DEFORM)) || (sm->flags & SOF_JITTER)) {
           for (int i = 0; i < sm->nverts; i++) {
-            vector vec = sm->verts[i];
+            simd::float3 vec = sm->verts[i];
             float val = ((ps_rand() % 1000) - 500.0) / 500.0;
             vec *= 1.0 + (Polymodel_effect.deform_range * val);
 
             g3_RotatePoint(&Robot_points[i], &vec);
 
-            vector normvec = sm->vertnorms[i];
-            val = (-vm_DotProduct(Polymodel_light_direction, &normvec) + 1.0) / 2;
+            simd::float3 normvec = sm->vertnorms[i];
+            val = (-simd::dot(*Polymodel_light_direction, normvec) + 1.0) / 2;
 
             Robot_points[i].p3_r = Polymodel_effect.r * val * Polylighting_static_red;
             Robot_points[i].p3_g = Polymodel_effect.g * val * Polylighting_static_green;
@@ -948,8 +948,8 @@ void RotateModelPoints(poly_model *pm, bsp_info *sm) {
         } else {
           for (int i = 0; i < sm->nverts; i++) {
             g3_RotatePoint(&Robot_points[i], &sm->verts[i]);
-            vector normvec = sm->vertnorms[i];
-            float val = (-vm_DotProduct(Polymodel_light_direction, &normvec) + 1.0) / 2;
+            simd::float3 normvec = sm->vertnorms[i];
+            float val = (-simd::dot(*Polymodel_light_direction, normvec) + 1.0) / 2;
 
             Robot_points[i].p3_r = Polymodel_effect.r * val * Polylighting_static_red;
             Robot_points[i].p3_g = Polymodel_effect.g * val * Polylighting_static_green;
@@ -960,13 +960,13 @@ void RotateModelPoints(poly_model *pm, bsp_info *sm) {
     } else {
       if ((Polymodel_use_effect && (Polymodel_effect.type & PEF_DEFORM)) || (sm->flags & SOF_JITTER)) {
         for (int i = 0; i < sm->nverts; i++) {
-          vector vec = sm->verts[i];
+          simd::float3 vec = sm->verts[i];
           float val = ((ps_rand() % 1000) - 500.0) / 500.0;
           vec *= 1.0 + (Polymodel_effect.deform_range * val);
 
           g3_RotatePoint(&Robot_points[i], &vec);
-          vector normvec = sm->vertnorms[i];
-          val = (-vm_DotProduct(Polymodel_light_direction, &normvec) + 1.0) / 2;
+          simd::float3 normvec = sm->vertnorms[i];
+          val = (-simd::dot(*Polymodel_light_direction, normvec) + 1.0) / 2;
 
           Robot_points[i].p3_r = val * Polylighting_static_red;
           Robot_points[i].p3_g = val * Polylighting_static_green;
@@ -975,8 +975,8 @@ void RotateModelPoints(poly_model *pm, bsp_info *sm) {
       } else {
         for (int i = 0; i < sm->nverts; i++) {
           g3_RotatePoint(&Robot_points[i], &sm->verts[i]);
-          vector normvec = sm->vertnorms[i];
-          float val = (-vm_DotProduct(Polymodel_light_direction, &normvec) + 1.0) / 2;
+          simd::float3 normvec = sm->vertnorms[i];
+          float val = (-simd::dot(*Polymodel_light_direction, normvec) + 1.0) / 2;
 
           Robot_points[i].p3_r = val * Polylighting_static_red;
           Robot_points[i].p3_g = val * Polylighting_static_green;
@@ -997,7 +997,7 @@ void RotateModelPoints(poly_model *pm, bsp_info *sm) {
 
 void RenderSubmodel(poly_model *pm, bsp_info *sm, uint32_t f_render_sub) {
   int i;
-  matrix lightmatrix;
+  vec::matrix lightmatrix;
 
   // Don't render door housings
   if (IsNonRenderableSubmodel(pm, sm - pm->submodel))
@@ -1015,7 +1015,7 @@ void RenderSubmodel(poly_model *pm, bsp_info *sm, uint32_t f_render_sub) {
 
   rend_SetColorModel(CM_RGB);
   StartPolyModelPosInstance(&sm->mod_pos);
-  vector temp_vec = sm->mod_pos + sm->offset;
+  simd::float3 temp_vec = sm->mod_pos + sm->offset;
   g3_StartInstanceAngles(&temp_vec, &sm->angs);
 
   vm_AnglesToMatrix(&lightmatrix, sm->angs.p, sm->angs.h, sm->angs.b);
@@ -1033,7 +1033,7 @@ void RenderSubmodel(poly_model *pm, bsp_info *sm, uint32_t f_render_sub) {
       if (!FacingPass)
         goto pop_lighting;
 
-      vector zero_pos = {0, 0, 0};
+      simd::float3 zero_pos = {0, 0, 0};
       rend_SetOverlayType(OT_NONE);
 
       if (Polymodel_use_effect && Polymodel_effect.type & PEF_GLOW_SCALAR) {
@@ -1059,7 +1059,7 @@ void RenderSubmodel(poly_model *pm, bsp_info *sm, uint32_t f_render_sub) {
       if (!FacingPass)
         goto pop_lighting;
 
-      vector pos;
+      simd::float3 pos;
       rend_SetLighting(LS_NONE);
       rend_SetColorModel(CM_MONO);
       rend_SetOverlayType(OT_NONE);
@@ -1067,7 +1067,7 @@ void RenderSubmodel(poly_model *pm, bsp_info *sm, uint32_t f_render_sub) {
       int bm_handle = GetTextureBitmap(pm->textures[sm->faces[0].texnum], 0);
       rend_SetAlphaValue(GameTextures[pm->textures[sm->faces[0].texnum]].alpha * 255);
 
-      vm_MakeZero(&pos);
+      vec::vm_MakeZero(&pos);
 
       if (GameTextures[pm->textures[sm->faces[0].texnum]].flags & TF_SATURATE)
         rend_SetAlphaType(AT_SATURATE_TEXTURE);
@@ -1134,9 +1134,9 @@ int RenderPolygonModel(poly_model *pm, uint32_t f_render_sub) {
   return 1;
 }
 
-float ComputeDefaultSizeFunc(int handle, float *size_ptr, vector *offset_ptr, bool f_use_all_frames) {
+float ComputeDefaultSizeFunc(int handle, float *size_ptr, simd::float3 *offset_ptr, bool f_use_all_frames) {
   poly_model *pm;
-  matrix m;
+  vec::matrix m;
   float normalized_time[MAX_SUBOBJECTS];
   int model_index, sm_vert_index, frame_index;
   float cur_dist;
@@ -1144,7 +1144,7 @@ float ComputeDefaultSizeFunc(int handle, float *size_ptr, vector *offset_ptr, bo
   int start_frame = 0;
   int end_frame = 0;
 
-  vector geometric_center = Zero_vector;
+  simd::float3 geometric_center = vec::Zero_vector;
 
   // Chris: Come see me when you are ready to deal with the paging problem - JL
   pm = GetPolymodelPointer(handle);
@@ -1157,8 +1157,8 @@ float ComputeDefaultSizeFunc(int handle, float *size_ptr, vector *offset_ptr, bo
   }
 
   if (offset_ptr) {
-    vector min_xyz;
-    vector max_xyz;
+    simd::float3 min_xyz;
+    simd::float3 max_xyz;
     bool first_pnt = true;
 
     for (frame_index = start_frame; frame_index <= end_frame; frame_index++) {
@@ -1174,7 +1174,7 @@ float ComputeDefaultSizeFunc(int handle, float *size_ptr, vector *offset_ptr, bo
 
         // For every vertex
         for (sm_vert_index = 0; sm_vert_index < sm->nverts; sm_vert_index++) {
-          vector pnt;
+          simd::float3 pnt;
           int mn;
 
           // Get the point and its current sub-object
@@ -1183,7 +1183,7 @@ float ComputeDefaultSizeFunc(int handle, float *size_ptr, vector *offset_ptr, bo
 
           // Instance up the tree
           while (mn != -1) {
-            vector tpnt;
+            simd::float3 tpnt;
 
             vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
             vm_TransposeMatrix(&m);
@@ -1244,7 +1244,7 @@ float ComputeDefaultSizeFunc(int handle, float *size_ptr, vector *offset_ptr, bo
 
       // For every vertex
       for (sm_vert_index = 0; sm_vert_index < sm->nverts; sm_vert_index++) {
-        vector pnt;
+        simd::float3 pnt;
         int mn;
 
         // Get the point and its current sub-object
@@ -1253,10 +1253,10 @@ float ComputeDefaultSizeFunc(int handle, float *size_ptr, vector *offset_ptr, bo
 
         // Instance up the tree
         while (mn != -1) {
-          vector tpnt;
+          simd::float3 tpnt;
 
-          vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
-          vm_TransposeMatrix(&m);
+          vec::vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
+          vec::vm_TransposeMatrix(&m);
 
           tpnt = pnt * m;
 
@@ -1273,7 +1273,7 @@ float ComputeDefaultSizeFunc(int handle, float *size_ptr, vector *offset_ptr, bo
         //
         //				*gun_point += obj->pos;
 
-        cur_dist = vm_VectorDistance(&geometric_center, &pnt);
+        cur_dist = simd::distance(geometric_center, pnt);
         if (cur_dist > size)
           size = cur_dist;
       }
@@ -1298,7 +1298,7 @@ float ComputeDefaultSize(int type, int handle, float *size_ptr) {
 
     if (type == OBJ_PLAYER) {
       Poly_models[handle].anim_size *= PLAYER_SIZE_SCALAR;
-      Poly_models[handle].anim_size_offset = Zero_vector;
+      Poly_models[handle].anim_size_offset = vec::Zero_vector;
     }
   } else {
     if (type == OBJ_POWERUP) {
@@ -1307,10 +1307,10 @@ float ComputeDefaultSize(int type, int handle, float *size_ptr) {
     }
 
     Poly_models[handle].wall_size = size;
-    Poly_models[handle].wall_size_offset = Zero_vector;
+    Poly_models[handle].wall_size_offset = vec::Zero_vector;
 
     Poly_models[handle].anim_size = size;
-    Poly_models[handle].anim_size_offset = Zero_vector;
+    Poly_models[handle].anim_size_offset = vec::Zero_vector;
   }
 
   Poly_models[handle].flags |= PMF_SIZE_COMPUTED;

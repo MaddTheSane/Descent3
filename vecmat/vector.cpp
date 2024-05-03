@@ -155,67 +155,53 @@
 #include "pserror.h"
 #include "psrand.h"
 
-const vec::vector Zero_vector = {0.0, 0.0, 0.0};
+const simd::float3 Zero_vector = {0.0, 0.0, 0.0};
 const vec::matrix Identity_matrix = IDENTITY_MATRIX;
 
-void vec::vm_AverageVector(vec::vector *a, int num) {
+void vec::vm_AverageVector(simd::float3 *a, int num) {
   // Averages a vector.  ie divides each component of vector a by num
   assert(num != 0);
-  a->x = a->x / (float)num;
-  a->y = a->y / (float)num;
-  a->z = a->z / (float)num;
+  *a /= (float)num;
 }
 
-void vec::vm_AddVectors(vec::vector *result, vec::vector *a, vec::vector *b) {
+void vec::vm_AddVectors(simd::float3 *result, simd::float3 *a, simd::float3 *b) {
   // Adds two vectors.  Either source can equal dest
 
-  result->x = a->x + b->x;
-  result->y = a->y + b->y;
-  result->z = a->z + b->z;
+  *result = *a + *b;
 }
 
-void vec::vm_SubVectors(vec::vector *result, const vec::vector *a, const vec::vector *b) {
+void vec::vm_SubVectors(simd::float3 *result, const simd::float3 *a, const simd::float3 *b) {
   // Subtracts second vector from first.  Either source can equal dest
 
-  result->x = a->x - b->x;
-  result->y = a->y - b->y;
-  result->z = a->z - b->z;
+  *result = *a - *b;
 }
 
-float vec::vm_VectorDistance(const vec::vector *a, const vec::vector *b) {
+float vec::vm_VectorDistance(const simd::float3 *a, const simd::float3 *b) {
   // Given two vectors, returns the distance between them
 
-  vec::vector dest;
-  float dist;
+  float dist = simd::distance(*a, *b);
 
-  vec::vm_SubVectors(&dest, a, b);
-  dist = vec::vm_GetMagnitude(&dest);
   return dist;
 }
-float vec::vm_VectorDistanceQuick(vec::vector *a, vec::vector *b) {
+float vec::vm_VectorDistanceQuick(simd::float3 *a, simd::float3 *b) {
   // Given two vectors, returns the distance between them
 
-  vec::vector dest;
-  float dist;
-
-  vec::vm_SubVectors(&dest, a, b);
-  dist = vec::vm_GetMagnitudeFast(&dest);
+  vec::vector dest = *a - *b;
+  float dist = vec::vm_GetMagnitudeFast(&dest);
   return dist;
 }
 
 // Calculates the perpendicular vector given three points
 // Parms:	n - the computed perp vector (filled in)
 //			v0,v1,v2 - three clockwise vertices
-void vec::vm_GetPerp(vec::vector *n, vec::vector *a, vec::vector *b, vec::vector *c) {
+void vec::vm_GetPerp(simd::float3 *n, simd::float3 *a, simd::float3 *b, simd::float3 *c) {
   // Given 3 vertices, return the surface normal in n
   // IMPORTANT: B must be the 'corner' vertex
 
-  vec::vector x, y;
+  simd::float3 x = *b - *a;
+  simd::float3 y = *c - *b;
 
-  vec::vm_SubVectors(&x, b, a);
-  vec::vm_SubVectors(&y, c, b);
-
-  vec::vm_CrossProduct(n, &x, &y);
+  *n = simd::cross(x, y);
 }
 
 // Calculates the (normalized) surface normal give three points
@@ -223,24 +209,20 @@ void vec::vm_GetPerp(vec::vector *n, vec::vector *a, vec::vector *b, vec::vector
 //			v0,v1,v2 - three clockwise vertices
 // Returns the magnitude of the normal before it was normalized.
 // The bigger this value, the better the normal.
-float vec::vm_GetNormal(vec::vector *n, vec::vector *v0, vec::vector *v1, vec::vector *v2) {
+float vec::vm_GetNormal(simd::float3 *n, simd::float3 *v0, simd::float3 *v1, simd::float3 *v2) {
   vec::vm_GetPerp(n, v0, v1, v2);
 
   return vec::vm_NormalizeVector(n);
 }
 
 // Does a simple dot product calculation
-float vec::vm_DotProduct(const vec::vector *u, const vec::vector *v) { return (u->x * v->x) + (u->y * v->y) + (u->z * v->z); }
+float vec::vm_DotProduct(const simd::float3 *u, const simd::float3 *v) { return simd::dot(*u, *v); }
 
 // Scales all components of vector v by value s and stores result in vector d
 // dest can equal source
-void vec::vm_ScaleVector(vec::vector *d, vec::vector *v, float s) {
-  d->x = (v->x * s);
-  d->y = (v->y * s);
-  d->z = (v->z * s);
-}
+void vec::vm_ScaleVector(simd::float3 *d, simd::float3 *v, float s) { *d = *v * s; }
 
-void vec::vm_ScaleAddVector(vec::vector *d, vec::vector *p, vec::vector *v, float s) {
+void vec::vm_ScaleAddVector(simd::float3 *d, simd::float3 *p, simd::float3 *v, float s) {
   // Scales all components of vector v by value s
   // adds the result to p and stores result in vector d
   // dest can equal source
@@ -248,17 +230,15 @@ void vec::vm_ScaleAddVector(vec::vector *d, vec::vector *p, vec::vector *v, floa
   *d = *p + (*v * s);
 }
 
-void vec::vm_DivVector(vector *dest, vector *src, float n) {
+void vec::vm_DivVector(simd::float3 *dest, simd::float3 *src, float n) {
   // Divides a vector into n portions
   // Dest can equal src
 
   assert(n != 0);
-  dest->x = src->x / n;
-  dest->y = src->y / n;
-  dest->z = src->z / n;
+  *dest = *src / n;
 }
 
-void vec::vm_CrossProduct(vec::vector *dest, vec::vector *u, vec::vector *v) {
+void vec::vm_CrossProduct(simd::float3 *dest, simd::float3 *u, simd::float3 *v) {
   // Computes a cross product between u and v, returns the result
   //	in Normal.  Dest cannot equal source.
 
@@ -267,7 +247,7 @@ void vec::vm_CrossProduct(vec::vector *dest, vec::vector *u, vec::vector *v) {
 
 // Normalize a vector.
 // Returns:  the magnitude before normalization
-float vec::vm_NormalizeVector(vec::vector *a) {
+float vec::vm_NormalizeVector(simd::float3 *a) {
   float mag;
 
   mag = vm_GetMagnitude(a);
@@ -283,7 +263,8 @@ float vec::vm_NormalizeVector(vec::vector *a) {
   return mag;
 }
 
-float vec::vm_GetMagnitude(vec::vector *a) {
+// TODO: find libsimd replacement!
+float vec::vm_GetMagnitude(simd::float3 *a) {
   float f;
 
   f = (a->x * a->x) + (a->y * a->y) + (a->z * a->z);
@@ -318,7 +299,7 @@ void vec::vm_TransposeMatrix(vec::matrix *m) {
   m->uvec.z = t;
 }
 
-void vec::vm_MatrixMulVector(vec::vector *result, vec::vector *v, vec::matrix *m) {
+void vec::vm_MatrixMulVector(simd::float3 *result, simd::float3 *v, vec::matrix *m) {
   // Rotates a vector thru a matrix
 
   assert(result != v);
@@ -329,7 +310,7 @@ void vec::vm_MatrixMulVector(vec::vector *result, vec::vector *v, vec::matrix *m
 }
 
 // Multiply a vector times the transpose of a matrix
-void vec::vm_VectorMulTMatrix(vec::vector *result, vec::vector *v, vec::matrix *m) {
+void vec::vm_VectorMulTMatrix(simd::float3 *result, simd::float3 *v, vec::matrix *m) {
   assert(result != v);
 
   result->x = vec::vm_Dot3Vector(m->rvec.x, m->uvec.x, m->fvec.x, v);
@@ -393,16 +374,14 @@ vec::matrix operator*(vec::matrix src0, vec::matrix src1) {
   return dest;
 }
 
-vec::matrix operator*=(vec::matrix &src0, vec::matrix src1) {
-  return (src0 = src0 * src1);
-}
+vec::matrix operator*=(vec::matrix &src0, vec::matrix src1) { return (src0 = src0 * src1); }
 
 // Computes a normalized direction vector between two points
 // Parameters:	dest - filled in with the normalized direction vector
 //					start,end - the start and end points used to calculate the vector
 // Returns:		the distance between the two input points
-float vec::vm_GetNormalizedDir(vec::vector *dest, vec::vector *end, vec::vector *start) {
-  vec::vm_SubVectors(dest, end, start);
+float vec::vm_GetNormalizedDir(simd::float3 *dest, simd::float3 *end, simd::float3 *start) {
+  *dest = *end - *start;
   return vec::vm_NormalizeVector(dest);
 }
 
@@ -411,12 +390,12 @@ float vec::vm_GetNormalizedDir(vec::vector *dest, vec::vector *end, vec::vector 
 // Parameters:	dest - filled in with the normalized direction vector
 //					start,end - the start and end points used to calculate the vector
 // Returns:		the distance between the two input points
-float vec::vm_GetNormalizedDirFast(vec::vector *dest, vec::vector *end, vec::vector *start) {
-  vec::vm_SubVectors(dest, end, start);
+float vec::vm_GetNormalizedDirFast(simd::float3 *dest, simd::float3 *end, simd::float3 *start) {
+  *dest = *end - *start;
   return vec::vm_NormalizeVectorFast(dest);
 }
 
-float vec::vm_GetMagnitudeFast(vec::vector *v) {
+float vec::vm_GetMagnitudeFast(simd::float3 *v) {
   float a, b, c, bc;
 
   a = fabs(v->x);
@@ -448,7 +427,7 @@ float vec::vm_GetMagnitudeFast(vec::vector *v) {
 
 // Normalize a vector using an approximation of the magnitude
 // Returns:  the magnitude before normalization
-float vec::vm_NormalizeVectorFast(vec::vector *a) {
+float vec::vm_NormalizeVectorFast(simd::float3 *a) {
   float mag;
 
   mag = vec::vm_GetMagnitudeFast(a);
@@ -458,9 +437,7 @@ float vec::vm_NormalizeVectorFast(vec::vector *a) {
     return 0;
   }
 
-  a->x = (a->x / mag);
-  a->y = (a->y / mag);
-  a->z = (a->z / mag);
+  *a = (*a / mag);
 
   return mag;
 }
@@ -470,10 +447,8 @@ float vec::vm_NormalizeVectorFast(vec::vector *a) {
 // Parms:	norm - the (normalized) surface normal of the plane
 //				planep - a point on the plane
 // Returns:	The signed distance from the plane; negative dist is on the back of the plane
-float vec::vm_DistToPlane(vec::vector *checkp, vec::vector *norm, vec::vector *planep) {
-  vec::vector t;
-
-  t = *checkp - *planep;
+float vec::vm_DistToPlane(simd::float3 *checkp, simd::float3 *norm, simd::float3 *planep) {
+  simd::float3 t = *checkp - *planep;
 
   return simd::dot(t, *norm);
 }
@@ -528,7 +503,7 @@ void vec::vm_AnglesToMatrix(vec::matrix *m, vec::angle p, vec::angle h, vec::ang
 // Parameters:	m - filled in with the computed matrix
 //					v - the forward vector of the new matrix
 //					a - the angle of rotation around the forward vector
-void vec::vm_VectorAngleToMatrix(matrix *m, vector *v, angle a) {
+void vec::vm_VectorAngleToMatrix(vec::matrix *m, simd::float3 *v, angle a) {
   float sinb, cosb, sinp, cosp, sinh, cosh;
 
   sinb = FixSin(a);
@@ -570,8 +545,8 @@ void vec::vm_Orthogonalize(vec::matrix *m) {
 }
 
 // do the math for vm_VectorToMatrix()
-void DoVectorToMatrix(vec::matrix *m, vec::vector *fvec, vec::vector *uvec, vec::vector *rvec) {
-  vec::vector *xvec = &m->rvec, *yvec = &m->uvec, *zvec = &m->fvec;
+void DoVectorToMatrix(vec::matrix *m, simd::float3 *fvec, simd::float3 *uvec, simd::float3 *rvec) {
+  simd::float3 *xvec = &m->rvec, *yvec = &m->uvec, *zvec = &m->fvec;
 
   ASSERT(fvec != NULL);
 
@@ -640,7 +615,7 @@ void DoVectorToMatrix(vec::matrix *m, vec::vector *fvec, vec::vector *uvec, vec:
 // Parameters:	m - filled in with the orienation matrix
 //					fvec,uvec,rvec - pointers to vectors that determine the matrix.
 //						One or two of these must be specified, with the other(s) set to NULL.
-void vec::vm_VectorToMatrix(vec::matrix *m, vec::vector *fvec, vec::vector *uvec, vec::vector *rvec) {
+void vec::vm_VectorToMatrix(vec::matrix *m, simd::float3 *fvec, simd::float3 *uvec, simd::float3 *rvec) {
   if (!fvec) { // no forward vector.  Use up and/or right vectors.
     vec::matrix tmatrix;
 
@@ -705,7 +680,8 @@ vec::angvec *vm_ExtractAnglesFromMatrix(vec::angvec *a, vec::matrix *m) {
 }
 
 // returns the value of a determinant
-float calc_det_value(vec::matrix *det) {
+float vec::calc_det_value(vec::matrix *det) {
+  //  simd::determinant(const float3x3 x)
   return det->rvec.x * det->uvec.y * det->fvec.z - det->rvec.x * det->uvec.z * det->fvec.y -
          det->rvec.y * det->uvec.x * det->fvec.z + det->rvec.y * det->uvec.z * det->fvec.x +
          det->rvec.z * det->uvec.x * det->fvec.y - det->rvec.z * det->uvec.y * det->fvec.x;
@@ -717,8 +693,8 @@ float calc_det_value(vec::matrix *det) {
 // value of the angle in returned.  Otherwise the angle around that vector is
 // returned.
 
-vec::angle vm_DeltaAngVec(vec::vector *v0, vec::vector *v1, vec::vector *fvec) {
-  vec::vector t0, t1;
+vec::angle vm_DeltaAngVec(simd::float3 *v0, simd::float3 *v1, simd::float3 *fvec) {
+  simd::float3 t0, t1;
 
   t0 = *v0;
   t1 = *v1;
@@ -730,16 +706,15 @@ vec::angle vm_DeltaAngVec(vec::vector *v0, vec::vector *v1, vec::vector *fvec) {
 }
 
 // computes the delta angle between two normalized vectors.
-vec::angle vec::vm_DeltaAngVecNorm(vec::vector *v0, vec::vector *v1, vec::vector *fvec) {
+vec::angle vec::vm_DeltaAngVecNorm(simd::float3 *v0, simd::float3 *v1, simd::float3 *fvec) {
   angle a;
 
   a = FixAcos(vec::vm_DotProduct(v0, v1));
 
   if (fvec) {
-    vector t;
+    simd::float3 t = simd::cross(*v0, *v1);
 
-    vec::vm_CrossProduct(&t, v0, v1);
-    if (vec::vm_DotProduct(&t, fvec) < 0)
+    if (simd::dot(t, *fvec) < 0)
       a = -a;
   }
 
@@ -748,12 +723,12 @@ vec::angle vec::vm_DeltaAngVecNorm(vec::vector *v0, vec::vector *v1, vec::vector
 
 // Gets the real center of a polygon
 // Returns the size of the passed in stuff
-float vec::vm_GetCentroid(vec::vector *centroid, vec::vector *src, int nv) {
+float vec::vm_GetCentroid(simd::float3 *centroid, simd::float3 *src, int nv) {
   ASSERT(nv > 2);
-  vec::vector normal;
+  simd::float3 normal;
   float area, total_area;
   int i;
-  vec::vector tmp_center;
+  simd::float3 tmp_center;
 
   vec::vm_MakeZero(centroid);
 
@@ -802,12 +777,12 @@ float vec::vm_GetCentroid(vec::vector *centroid, vec::vector *src, int nv) {
 
 // Gets the real center of a polygon, but uses fast magnitude calculation
 // Returns the size of the passed in stuff
-float vec::vm_GetCentroidFast(vec::vector *centroid, vec::vector *src, int nv) {
+float vec::vm_GetCentroidFast(simd::float3 *centroid, simd::float3 *src, int nv) {
   ASSERT(nv > 2);
-  vec::vector normal;
+  simd::float3 normal;
   float area, total_area;
   int i;
-  vec::vector tmp_center;
+  simd::float3 tmp_center;
 
   vm_MakeZero(centroid);
 
@@ -855,18 +830,18 @@ float vec::vm_GetCentroidFast(vec::vector *centroid, vec::vector *src, int nv) {
 }
 
 //	creates a completely random, non-normalized vector with a range of values from -1023 to +1024 values)
-void vec::vm_MakeRandomVector(vec::vector *vec) {
+void vec::vm_MakeRandomVector(simd::float3 *vec) {
   vec->x = ps_rand() - D3_RAND_MAX / 2;
   vec->y = ps_rand() - D3_RAND_MAX / 2;
   vec->z = ps_rand() - D3_RAND_MAX / 2;
 }
 
 // Given a set of points, computes the minimum bounding sphere of those points
-float vec::vm_ComputeBoundingSphere(vec::vector *center, vec::vector *vecs, int num_verts) {
+float vec::vm_ComputeBoundingSphere(simd::float3 *center, simd::float3 *vecs, int num_verts) {
   // This algorithm is from Graphics Gems I.  There's a better algorithm in Graphics Gems III that
   // we should probably implement sometime.
 
-  vec::vector *min_x, *max_x, *min_y, *max_y, *min_z, *max_z, *vp;
+  simd::float3 *min_x, *max_x, *min_y, *max_y, *min_z, *max_z, *vp;
   float dx, dy, dz;
   float rad, rad2;
   int i;
@@ -921,7 +896,7 @@ float vec::vm_ComputeBoundingSphere(vec::vector *center, vec::vector *vecs, int 
   // Go through all points and look for ones that don't fit
   rad2 = rad * rad;
   for (i = 0, vp = vecs; i < num_verts; i++, vp++) {
-    vec::vector delta;
+    simd::float3 delta;
     float t2;
 
     delta = *vp - *center;

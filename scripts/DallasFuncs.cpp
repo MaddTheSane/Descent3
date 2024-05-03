@@ -930,8 +930,8 @@ public:
   cPositionClipboard() { has_pos = false; }
   bool has_pos;
   int room;
-  vector pos;
-  matrix orient;
+  simd::float3 pos;
+  vec::matrix orient;
 };
 cPositionClipboard PositionClipboard;
 
@@ -2123,7 +2123,7 @@ Parameters:
 $$END
 */
 void aObjSetVelocity(int objhandle, float x, float y, float z, float speed) {
-  vector velocity;
+  simd::float3 velocity;
 
   velocity.x = x * speed;
   velocity.y = y * speed;
@@ -3595,7 +3595,7 @@ Parameters:
 $$END
 */
 void aAIGoalGotoRoom(int objhandle, int roomnum, int slot, int flags, int goalid) {
-  vector pos;
+  simd::float3 pos;
 
   Room_Value(roomnum, VF_GET, RMSV_V_PATH_PNT, &pos, 0);
 
@@ -4084,7 +4084,7 @@ Params:
         Room: The room that that position is in
 $$END
 */
-void aComplexCinematicCameraAtPoint(vector *Position, int Room) {
+void aComplexCinematicCameraAtPoint(simd::float3 *Position, int Room) {
   ccinematic.info.flags &= ~GCF_USEPATH;
   ccinematic.info.flags |= GCF_USEPOINT;
 
@@ -4851,7 +4851,7 @@ float qObjectPosition(int handle, int axis) {
 
   Obj_Value(handle, VF_GET, OBJV_I_TYPE, &type);
   if (type != OBJ_NONE) {
-    vector pos;
+    simd::float3 pos;
     Obj_Value(handle, VF_GET, OBJV_V_POS, &pos);
 
     switch (axis) {
@@ -5096,7 +5096,7 @@ Parameters:
 $$END
 */
 void aGoalSetCompletionMessage(int goal_index, const char *message) {
-  LGoal_Value(VF_SET, LGSV_PC_COMPLETION_MESSAGE, (void *) message, goal_index);
+  LGoal_Value(VF_SET, LGSV_PC_COMPLETION_MESSAGE, (void *)message, goal_index);
 }
 
 /*
@@ -5314,7 +5314,7 @@ Parameters:
 $$END
 */
 bool qObjCanSeeObj(int handletarget, int cone, int handlesrc) {
-  vector vsource, vtarget;
+  simd::float3 vsource, vtarget;
 
   msafe_struct mstruct;
 
@@ -5334,7 +5334,7 @@ bool qObjCanSeeObj(int handletarget, int cone, int handlesrc) {
   mstruct.objhandle = handlesrc;
   MSafe_GetValue(MSAFE_OBJECT_ORIENT, &mstruct);
 
-  vector subvec = vtarget - vsource;
+  simd::float3 subvec = vtarget - vsource;
   vm_VectorNormalizeFast(&subvec);
   float dotp = vm_DotProduct(&subvec, &mstruct.orient.fvec);
 
@@ -5360,7 +5360,7 @@ Parameters:
 $$END
 */
 bool qObjCanSeeObjAdvanced(int handletarget, int cone, int handlesrc, int fvi_flags) {
-  vector vsource, vtarget;
+  simd::float3 vsource, vtarget;
   int sourceroom;
 
   msafe_struct mstruct;
@@ -5385,7 +5385,7 @@ bool qObjCanSeeObjAdvanced(int handletarget, int cone, int handlesrc, int fvi_fl
   mstruct.objhandle = handlesrc;
   MSafe_GetValue(MSAFE_OBJECT_ORIENT, &mstruct);
 
-  vector subvec = vtarget - vsource;
+  simd::float3 subvec = vtarget - vsource;
   vm_VectorNormalizeFast(&subvec);
   float dotp = vm_DotProduct(&subvec, &mstruct.orient.fvec);
 
@@ -6059,7 +6059,7 @@ $$END
 */
 float qObjGetDistance(int objhandle0, int objhandle1) {
   msafe_struct mstruct;
-  vector p0;
+  simd::float3 p0;
 
   mstruct.objhandle = objhandle0;
   MSafe_GetValue(MSAFE_OBJECT_POS, &mstruct);
@@ -6144,7 +6144,7 @@ Parameters:
 $$END
 */
 bool qObjCanSeePlayer(int cone, int handlesrc, float max_distance) {
-  vector vsource, vtarget, viewvec;
+  simd::float3 vsource, vtarget, viewvec;
   msafe_struct mstruct;
 
   // Get half of the angle that the user specified because they specified a cone, and we want an angle
@@ -6206,9 +6206,9 @@ Parameters:
 $$END
 */
 bool qObjCanSeePlayerAdvanced(int cone, int handlesrc, float max_distance, int fvi_flags) {
-  vector vsource, vtarget, viewvec;
+  simd::float3 vsource, vtarget, viewvec;
   msafe_struct mstruct;
-  matrix orient;
+  vec::matrix orient;
   int sourceroom;
 
   // Get half of the angle that the user specified because they specified a cone, and we want an angle
@@ -6293,9 +6293,9 @@ Parameters:
 $$END
 */
 bool qObjCanSeePlayerAdvancedWithStore(int slot, int cone, int handlesrc, float max_distance, int fvi_flags) {
-  vector vsource, vtarget, viewvec;
+  simd::float3 vsource, vtarget, viewvec;
   msafe_struct mstruct;
-  matrix orient;
+  vec::matrix orient;
   int sourceroom;
 
   // Get half of the angle that the user specified because they specified a cone, and we want an angle
@@ -6594,7 +6594,7 @@ Parameters:
 $$END
 */
 int qPlayerClosest(int objhandle, int varnum) {
-  vector objpos;
+  simd::float3 objpos;
   float closest_dist = FLT_MAX;
   int closest_player = OBJECT_HANDLE_NONE;
   msafe_struct mstruct;

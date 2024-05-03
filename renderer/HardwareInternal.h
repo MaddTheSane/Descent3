@@ -34,13 +34,13 @@ struct tex_array {
 };
 
 struct PosColorUVVertex {
-  vector pos;
+  simd::float3 pos;
   color_array color;
   tex_array uv;
 };
 
 struct PosColorUV2Vertex {
-  vector pos;
+  simd::float3 pos;
   color_array color;
   tex_array uv0;
   tex_array uv1;

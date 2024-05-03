@@ -198,7 +198,7 @@ void DrawFireballObject(object *obj);
 // Creates a fireball
 // Returns object number on success, else -1 on error
 // If vis_effect is non-zero, then this is a visual effect only
-int CreateFireball(vector *pos, int fireball_num, int roomnum, int realtype = VISUAL_FIREBALL);
+int CreateFireball(simd::float3 *pos, int fireball_num, int roomnum, int realtype = VISUAL_FIREBALL);
 
 // Creates a fireball vis effect for the specified object
 // The explosion size is twice the object size times size_scale
@@ -218,7 +218,7 @@ void MakeShockwave(object *explode_obj_ptr, int parent_handle);
 void DoConcussiveForce(object *explode_obj_ptr, int parent_handle, float player_scalar = 1);
 
 // Creates a gravity field that sucks objects into it
-extern int CreateGravityField(vector *pos, int roomnum, float size, float time, int parent_handle);
+extern int CreateGravityField(simd::float3 *pos, int roomnum, float size, float time, int parent_handle);
 
 // Control code for explosions
 void DoExplosionFrame(object *obj);
@@ -227,37 +227,37 @@ void DoExplosionFrame(object *obj);
 void DestroyObject(object *objp, float explosion_mag, int death_flags);
 
 // Creates a debris piece that goes off in a given direction, with a given magnitude
-object *CreateSubobjectDebrisDirected(object *parent, int subobj_num, vector *dir, float explosion_mag,
+object *CreateSubobjectDebrisDirected(object *parent, int subobj_num, simd::float3 *dir, float explosion_mag,
                                       int death_flags = DF_DEBRIS_SMOKES);
 
 //	Creates nifty splinters that shoot out from the body, I figure.
 void CreateSplintersFromBody(object *obj, float explosion_mag, float lifetime);
 
 // Creates a blast ring to be drawn
-int CreateBlastRing(vector *pos, int index, float lifetime, float max_size, int roomnum, int force_blue = 0);
+int CreateBlastRing(simd::float3 *pos, int index, float lifetime, float max_size, int roomnum, int force_blue = 0);
 
 // Creates a standard blast ring for an object
 int CreateObjectBlastRing(object *objp);
 
 // Creates a smolding smoke to be drawn
-int CreateSmolderingObject(vector *pos, int index, float lifetime, float max_size, int roomnum);
+int CreateSmolderingObject(simd::float3 *pos, int index, float lifetime, float max_size, int roomnum);
 
 // Draws a blast ring
 void DrawBlastRingObject(object *obj);
 
 // Draws a colored alpha disk...useful for cool lighting effects
-void DrawColoredDisk(vector *pos, float r, float g, float b, float inner_alpha, float outer_alpha, float size,
+void DrawColoredDisk(simd::float3 *pos, float r, float g, float b, float inner_alpha, float outer_alpha, float size,
                      uint8_t saturate = 0, uint8_t lod = 1);
 
 // Draws a colored alpha ring...useful for cool lighting effects
-void DrawColoredRing(vector *pos, float r, float g, float b, float inner_alpha, float outer_alpha, float size,
+void DrawColoredRing(simd::float3 *pos, float r, float g, float b, float inner_alpha, float outer_alpha, float size,
                      float inner_ring_ratio, uint8_t saturate = 0, uint8_t lod = 1);
 
 // Creates a blast ring from an event
 void DoBlastRingEvent(int eventnum, void *data);
 
 // Makes a fireball have a custom vclip
-int CreateCustomFireballObject(vector *pos, int fireball_num, int tex_handle, int roomnum);
+int CreateCustomFireballObject(simd::float3 *pos, int fireball_num, int tex_handle, int roomnum);
 
 // Creates an explosion
 void DoExplosionEvent(int eventnum, void *data);
@@ -276,14 +276,14 @@ int GetRandomSmallExplosion();
 int GetRandomBillowingExplosion();
 
 // Draws a sphere with the appropriate texture.  If texture=-1, then uses rgb as colors
-void DrawSphere(vector *pos, float r, float g, float b, float alpha, float size, int texture, uint8_t saturate = 1);
+void DrawSphere(simd::float3 *pos, float r, float g, float b, float alpha, float size, int texture, uint8_t saturate = 1);
 
 // Creates end points that simulate lightning
-void CreateLightningRodPositions(vector *src, vector *dest, vector *world_vecs, int num_segments, float rand_mag,
-                                 bool do_flat);
+void CreateLightningRodPositions(simd::float3 *src, simd::float3 *dest, simd::float3 *world_vecs, int num_segments,
+                                 float rand_mag, bool do_flat);
 
 // Draws a glowing cone of light using a bitmap
-void DrawColoredGlow(vector *pos, float r, float g, float b, float size);
+void DrawColoredGlow(simd::float3 *pos, float r, float g, float b, float size);
 
 void CreateElectricalBolts(object *objp, int num_bolts);
 

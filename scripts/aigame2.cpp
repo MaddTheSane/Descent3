@@ -232,7 +232,7 @@ protected:
 
 class aiSTBlackBarrel : public aiObjScript {
   struct t_stblackbarrel_memory {
-    matrix orient;
+    vec::matrix orient;
   };
 
   t_stblackbarrel_memory *memory;
@@ -452,7 +452,7 @@ void AI_SafeSetType(int obj_handle, int ai_type) {
 
   switch (ai_type) {
   case AIT_STALKER: {
-    vector goal_pos;
+    simd::float3 goal_pos;
     int goal_room;
 
     Obj_Value(obj_handle, VF_GET, OBJV_V_POS, &goal_pos);
@@ -463,7 +463,7 @@ void AI_SafeSetType(int obj_handle, int ai_type) {
   } break;
 
   case AIT_EVADER2: {
-    vector goal_pos;
+    simd::float3 goal_pos;
     int goal_room;
     float size, circle_distance;
 
@@ -669,7 +669,7 @@ void aiSamirPest::OnCollide(int me_handle, int it_handle) {
     // tell pest to return to hive.
     int id = Scrpt_FindObjectName("Hive");
     int room_index;
-    vector pos;
+    simd::float3 pos;
 
     // force scripting for this.
     AI_SetType(me_handle, AIT_AIS);
@@ -756,8 +756,8 @@ void aiBlackStormTrooper::OnInit(int me_handle) {
 }
 
 void aiBlackStormTrooper::find_targets(int me_handle, bool new_snipe_point) {
-  vector pos; // position of trooper
-  int room;   // room of trooper
+  simd::float3 pos; // position of trooper
+  int room;         // room of trooper
 
   int nearby_objs[32];                     // objhandles for nearby players (or robots)
   int player_objs[8];                      // nearby players.
@@ -844,7 +844,7 @@ void aiBlackStormTrooper::OnInterval(tOSIRISEventInfo *data) {
   msafe_struct mstruct;
   int me_handle = data->me_handle;
   float anim_frame;
-  vector pos;
+  simd::float3 pos;
   int room;
 
   Obj_Value(me_handle, VF_GET, OBJV_F_ANIM_FRAME, &anim_frame);
@@ -854,12 +854,12 @@ void aiBlackStormTrooper::OnInterval(tOSIRISEventInfo *data) {
   // laser gunsight
   if (memory->laser_targeted) {
     ray_info ray;
-    matrix orient;
+    vec::matrix orient;
 
     Obj_Value(me_handle, VF_GET, OBJV_M_ORIENT, &orient);
 
     // Determine real start pos - room
-    vector end_pos = pos;
+    simd::float3 end_pos = pos;
     end_pos += orient.fvec * 2000.0f;
 
     int fvi_flags = FQ_CHECK_OBJS | FQ_IGNORE_POWERUPS | FQ_IGNORE_WEAPONS | FQ_IGNORE_MOVING_OBJECTS |
@@ -1032,7 +1032,7 @@ bool aiBlackStormTrooper::OnNotify(int me_handle, tOSIRISEVTAINOTIFY *data) {
 
 void aiBlackStormTrooper::set_state(int me_handle, int state) {
   int room_number, id, i;
-  vector pos;
+  simd::float3 pos;
   char buf[64];
   char name[48];
   float dist;
@@ -1313,7 +1313,7 @@ void aiCreeper::OnInterval(tOSIRISEventInfo *data) {
 }
 
 bool aiCreeper::OnNotify(int me_handle, tOSIRISEVTAINOTIFY *data) {
-  vector pos;
+  simd::float3 pos;
   int room_number;
 
   switch (data->notify_type) {
@@ -1365,7 +1365,7 @@ bool aiCreeper::OnNotify(int me_handle, tOSIRISEVTAINOTIFY *data) {
 
 void aiCreeper::set_state(int me_handle, int state) {
   int room_number = 0, id, i, flags;
-  vector pos;
+  simd::float3 pos;
   char buf[64];
   char name[48];
   msafe_struct m;
@@ -1501,9 +1501,9 @@ void aiSTBlackBarrel::OnInit(int me_handle) {
 
 void aiSTBlackBarrel::OnDestroy(int me_handle, tOSIRISEVTDESTROY *evt) {
   // Create a frag burst effect
-  vector pos, new_dir;
+  simd::float3 pos, new_dir;
   int room;
-  matrix orient, new_orient;
+  vec::matrix orient, new_orient;
 
   Obj_Value(me_handle, VF_GET, OBJV_V_POS, &pos);
   Obj_Value(me_handle, VF_GET, OBJV_I_ROOMNUM, &room);

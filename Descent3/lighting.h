@@ -64,15 +64,15 @@ int FindFreeDynamicLightmap(int cl);
 
 // Applies dynamic lighting to the room faces based on the light coming from
 // an object
-void ApplyLightingToRooms(vector *, int, float, float, float, float, vector *light_direction = NULL,
+void ApplyLightingToRooms(simd::float3 *, int, float, float, float, float, simd::float3 *light_direction = NULL,
                           float dot_range = 0);
 
 // Clears the used flag for the dynamic lightmaps
 void ClearDynamicLightmaps();
 
 // Changes the terrain shading to approximate lighting
-void ApplyLightingToTerrain(vector *pos, int cellnum, float light_dist, float red_scale, float green_scale,
-                            float blue_scale, vector *light_direction = NULL, float dot_range = 0);
+void ApplyLightingToTerrain(simd::float3 *pos, int cellnum, float light_dist, float red_scale, float green_scale,
+                            float blue_scale, simd::float3 *light_direction = NULL, float dot_range = 0);
 
 // Given a float, returns the index into the Ubyte_float_table that this number
 // corresponds to
@@ -87,7 +87,7 @@ void SetRoomPulse(room *rp, uint8_t pulse_time, uint8_t pulse_offset);
 int GetVolumeSizeOfRoom(room *rp, int *w = NULL, int *h = NULL, int *d = NULL);
 
 // Returns a lightmap that can be applied for specular lighting
-int GetSpecularLightmapForFace(vector *pos, room *rp, face *fp);
+int GetSpecularLightmapForFace(simd::float3 *pos, room *rp, face *fp);
 
 // Kills the lighting that a face casts and dampens all the faces that light influences
 void DestroyLight(int roomnum, int facenum);

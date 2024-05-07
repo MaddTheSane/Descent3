@@ -236,7 +236,7 @@ struct {
 
   int pathnum;
   int room;
-  vector position;
+  simd::float3 position;
 
   int target_objhandle;
   int camera_objhandle;
@@ -672,10 +672,10 @@ bool Cinematic_StartCine(tGameCinematic *info, const char *text_string, int came
   camera->mtype.phys_info.mass = 2.0f;
   camera->mtype.phys_info.rotdrag = 0.1f;
 
-  vm_MakeZero(&camera->mtype.phys_info.thrust);
-  vm_MakeZero(&camera->mtype.phys_info.rotthrust);
-  vm_MakeZero(&camera->mtype.phys_info.rotvel);
-  vm_MakeZero(&camera->mtype.phys_info.velocity);
+  vec::vm_MakeZero(&camera->mtype.phys_info.thrust);
+  vec::vm_MakeZero(&camera->mtype.phys_info.rotthrust);
+  vec::vm_MakeZero(&camera->mtype.phys_info.rotvel);
+  vec::vm_MakeZero(&camera->mtype.phys_info.velocity);
 
   // setup camera AI
   SetObjectControlType(camera, CT_AI);
@@ -714,7 +714,7 @@ bool Cinematic_StartCine(tGameCinematic *info, const char *text_string, int came
   camera->ai_info->last_render_time = -1.0f;
   camera->ai_info->next_target_update_time = Gametime;
   camera->ai_info->notify_flags |= AI_NOTIFIES_ALWAYS_ON;
-  camera->ai_info->last_see_target_pos = Zero_vector;
+  camera->ai_info->last_see_target_pos = vec::Zero_vector;
   camera->ai_info->dodge_vel_percent = 1.0f;
   camera->ai_info->attack_vel_percent = 1.0f;
   camera->ai_info->fight_same = 0.0f;
@@ -728,9 +728,9 @@ bool Cinematic_StartCine(tGameCinematic *info, const char *text_string, int came
   AIPathInitPath(&camera->ai_info->path);
 
   // Move camera to start position
-  vector c_pos;
+  simd::float3 c_pos;
   int c_room;
-  matrix c_orient;
+  vec::matrix c_orient;
 
   if ((info->flags & GCF_CAMERAPLACEMENT) == GCF_USEPOINT) {
     c_room = GameCinema.room;
@@ -738,7 +738,7 @@ bool Cinematic_StartCine(tGameCinematic *info, const char *text_string, int came
     if (info->orient)
       c_orient = *info->orient;
     else
-      vm_MakeIdentity(&c_orient);
+      vec::vm_MakeIdentity(&c_orient);
   } else {
     // Set up path info
     path_information pi;
@@ -748,12 +748,13 @@ bool Cinematic_StartCine(tGameCinematic *info, const char *text_string, int came
     pi.end_node = GamePaths[GameCinema.pathnum].num_nodes - 1;
 
     if (GamePaths[GameCinema.pathnum].num_nodes == 1) {
-      vm_VectorToMatrix(&c_orient, &GamePaths[GameCinema.pathnum].pathnodes[0].fvec,
-                        &GamePaths[GameCinema.pathnum].pathnodes[0].uvec, NULL);
+      vec::vm_VectorToMatrix(&c_orient, &GamePaths[GameCinema.pathnum].pathnodes[0].fvec,
+                             &GamePaths[GameCinema.pathnum].pathnodes[0].uvec, NULL);
       pi.next_node = 0;
     } else {
-      vector fvec = GamePaths[GameCinema.pathnum].pathnodes[1].pos - GamePaths[GameCinema.pathnum].pathnodes[0].pos;
-      vm_VectorToMatrix(&c_orient, &fvec, NULL, NULL);
+      simd::float3 fvec =
+          GamePaths[GameCinema.pathnum].pathnodes[1].pos - GamePaths[GameCinema.pathnum].pathnodes[0].pos;
+      vec::vm_VectorToMatrix(&c_orient, &fvec, NULL, NULL);
       pi.next_node = 1;
     }
 
@@ -830,18 +831,18 @@ bool Cinematic_StartCine(tGameCinematic *info, const char *text_string, int came
 
     if (GameCinema.track_start <= Gametime && target) {
       // face target immediatly
-      vector u_axis;
-      angle goal_angle;
+      simd::float3 u_axis;
+      vec::angle goal_angle;
 
-      vector turn_to = target->pos - camera->pos;
-      vm_NormalizeVector(&turn_to);
+      simd::float3 turn_to = target->pos - camera->pos;
+      vec::vm_NormalizeVector(&turn_to);
 
-      if (turn_to == Zero_vector) {
+      if (simd::all(turn_to == vec::Zero_vector)) {
         LOG_WARNING << "Cine: No turn_to or less than 1 degree off goal";
         goto continue_start;
       }
 
-      goal_angle = vm_DeltaAngVecNorm(&camera->orient.fvec, &turn_to, &u_axis);
+      goal_angle = vec::vm_DeltaAngVecNorm(&camera->orient.fvec, &turn_to, &u_axis);
       if (goal_angle == 0) {
         LOG_WARNING << "Cine: Goal angle is zero";
         goto continue_start;
@@ -852,7 +853,7 @@ bool Cinematic_StartCine(tGameCinematic *info, const char *text_string, int came
       camera->orient.uvec.x = camera->orient.uvec.z = 0.0f;
       camera->orient.uvec.y = 1.0f;
 
-      vm_Orthogonalize(&camera->orient);
+      vec::vm_Orthogonalize(&camera->orient);
       ObjSetOrient(camera, &camera->orient);
 
     } else if ((GameCinema.flags & GCF_CAMERAPLACEMENT) == GCF_USEPATH) {
@@ -864,9 +865,9 @@ bool Cinematic_StartCine(tGameCinematic *info, const char *text_string, int came
       int path_num = camera->ai_info->path.path_id[cur_path];
 
       if (cur_node != next_node) {
-        vector fvec = GamePaths[path_num].pathnodes[next_node].pos - GamePaths[path_num].pathnodes[cur_node].pos;
-        vm_VectorToMatrix(&camera->orient, &fvec, NULL, NULL);
-        vm_Orthogonalize(&camera->orient);
+        simd::float3 fvec = GamePaths[path_num].pathnodes[next_node].pos - GamePaths[path_num].pathnodes[cur_node].pos;
+        vec::vm_VectorToMatrix(&camera->orient, &fvec, NULL, NULL);
+        vec::vm_Orthogonalize(&camera->orient);
         ObjSetOrient(camera, &camera->orient);
       }
     }
@@ -1032,15 +1033,15 @@ void Cinematic_Frame(void) {
 #endif
 
           // it is a target on a path
-          matrix orient;
-          vector pos;
+          vec::matrix orient;
+          simd::float3 pos;
           int room;
 
           int currpath = target->ai_info->path.path_id[target->ai_info->path.cur_path];
           int endnode = GamePaths[currpath].num_nodes - 1;
 
-          vm_VectorToMatrix(&orient, &GamePaths[currpath].pathnodes[endnode].fvec,
-                            &GamePaths[currpath].pathnodes[endnode].uvec, NULL);
+          vec::vm_VectorToMatrix(&orient, &GamePaths[currpath].pathnodes[endnode].fvec,
+                                 &GamePaths[currpath].pathnodes[endnode].uvec, NULL);
 
           pos = GamePaths[currpath].pathnodes[endnode].pos;
           room = GamePaths[currpath].pathnodes[endnode].roomnum;
@@ -1107,18 +1108,18 @@ void Cinematic_Frame(void) {
   if (Gametime >= GameCinema.track_start && Gametime <= GameCinema.track_stop && target) {
     // track target
 
-    vector u_axis;
+    simd::float3 u_axis;
     angle goal_angle;
 
-    vector turn_to = target->pos - camera->pos;
-    vm_NormalizeVector(&turn_to);
+    simd::float3 turn_to = target->pos - camera->pos;
+    vec::vm_NormalizeVector(&turn_to);
 
-    if (turn_to == Zero_vector) {
+    if (simd::all(turn_to == vec::Zero_vector)) {
       LOG_WARNING << "Cine: No turn_to or less than 1 degree off goal";
       goto continue_frame;
     }
 
-    goal_angle = vm_DeltaAngVecNorm(&camera->orient.fvec, &turn_to, &u_axis);
+    goal_angle = vec::vm_DeltaAngVecNorm(&camera->orient.fvec, &turn_to, &u_axis);
     if (goal_angle == 0) {
       LOG_WARNING << "Cine: Goal angle is zero";
       goto continue_frame;
@@ -1129,7 +1130,7 @@ void Cinematic_Frame(void) {
     camera->orient.uvec.x = camera->orient.uvec.z = 0.0f;
     camera->orient.uvec.y = 1.0f;
 
-    vm_Orthogonalize(&camera->orient);
+    vec::vm_Orthogonalize(&camera->orient);
     ObjSetOrient(camera, &camera->orient);
 
   } else if ((GameCinema.flags & GCF_CAMERAPLACEMENT) == GCF_USEPATH) {
@@ -1141,9 +1142,9 @@ void Cinematic_Frame(void) {
     int path_num = camera->ai_info->path.path_id[cur_path];
 
     if (cur_node != next_node) {
-      vector fvec = GamePaths[path_num].pathnodes[next_node].pos - GamePaths[path_num].pathnodes[cur_node].pos;
-      vm_VectorToMatrix(&camera->orient, &fvec, NULL, NULL);
-      vm_Orthogonalize(&camera->orient);
+      simd::float3 fvec = GamePaths[path_num].pathnodes[next_node].pos - GamePaths[path_num].pathnodes[cur_node].pos;
+      vec::vm_VectorToMatrix(&camera->orient, &fvec, NULL, NULL);
+      vec::vm_Orthogonalize(&camera->orient);
       ObjSetOrient(camera, &camera->orient);
     }
   } else {
@@ -1657,7 +1658,7 @@ float Cine_GetPathTravelSpeed(int pathnum, float time) {
   distance = 0;
 
   for (int n = 0; n < num_nodes - 1; n++) {
-    distance += vm_VectorDistance(&GamePaths[pathnum].pathnodes[n].pos, &GamePaths[pathnum].pathnodes[n + 1].pos);
+    distance += simd::distance(GamePaths[pathnum].pathnodes[n].pos, GamePaths[pathnum].pathnodes[n + 1].pos);
   }
 
   if (time > 0)
@@ -1701,8 +1702,8 @@ void CannedCinematicIntroCallback(int type) {
     // move the target (player) to the first node of the path
     // this makes it multiplayer friendly since this will only be called
     // in a single player game
-    vector pos;
-    matrix orient;
+    simd::float3 pos;
+    vec::matrix orient;
     int roomnum;
     int next_node;
 
@@ -1713,13 +1714,12 @@ void CannedCinematicIntroCallback(int type) {
 
     if (GamePaths[pathnum].num_nodes > 1) {
       next_node = 1;
-      vector fvec = GamePaths[pathnum].pathnodes[1].pos - GamePaths[pathnum].pathnodes[0].pos;
-      vm_VectorToMatrix(&orient, &fvec, NULL, NULL);
+      simd::float3 fvec = GamePaths[pathnum].pathnodes[1].pos - GamePaths[pathnum].pathnodes[0].pos;
+      vec::vm_VectorToMatrix(&orient, &fvec, NULL, NULL);
 
       // see if it is a hacked 2 node path (i.e. it is such a small distance it should move)
       if (GamePaths[pathnum].num_nodes == 2) {
-        if (fabs(vm_VectorDistance(&GamePaths[pathnum].pathnodes[1].pos, &GamePaths[pathnum].pathnodes[0].pos)) >
-            30.0f) {
+        if (fabs(simd::distance(GamePaths[pathnum].pathnodes[1].pos, GamePaths[pathnum].pathnodes[0].pos)) > 30.0f) {
           CannedCinematicIntro.should_thrust = true;
           LOG_WARNING << "Player should thrust";
         } else {
@@ -1734,7 +1734,7 @@ void CannedCinematicIntroCallback(int type) {
       next_node = 0;
       CannedCinematicIntro.should_thrust = false;
       LOG_WARNING << "Player should NOT thrust";
-      vm_VectorToMatrix(&orient, &GamePaths[pathnum].pathnodes[0].fvec, &GamePaths[pathnum].pathnodes[0].uvec, NULL);
+      vec::vm_VectorToMatrix(&orient, &GamePaths[pathnum].pathnodes[0].fvec, &GamePaths[pathnum].pathnodes[0].uvec, NULL);
     }
     pos = GamePaths[pathnum].pathnodes[0].pos;
     roomnum = GamePaths[pathnum].pathnodes[0].roomnum;
@@ -1759,7 +1759,7 @@ void CannedCinematicIntroCallback(int type) {
     ResetPlayerControlType(Player_num);
     ResumeControls();
 
-    vm_MakeZero(&Player_object->mtype.phys_info.velocity);
+    vec::vm_MakeZero(&Player_object->mtype.phys_info.velocity);
 
     Players[Player_num].flags &= ~PLAYER_FLAGS_THRUSTED;
 
@@ -1847,19 +1847,18 @@ void CannedCinematicEndLevelCallback(int type) {
     // move the target (player) to the first node of the path
     // this makes it multiplayer friendly since this will only be called
     // in a single player game
-    vector pos;
-    matrix orient;
+    simd::float3 pos;
+    vec::matrix orient;
     int roomnum;
     int next_node;
 
     if (GamePaths[pathnum].num_nodes > 1) {
       next_node = 1;
-      vector fvec = GamePaths[pathnum].pathnodes[1].pos - GamePaths[pathnum].pathnodes[0].pos;
-      vm_VectorToMatrix(&orient, &fvec, NULL, NULL);
+      simd::float3 fvec = GamePaths[pathnum].pathnodes[1].pos - GamePaths[pathnum].pathnodes[0].pos;
+      vec::vm_VectorToMatrix(&orient, &fvec, NULL, NULL);
 
       if (GamePaths[pathnum].num_nodes == 2) {
-        if (fabs(vm_VectorDistance(&GamePaths[pathnum].pathnodes[1].pos, &GamePaths[pathnum].pathnodes[0].pos)) >
-            30.0f) {
+        if (fabs(simd::distance(GamePaths[pathnum].pathnodes[1].pos, GamePaths[pathnum].pathnodes[0].pos)) > 30.0f) {
           CannedCinematicEndLevel.should_thrust = true;
         } else {
           CannedCinematicEndLevel.should_thrust = false;
@@ -1869,7 +1868,8 @@ void CannedCinematicEndLevelCallback(int type) {
       }
     } else {
       next_node = 0;
-      vm_VectorToMatrix(&orient, &GamePaths[pathnum].pathnodes[0].fvec, &GamePaths[pathnum].pathnodes[0].uvec, NULL);
+      vec::vm_VectorToMatrix(&orient, &GamePaths[pathnum].pathnodes[0].fvec, &GamePaths[pathnum].pathnodes[0].uvec,
+                             NULL);
       CannedCinematicEndLevel.should_thrust = false;
     }
     pos = GamePaths[pathnum].pathnodes[0].pos;
@@ -1896,7 +1896,7 @@ void CannedCinematicEndLevelCallback(int type) {
     ResetPlayerControlType(Player_num);
     ResumeControls();
 
-    vm_MakeZero(&Player_object->mtype.phys_info.velocity);
+    vec::vm_MakeZero(&Player_object->mtype.phys_info.velocity);
 
     SetGameState(GAMESTATE_LVLEND);
   } break;
@@ -1938,7 +1938,7 @@ void CannedCinematic_EndLevelPath(int PathID, const char *Text, int PlayerPath, 
   Cinematic_StartCine(&info, Text, camera_handle);
 }
 
-void CannedCinematic_EndLevelPoint(vector *pos, int room, const char *Text, int PlayerPath, float Seconds,
+void CannedCinematic_EndLevelPoint(simd::float3 *pos, int room, const char *Text, int PlayerPath, float Seconds,
                                    int camera_handle) {
   CannedCinematicEndLevel.player_path = PlayerPath;
   CannedCinematicEndLevel.cinematic_time = Seconds;
@@ -1973,8 +1973,8 @@ void CannedCinematic_EndLevelPoint(vector *pos, int room, const char *Text, int 
 struct {
   object *player;
   int room;
-  vector pos;
-  matrix orient;
+  simd::float3 pos;
+  vec::matrix orient;
 } CannedCinematicMovePlayerFade;
 
 void CannedCinematicMovePlayerFadeCallback(int type) {
@@ -1987,7 +1987,8 @@ void CannedCinematicMovePlayerFadeCallback(int type) {
   }
 }
 
-void CannedCinematic_MovePlayerFade(object *player, int room, vector *pos, matrix *orient, int camera_handle) {
+void CannedCinematic_MovePlayerFade(object *player, int room, simd::float3 *pos, vec::matrix *orient,
+                                    int camera_handle) {
   CannedCinematicMovePlayerFade.player = player;
   CannedCinematicMovePlayerFade.room = room;
   CannedCinematicMovePlayerFade.pos = *pos;
@@ -2221,8 +2222,8 @@ void Cinematic_DoDemoFileData(uint8_t *buffer) {
   // see what kind of cinematic we are loading
   switch (mf_ReadByte(buffer, &count)) {
   case CDI_NOT_CANNED: {
-    matrix fake_orient;
-    vm_MakeIdentity(&fake_orient);
+    vec::matrix fake_orient;
+    vec::vm_MakeIdentity(&fake_orient);
 
     cinematic_data.orient = &fake_orient;
     cinematic_data.callback = NULL;

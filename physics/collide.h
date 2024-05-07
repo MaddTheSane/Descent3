@@ -93,20 +93,20 @@ extern uint8_t CollisionResult[MAX_OBJECT_TYPES][MAX_OBJECT_TYPES];
 extern uint8_t CollisionRayResult[MAX_OBJECT_TYPES];
 
 void CollideInit();
-void collide_two_objects(object *A, object *B, vector *collision_point, vector *collision_normal,
+void collide_two_objects(object *A, object *B, simd::float3 *collision_point, simd::float3 *collision_normal,
                          fvi_info *hit_info = nullptr);
 
 // Process a collision between an object and a wall
 // Returns true if the object hits the wall, and false if should keep going though the wall (for breakable glass)
-bool collide_object_with_wall(object *A, float hitspeed, int hitseg, int hitwall, vector *hitpt, vector *wall_normal,
-                              float hit_dot);
+bool collide_object_with_wall(object *A, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                              simd::float3 *wall_normal, float hit_dot);
 
-extern void FindHitpointUV(float *u, float *v, vector *point, room *rp, int facenum);
+extern void FindHitpointUV(float *u, float *v, simd::float3 *point, room *rp, int facenum);
 
-void ConvertEulerToAxisAmount(vector *e, vector *n, float *w);
-void ConvertAxisAmountToEuler(vector *n, float *w, vector *e);
+void ConvertEulerToAxisAmount(simd::float3 *e, simd::float3 *n, float *w);
+void ConvertAxisAmountToEuler(simd::float3 *n, float *w, simd::float3 *e);
 
-void bump_obj_against_fixed(object *obj, vector *collision_point, vector *collision_normal);
+void bump_obj_against_fixed(object *obj, simd::float3 *collision_point, simd::float3 *collision_normal);
 
 #ifndef NED_PHYSICS
 #define RESULT_NOTHING 0

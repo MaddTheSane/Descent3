@@ -829,21 +829,21 @@ int DrawTerrainTrianglesSoftware(int index, int bm_handle, int upper_left, int l
 int DrawTerrainTrianglesHardware(int index, int bm_handle, int upper_left, int lower_right);
 int DrawTerrainTrianglesHardwareNoLight(int index, int bm_handle, int upper_left, int lower_right);
 void DrawTerrainLightmapsHardware(int index, int upper_left, int lower_right);
-void DrawSky(vector *veye, matrix *vorient);
+void DrawSky(simd::float3 *veye, vec::matrix *vorient);
 function_mode View_mode;
 int ManageFramerate = 0;
 int MinAllowableFramerate = 15;
 uint8_t Fast_terrain = 1;
 float Far_fog_border;
-vector Terrain_viewer_eye;
+simd::float3 Terrain_viewer_eye;
 uint8_t Terrain_from_mine = 0;
 uint8_t Show_invisible_terrain = 0;
 int Terrain_objects_drawn = 0;
-vector Last_frame_stars[MAX_STARS];
+simd::float3 Last_frame_stars[MAX_STARS];
 float Terrain_texture_distance = DEFAULT_TEXTURE_DISTANCE;
 int Check_terrain_portal = 0;
-static vector Temp_sky_vectors[MAX_HORIZON_PIECES][6];
-static vector Temp_sky_vectors_unrotated[MAX_HORIZON_PIECES][6];
+static simd::float3 Temp_sky_vectors[MAX_HORIZON_PIECES][6];
+static simd::float3 Temp_sky_vectors_unrotated[MAX_HORIZON_PIECES][6];
 // Last time terrain was rendered
 float Last_terrain_render_time = -1;
 // Sets UV's based on 90 degree rotations
@@ -898,7 +898,7 @@ int IsTerrainDynamicChecked(int seg, int bit) {
   return 0;
 }
 // Gets the dynamic light value for this position
-float GetTerrainDynamicScalar(vector *pos, int seg) {
+float GetTerrainDynamicScalar(simd::float3 *pos, int seg) {
   float cube_values[10];
   int y_increment = MAX_TERRAIN_HEIGHT / 8;
   int y_int = pos->y / y_increment;
@@ -939,7 +939,7 @@ float GetTerrainDynamicScalar(vector *pos, int seg) {
   return scalar;
 }
 // Takes a min,max vector and makes a surrounding cube from it
-void MakePointsFromMinMax(vector *corners, vector *minp, vector *maxp);
+void MakePointsFromMinMax(simd::float3 *corners, simd::float3 *minp, simd::float3 *maxp);
 // Compare function for room face sort
 static int obj_sort_func(const obj_sort_item *a, const obj_sort_item *b) {
   if (a->dist < b->dist)
@@ -973,7 +973,7 @@ obj_sort_item rooms_to_render[MAX_ROOMS];
 // By shooting rays to it
 // Returns true if any of the rays hit
 int ShootRaysToObject(object *obj) {
-  vector corners[8];
+  simd::float3 corners[8];
   if (obj->type == OBJ_ROOM) {
     room *rp = &Rooms[obj->id];
     MakePointsFromMinMax(corners, &rp->min_xyz, &rp->max_xyz);
@@ -1004,12 +1004,12 @@ int ShootRaysToObject(object *obj) {
 }
 // Returns true if the external room is in the view cone
 // Else returns false
-bool ExternalRoomVisible(room *rp, vector *center, float *zdist) {
+bool ExternalRoomVisible(room *rp, simd::float3 *center, float *zdist) {
   ASSERT(rp->flags & RF_EXTERNAL);
   g3Point pnt;
   uint8_t ccode;
 
-  vector corners[8];
+  simd::float3 corners[8];
   g3_RotatePoint(&pnt, center);
   *zdist = pnt.p3_z;
   MakePointsFromMinMax(corners, &rp->min_xyz, &rp->max_xyz);
@@ -1241,7 +1241,7 @@ void RenderAllTerrainObjects() {
 #define FOG_LAYER_HEIGHT (TERRAIN_HEIGHT_INCREMENT * 30.5f)
 // Draws a flat fog layer
 void DrawFogLayer() {
-  vector worldvec[4];
+  simd::float3 worldvec[4];
   g3Point pnt[4], *pntlist[6];
   rend_SetFlatColor(GR_RGB(132, 132, 255));
   rend_SetAlphaValue(64);
@@ -1269,7 +1269,7 @@ void DrawFogLayer() {
 #define CLOUD_LAYER_HEIGHT (TERRAIN_HEIGHT_INCREMENT * 320.0f)
 // Draws a flat fog layer
 void DrawCloudLayer() {
-  vector worldvec[4];
+  simd::float3 worldvec[4];
   g3Point pnt[4], *pntlist[6];
   rend_SetFlatColor(GR_RGB(192, 192, 255));
   rend_SetAlphaValue(32);
@@ -1379,8 +1379,8 @@ void RenderTerrain(uint8_t from_mine, int left, int top, int right, int bot) {
   g3_SetFarClipZ(VisibleTerrainZ);
 
   // Get the viewer position & orientation
-  vector viewer_eye;
-  matrix viewer_orient;
+  simd::float3 viewer_eye;
+  vec::matrix viewer_orient;
   g3_GetViewPosition(&viewer_eye);
   g3_GetViewMatrix(&viewer_orient);
 
@@ -1425,8 +1425,8 @@ void RenderTerrain(uint8_t from_mine, int left, int top, int right, int bot) {
 
 // Draws a segment of lightning that is always facing you
 // Vectors are in world coords
-void DrawLightningSegment(vector *from, vector *to) {
-  vector src_vecs[2], world_vecs[6];
+void DrawLightningSegment(simd::float3 *from, simd::float3 *to) {
+  simd::float3 src_vecs[2], world_vecs[6];
   g3Point rot_src_pnts[2], world_points[6], *pntlist[6];
   static float alphas[] = {0.3f, 1.0f, 0.3f, 0.3f, 1.0f, 0.3f};
   src_vecs[0] = *from;
@@ -1436,7 +1436,7 @@ void DrawLightningSegment(vector *from, vector *to) {
   g3_RotatePoint(&rot_src_pnts[1], &src_vecs[1]);
   if (rot_src_pnts[0].p3_codes & rot_src_pnts[1].p3_codes)
     return; // Don't draw because both points are off screen
-  vector rvec = Viewer_object->orient.rvec * 10;
+  simd::float3 rvec = Viewer_object->orient.rvec * 10;
 
   // Put all points so that they face the viewer
   world_vecs[0] = src_vecs[0] - rvec;
@@ -1479,9 +1479,9 @@ void DrawLightningSegment(vector *from, vector *to) {
   }
 // Draws an entire strip of lightning
 void DrawLightning(void) {
-  angvec player_angs;
-  matrix mat;
-  vector froms[50];
+  vec::angvec player_angs;
+  vec::matrix mat;
+  simd::float3 froms[50];
   int si = 0, level;
   int stack_level[50];
   int splits[50];
@@ -1495,8 +1495,8 @@ void DrawLightning(void) {
   vm_AnglesToMatrix(&mat, 0, new_heading, 0);
   // Put the starting point way up in the air
   float ylimit = (-(Viewer_object->pos.y * 2)) + (ps_rand() % 400);
-  vector cur_from = Viewer_object->pos + (mat.fvec * 4000);
-  vector new_vec;
+  simd::float3 cur_from = Viewer_object->pos + (mat.fvec * 4000);
+  simd::float3 new_vec;
   cur_from.y += 800.0f;
   cur_from.y += (ps_rand() % 100);
   // Set some states
@@ -1876,25 +1876,25 @@ void DrawWireframeSky(void) {
   }
 }
 // Draws the atmosphere over a satellite
-void DrawAtmosphereBlend(vector *pos, angle rotAngle, float w, float h, int bm, float r, float g, float b) {
+void DrawAtmosphereBlend(simd::float3 *pos, angle rotAngle, float w, float h, int bm, float r, float g, float b) {
   g3Point pnt;
   if (g3_RotatePoint(&pnt, pos) & CC_BEHIND)
     return;
 
   // create the rotation matrix
-  matrix rotMatrix;
+  vec::matrix rotMatrix;
   vm_AnglesToMatrix(&rotMatrix, 0, 0, rotAngle);
 
   // get the view matrix
-  matrix viewToWorld;
+  vec::matrix viewToWorld;
   g3_GetUnscaledMatrix(&viewToWorld);
   viewToWorld = ~viewToWorld;
 
   // combine the matrices into one
-  matrix rotationToWorld = rotMatrix * viewToWorld;
+  vec::matrix rotationToWorld = rotMatrix * viewToWorld;
 
   // setup the rotation vectors
-  vector rotVectors[4];
+  simd::float3 rotVectors[4];
   rotVectors[0].x = -w;
   rotVectors[0].y = h;
   rotVectors[1].x = w;
@@ -1940,7 +1940,7 @@ void DrawAtmosphereBlend(vector *pos, angle rotAngle, float w, float h, int bm, 
 }
 
 // Draws our pretty stars
-void DrawStars(matrix *vorient) {
+void DrawStars(vec::matrix *vorient) {
   rend_SetLighting(LS_NONE);
   rend_SetTextureType(TT_FLAT);
   rend_SetOverlayType(OT_NONE);
@@ -1948,9 +1948,9 @@ void DrawStars(matrix *vorient) {
   rend_SetAlphaType(AT_VERTEX);
   rend_SetZBufferState(0);
   g3_SetFarClipZ(6000000);
-  vector tempvec;
+  simd::float3 tempvec;
   if (Rendering_main_view && Terrain_sky.flags & TF_ROTATE_STARS && Terrain_sky.rotate_rate > 0) {
-    matrix mat;
+    vec::matrix mat;
     vm_AnglesToMatrix(&mat, 0, Terrain_sky.rotate_rate * Frametime * (65536.0 / 360.0), 0);
     vm_Orthogonalize(&mat);
     for (int i = 0; i < MAX_STARS; i++) {
@@ -1960,7 +1960,7 @@ void DrawStars(matrix *vorient) {
   }
   for (int i = 0; i < MAX_STARS; i++) {
     g3Point starpnt, lastpnt;
-    vector streak_vec;
+    simd::float3 streak_vec;
     float mag;
     // Rotate star
     tempvec = Terrain_sky.star_vectors[i];
@@ -2014,10 +2014,10 @@ void DrawStars(matrix *vorient) {
   g3_SetFarClipZ(60000);
 }
 // Draw the suns,moons,stars, horizon, etc
-void DrawSky(vector *veye, matrix *vorient) {
+void DrawSky(simd::float3 *veye, vec::matrix *vorient) {
   int i, t;
 
-  vector tempvec;
+  simd::float3 tempvec;
 
   rend_SetLighting(LS_GOURAUD);
   rend_SetZBufferState(0);
@@ -2025,12 +2025,12 @@ void DrawSky(vector *veye, matrix *vorient) {
 
   // If the sky is rotating, update the horizon vectors accordingly
   if (Rendering_main_view && Terrain_sky.flags & TF_ROTATE_SKY && Terrain_sky.rotate_rate > 0) {
-    matrix mat;
+    vec::matrix mat;
     vm_AnglesToMatrix(&mat, 0, Terrain_sky.rotate_rate * Frametime * (65536.0 / 360.0), 0);
     vm_Orthogonalize(&mat);
     for (i = 0; i < 6; i++) {
       for (t = 0; t < MAX_HORIZON_PIECES; t++) {
-        vector rot_vec;
+        simd::float3 rot_vec;
         tempvec = Terrain_sky.horizon_vectors[t][i];
         vm_MatrixMulVector(&rot_vec, &tempvec, &mat);
         Terrain_sky.horizon_vectors[t][i] = rot_vec;
@@ -2071,7 +2071,7 @@ void DrawSky(vector *veye, matrix *vorient) {
     // do satellites
     for (i = 0; i < Terrain_sky.num_satellites; i++) {
       int bm_handle = GetTextureBitmap(Terrain_sky.satellite_texture[i], 0);
-      vector subvec = Terrain_sky.satellite_vectors[i] - *veye;
+      simd::float3 subvec = Terrain_sky.satellite_vectors[i] - *veye;
       float size = Terrain_sky.satellite_size[i];
 
       // Get position, angle of satellite
@@ -2452,11 +2452,11 @@ int BuildEdgeLists(int *n, int tlist_index) {
 // If a cell is a low-res cell, then we rotate all the points down each edge
 // of the cell to make sure any higher res blocks that touch the cell don't
 // appear with cracks
-vector Terrain_alter_vec = {19, -19, 19};
+simd::float3 Terrain_alter_vec = {19, -19, 19};
 void RotateTerrainList(int cellcount, bool from_automap) {
   int lod, simplemul, edgecount;
   int i, n[200], t, k, cx, cz;
-  vector camlight = Terrain_sky.lightsource;
+  simd::float3 camlight = Terrain_sky.lightsource;
   vm_NormalizeVector(&camlight);
   // Reset all modified y values for the corners of each cell
   for (i = 0; i < cellcount; i++) {
@@ -2510,7 +2510,7 @@ void RotateTerrainList(int cellcount, bool from_automap) {
 
         if (Viewer_object->effect_info && (Viewer_object->effect_info->type_flags & EF_DEFORM)) {
           float val = (((ps_rand() % 1000) - 500.0f) / 500.0f) * Viewer_object->effect_info->deform_time;
-          vector jitterVec = Terrain_alter_vec * (Viewer_object->effect_info->deform_range * val);
+          simd::float3 jitterVec = Terrain_alter_vec * (Viewer_object->effect_info->deform_range * val);
           World_point_buffer[n[k]].p3_vec += jitterVec;
           World_point_buffer[n[k]].p3_vecPreRot += jitterVec;
         }
@@ -2527,8 +2527,8 @@ void TerrainCellVisible(int index, int *upper_left, int *lower_right) {
   int simplemul = 1 << ((MAX_TERRAIN_LOD - 1) - lod);
   int cx, cz, smul_x, smul_z;
 
-  vector tempv;
-  vector *corner[4];
+  simd::float3 tempv;
+  simd::float3 *corner[4];
 
   cx = seg % TERRAIN_WIDTH;
   cz = seg / TERRAIN_WIDTH;

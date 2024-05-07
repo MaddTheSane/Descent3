@@ -104,7 +104,7 @@ bsp_info *CockpitGetMonitorSubmodel(uint16_t monitor_flag);
 poly_model *CockpitGetPolyModel();
 
 //	cockpit effects.
-void StartCockpitShake(float mag, vector *vec);
+void StartCockpitShake(float mag, simd::float3 *vec);
 
 #define COCKPIT_STATE_DORMANT 0
 #define COCKPIT_STATE_QUASI 1 // state changing

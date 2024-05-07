@@ -59,7 +59,7 @@ int Physics_vis_counter;
 #ifdef _DEBUG
 // This will allow us to debug physics in a better way.
 struct sim_loop_info {
-  vector start_pos;
+  simd::float3 start_pos;
   physics_info phys_info; // At beginnning of loop
   fvi_info hit_info;      // Hit information returned by FVI
 };
@@ -85,15 +85,15 @@ float Gravity_strength = -32.2f; // Meters/second^2
 
 void DoPhysLinkedFrame(object *obj) {
   object *parent = ObjGet(obj->mtype.obj_link_info.parent_handle);
-  matrix new_orient;
-  vector new_pos;
+  vec::matrix new_orient;
+  simd::float3 new_pos;
 
   if (parent && parent->type != OBJ_GHOST && parent->type != OBJ_DUMMY) {
     poly_model *pm;
-    vector pnt;
-    vector fvec;
-    vector uvec;
-    matrix m;
+    simd::float3 pnt;
+    simd::float3 fvec;
+    simd::float3 uvec;
+    vec::matrix m;
     int mn; // submodel number
     float normalized_time[MAX_SUBOBJECTS];
 
@@ -118,10 +118,10 @@ void DoPhysLinkedFrame(object *obj) {
 
     // Instance up the tree for this gun
     while (mn != -1) {
-      vector tpnt;
+      simd::float3 tpnt;
 
-      vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
-      vm_TransposeMatrix(&m);
+      vec::vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
+      vec::vm_TransposeMatrix(&m);
 
       tpnt = pnt * m;
       fvec = fvec * m;
@@ -134,13 +134,13 @@ void DoPhysLinkedFrame(object *obj) {
 
     // now instance for the entire object
     m = parent->orient;
-    vm_TransposeMatrix(&m);
+    vec::vm_TransposeMatrix(&m);
 
     new_pos = pnt * m;
     fvec = fvec * m;
     uvec = uvec * m;
 
-    vm_VectorToMatrix(&new_orient, &fvec, &uvec, NULL);
+    vec::vm_VectorToMatrix(&new_orient, &fvec, &uvec, NULL);
 
     new_pos += parent->pos;
 
@@ -150,11 +150,11 @@ void DoPhysLinkedFrame(object *obj) {
   }
 }
 
-bool PhysCalcGround(vector *ground_point, vector *ground_normal, object *obj, int ground_num) {
+bool PhysCalcGround(simd::float3 *ground_point, simd::float3 *ground_normal, object *obj, int ground_num) {
   poly_model *pm;
-  vector pnt;
-  vector normal;
-  matrix m;
+  simd::float3 pnt;
+  simd::float3 normal;
+  vec::matrix m;
   int mn; // submodel number
   float normalized_time[MAX_SUBOBJECTS];
   bool f_good_gp = true;
@@ -199,10 +199,10 @@ bool PhysCalcGround(vector *ground_point, vector *ground_normal, object *obj, in
 
   // Instance up the tree for this ground
   while (mn != -1) {
-    vector tpnt;
+    simd::float3 tpnt;
 
-    vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
-    vm_TransposeMatrix(&m);
+    vec::vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
+    vec::vm_TransposeMatrix(&m);
 
     tpnt = pnt * m;
     normal = normal * m;
@@ -213,7 +213,7 @@ bool PhysCalcGround(vector *ground_point, vector *ground_normal, object *obj, in
   }
 
   m = obj->orient;
-  vm_TransposeMatrix(&m);
+  vec::vm_TransposeMatrix(&m);
 
   if (ground_point)
     *ground_point = pnt * m;
@@ -227,7 +227,7 @@ bool PhysCalcGround(vector *ground_point, vector *ground_normal, object *obj, in
 }
 
 // Applies rotational thrust over at delta time
-void PhysicsApplyConstRotForce(object &objp, const vector &rotforce, vector &rotvel, float deltaTime) {
+void PhysicsApplyConstRotForce(object &objp, const simd::float3 &rotforce, simd::float3 &rotvel, float deltaTime) {
   const double drag = objp.mtype.phys_info.rotdrag;
   const double mass = objp.mtype.phys_info.mass;
 
@@ -256,10 +256,10 @@ void PhysicsApplyConstRotForce(object &objp, const vector &rotforce, vector &rot
 }
 
 // Applies a linear force over time.  --Like gravity or thrust
-void PhysicsApplyConstantForce(const object &objp, vector &newPos, vector &newVel, vector &movementVec,
-                               const vector &force, float deltaTime) {
-  const vector &pos = objp.pos;
-  const vector &vel = objp.mtype.phys_info.velocity;
+void PhysicsApplyConstantForce(const object &objp, simd::float3 &newPos, simd::float3 &newVel,
+                               simd::float3 &movementVec, const simd::float3 &force, float deltaTime) {
+  const simd::float3 &pos = objp.pos;
+  const simd::float3 &vel = objp.mtype.phys_info.velocity;
   const double drag = static_cast<double>(objp.mtype.phys_info.drag);
   const double mass = static_cast<double>(objp.mtype.phys_info.mass);
 
@@ -293,9 +293,9 @@ void PhysicsApplyConstantForce(const object &objp, vector &newPos, vector &newVe
 
 // Banks an object as it turns (we counteract this and then reapply it when we
 // actually do the turn -- cool)
-void set_object_turnroll(object *obj, vector *rotvel, angle *turnroll) {
+void set_object_turnroll(object *obj, simd::float3 *rotvel, vec::angle *turnroll) {
   float desired_bank;
-  angle desired_bank_angle;
+  vec::angle desired_bank_angle;
 
   desired_bank = -(rotvel->y) * obj->mtype.phys_info.turnroll_ratio;
 
@@ -354,10 +354,10 @@ void set_object_turnroll(object *obj, vector *rotvel, angle *turnroll) {
 
 // Rotational simulator the updates orient, rotvel, and turnroll
 // (using these original values + frametime + rotthrust)
-bool PhysicsDoSimRot(object *obj, float frame_time, matrix *orient, vector *rotthrust, vector *rotvel,
-                     angle *turnroll) {
-  angvec tangles;
-  matrix rotmat;
+bool PhysicsDoSimRot(object *obj, float frame_time, vec::matrix *orient, simd::float3 *rotthrust, simd::float3 *rotvel,
+                     vec::angle *turnroll) {
+  vec::angvec tangles;
+  vec::matrix rotmat;
   physics_info *pi;
   bool f_leveling = false;
   float max_tilt_angle = 0;
@@ -399,10 +399,10 @@ bool PhysicsDoSimRot(object *obj, float frame_time, matrix *orient, vector *rott
     tangles.h = (int16_t)(rotvel->y * frame_time);
     tangles.b = (int16_t)(rotvel->z * frame_time);
 
-    vm_AnglesToMatrix(&rotmat, tangles.p, tangles.h, tangles.b);
+    vec::vm_AnglesToMatrix(&rotmat, tangles.p, tangles.h, tangles.b);
     *orient = *orient * rotmat; // ObjSetOrient below
 
-    vm_Orthogonalize(orient); // Rest done after call
+    vec::vm_Orthogonalize(orient); // Rest done after call
 
     return true;
   }
@@ -412,7 +412,7 @@ bool PhysicsDoSimRot(object *obj, float frame_time, matrix *orient, vector *rott
   if (*turnroll != 0) {
     tangles.p = tangles.h = 0;
     tangles.b = -(*turnroll);
-    vm_AnglesToMatrix(&rotmat, tangles.p, tangles.h, tangles.b);
+    vec::vm_AnglesToMatrix(&rotmat, tangles.p, tangles.h, tangles.b);
     // Apply rotation matrix to the orientation matrix
     *orient = *orient * rotmat; // ObjSetOrient is below
   }
@@ -421,15 +421,15 @@ bool PhysicsDoSimRot(object *obj, float frame_time, matrix *orient, vector *rott
   if ((f_leveling) && (obj->type != OBJ_PLAYER)) {
     if (fabs(rotthrust->z) < 100.0f) {
       if ((fabs(rotvel->z) < 1500.0f) /*&& (pi->turnroll <= 10 || pi->turnroll >= 65535 - 10)*/) {
-        angvec ang;
-        vector fvec;
+        vec::angvec ang;
+        simd::float3 fvec;
         int bound;
 
         // f_leveling = true;
         // pi->turnroll = 0;
 
         // extract angles from a matrix
-        vm_ExtractAnglesFromMatrix(&ang, orient);
+        vec::vm_ExtractAnglesFromMatrix(&ang, orient);
 
         if ((pi->flags & PF_TURNROLL) && *turnroll) {
           bound = *turnroll;
@@ -488,7 +488,7 @@ bool PhysicsDoSimRot(object *obj, float frame_time, matrix *orient, vector *rott
 
           fvec = orient->fvec;
 
-          vm_AnglesToMatrix(orient, ang.p, ang.h, ang.b);
+          vec::vm_AnglesToMatrix(orient, ang.p, ang.h, ang.b);
         }
       }
     }
@@ -508,14 +508,14 @@ bool PhysicsDoSimRot(object *obj, float frame_time, matrix *orient, vector *rott
     if (!f_player_fired_recently && f_newbie_leveling &&
         (Players[obj->id].last_thrust_time + NEWBIE_PITCH_LEVEL_TIME < Gametime)) {
       if (1) {
-        angvec ang;
+        vec::angvec ang;
         int bound;
 
         // f_leveling = true;
         // pi->turnroll = 0;
 
         // extract angles from a matrix
-        vm_ExtractAnglesFromMatrix(&ang, orient);
+        vec::vm_ExtractAnglesFromMatrix(&ang, orient);
 
         bound = 750;
 
@@ -550,7 +550,7 @@ bool PhysicsDoSimRot(object *obj, float frame_time, matrix *orient, vector *rott
     }
 
     if (!f_pitch_leveled && fabs(rotthrust->z) < 100.0f) {
-      angvec ang;
+      vec::angvec ang;
       int bound;
 
       // extract angles from a matrix
@@ -616,7 +616,7 @@ bool PhysicsDoSimRot(object *obj, float frame_time, matrix *orient, vector *rott
 
   if (pi->rotdrag > 0.0f) {
     if (!(pi->flags & PF_USES_THRUST)) {
-      *rotthrust = Zero_vector;
+      *rotthrust = vec::Zero_vector;
     }
 
     PhysicsApplyConstRotForce(*obj, *rotthrust, *rotvel, frame_time);
@@ -628,7 +628,7 @@ bool PhysicsDoSimRot(object *obj, float frame_time, matrix *orient, vector *rott
   tangles.h = (int16_t)(rotvel->y * frame_time);
   tangles.b = (int16_t)(rotvel->z * frame_time);
 
-  vm_AnglesToMatrix(&rotmat, tangles.p, tangles.h, tangles.b);
+  vec::vm_AnglesToMatrix(&rotmat, tangles.p, tangles.h, tangles.b);
   *orient = *orient * rotmat; // ObjSetOrient is below
 
   // Determine the new turnroll from this amount of turning
@@ -640,17 +640,17 @@ bool PhysicsDoSimRot(object *obj, float frame_time, matrix *orient, vector *rott
   if (*turnroll != 0) {
     tangles.p = tangles.h = 0;
     tangles.b = *turnroll;
-    vm_AnglesToMatrix(&rotmat, tangles.p, tangles.h, tangles.b);
+    vec::vm_AnglesToMatrix(&rotmat, tangles.p, tangles.h, tangles.b);
     *orient = *orient * rotmat; // ObjSetOrient is below
   }
   // Make sure the new orientation is valid
-  vm_Orthogonalize(orient);
+  vec::vm_Orthogonalize(orient);
 
   return true;
 }
 
-void PhysicsDoSimLinear(const object &obj, const vector &pos, const vector &force, vector &velocity,
-                        vector &movementVec, vector &movementPos, float simTime, int count) {
+void PhysicsDoSimLinear(const object &obj, const simd::float3 &pos, const simd::float3 &force, simd::float3 &velocity,
+                        simd::float3 &movementVec, simd::float3 &movementPos, float simTime, int count) {
   // Determine velocity
   if (obj.mtype.phys_info.flags & PF_FIXED_VELOCITY) {
     movementVec = velocity * simTime;
@@ -658,13 +658,13 @@ void PhysicsDoSimLinear(const object &obj, const vector &pos, const vector &forc
     return;
   }
 
-  vector forceToUse = force;
+  simd::float3 forceToUse = force;
   if (!ROOMNUM_OUTSIDE(obj.roomnum) && !(obj.mtype.phys_info.flags & PF_LOCK_MASK) &&
-      Rooms[obj.roomnum].wind != Zero_vector && count == 0 && obj.mtype.phys_info.drag > 0.0f &&
+      simd::any(Rooms[obj.roomnum].wind != vec::Zero_vector) && count == 0 && obj.mtype.phys_info.drag > 0.0f &&
       !(obj.type == OBJ_POWERUP && Level_powerups_ignore_wind)) {
     // Factor in outside wind
-    const vector &wind = Rooms[obj.roomnum].wind;
-    vector deltaForce = wind * obj.mtype.phys_info.drag * 16.0f;
+    const simd::float3 &wind = Rooms[obj.roomnum].wind;
+    simd::float3 deltaForce = wind * obj.mtype.phys_info.drag * 16.0f;
     forceToUse += deltaForce;
   }
 
@@ -672,7 +672,7 @@ void PhysicsDoSimLinear(const object &obj, const vector &pos, const vector &forc
 
 #ifdef _DEBUG
   if (Physics_player_verbose && obj.type == OBJ_PLAYER) {
-    LOG_DEBUG.printf("Player Velocity = %f(%f)", vm_GetMagnitude(&velocity), vm_GetMagnitude(&movementVec) / simTime);
+    LOG_DEBUG.printf("Player Velocity = %f(%f)", vec::vm_GetMagnitude(&velocity), vec::vm_GetMagnitude(&movementVec) / simTime);
   }
 #endif
 }
@@ -686,9 +686,9 @@ void do_physics_sim(object *obj) {
   int n_ignore_objs = 0;                    // The number of ignored objects
   int ignore_obj_list[MAX_IGNORE_OBJS + 1]; // List of ignored objects
 
-  int fate;            // Collision type for response code
-  vector movement_vec; // Movement in this frame
-  vector movement_pos; // End point of the movement
+  int fate;                  // Collision type for response code
+  simd::float3 movement_vec; // Movement in this frame
+  simd::float3 movement_pos; // End point of the movement
 
   int count = 0; // Simulation loop counter
   int sim_loop_limit = (obj->type == OBJ_PLAYER) ? MAX_PLAYER_SIM_LOOPS : MAX_NON_PLAYER_SIM_LOOPS;
@@ -700,14 +700,14 @@ void do_physics_sim(object *obj) {
   float sim_time_remaining = Frametime;     // Amount of simulation time remaining (current iteration)
   float old_sim_time_remaining = Frametime; // Amount of simulation time remaining (previous iteration)
 
-  vector init_pos = obj->pos;   // Initial position
-  int init_room = obj->roomnum; // Initial room
+  simd::float3 init_pos = obj->pos; // Initial position
+  int init_room = obj->roomnum;     // Initial room
 
-  vector start_pos; // Values at the start of current simulation loop
-  vector start_vel;
-  matrix start_orient;
-  vector start_rotvel;
-  angle start_turnroll;
+  simd::float3 start_pos; // Values at the start of current simulation loop
+  simd::float3 start_vel;
+  vec::matrix start_orient;
+  simd::float3 start_rotvel;
+  vec::angle start_turnroll;
   int start_room;
 
   float moved_time;                         // How long objected moved before hit something
@@ -715,7 +715,7 @@ void do_physics_sim(object *obj) {
 
   int bounced = 0; // Did the object bounce?
 
-  vector total_force; // Constant force acting on an object
+  simd::float3 total_force; // Constant force acting on an object
 
   bool f_continue_sim;            // Should we run another simulation loop
   bool f_start_fvi_record = true; // Records the rooms that are passed thru
@@ -751,8 +751,8 @@ void do_physics_sim(object *obj) {
     return;
   }
 
-  if (obj->type == OBJ_PLAYER &&
-      (obj->mtype.phys_info.thrust != Zero_vector || obj->mtype.phys_info.rotthrust != Zero_vector)) {
+  if (obj->type == OBJ_PLAYER && (simd::any(obj->mtype.phys_info.thrust != vec::Zero_vector) ||
+                                  simd::any(obj->mtype.phys_info.rotthrust != vec::Zero_vector))) {
     Players[obj->id].last_thrust_time = Gametime;
   }
 
@@ -761,9 +761,9 @@ void do_physics_sim(object *obj) {
   // If the object wiggles
   if ((obj->mtype.phys_info.flags & PF_WIGGLE) && (Demo_flags != DF_PLAYBACK)) {
     float swiggle;
-    vector w_pos;
+    simd::float3 w_pos;
 
-    if (vm_GetMagnitude(&obj->mtype.phys_info.thrust) < .1) {
+    if (vec::vm_GetMagnitude(&obj->mtype.phys_info.thrust) < .1) {
       obj->mtype.phys_info.last_still_time -= Frametime / WIGGLE_FALLOFF_TIME;
     } else {
       obj->mtype.phys_info.last_still_time += Frametime / WIGGLE_FALLOFF_TIME;
@@ -839,7 +839,7 @@ void do_physics_sim(object *obj) {
         fabs(pi->rotvel.x) > .000001 || fabs(pi->rotvel.y) > .000001 || fabs(pi->rotvel.z) > .000001 ||
         fabs(pi->rotthrust.x) > .000001 || fabs(pi->rotthrust.y) > .000001 || fabs(pi->rotthrust.z) > .000001 ||
         (obj->mtype.phys_info.flags & PF_GRAVITY) ||
-        ((!ROOMNUM_OUTSIDE(obj->roomnum)) && Rooms[obj->roomnum].wind != Zero_vector) ||
+        ((!ROOMNUM_OUTSIDE(obj->roomnum)) && simd::any(Rooms[obj->roomnum].wind != vec::Zero_vector)) ||
         (obj->mtype.phys_info.flags & PF_WIGGLE) ||
         ((obj->ai_info != NULL) && ((obj->ai_info->flags & AIF_REPORT_NEW_ORIENT) != 0)))) {
     if ((obj->flags & OF_MOVED_THIS_FRAME)) {
@@ -879,10 +879,10 @@ void do_physics_sim(object *obj) {
     start_turnroll = obj->mtype.phys_info.turnroll;
     start_room = obj->roomnum;
 
-    matrix end_orient = start_orient;
-    vector end_rotvel = start_rotvel;
+    vec::matrix end_orient = start_orient;
+    simd::float3 end_rotvel = start_rotvel;
     angle end_turnroll = start_turnroll;
-    vector end_vel = start_vel;
+    simd::float3 end_vel = start_vel;
 
 #ifdef _DEBUG
     // This records the sim.
@@ -935,19 +935,19 @@ void do_physics_sim(object *obj) {
     // Only do velocity until we've reached our destination position
     // This is useful for multiplayer
     if (obj->mtype.phys_info.flags & PF_DESTINATION_POS) {
-      vector sub1 = obj->pos - obj->mtype.phys_info.dest_pos;
-      vector sub2 = movement_pos - obj->mtype.phys_info.dest_pos;
+      simd::float3 sub1 = obj->pos - obj->mtype.phys_info.dest_pos;
+      simd::float3 sub2 = movement_pos - obj->mtype.phys_info.dest_pos;
 
-      if (vm_DotProduct(&sub1, &sub2) <= 0) {
+      if (simd::dot(sub1, sub2) <= 0) {
         obj->mtype.phys_info.flags &= ~PF_DESTINATION_POS;
-        vm_MakeZero(&obj->mtype.phys_info.velocity);
-        vm_MakeZero(&movement_vec);
+        vec::vm_MakeZero(&obj->mtype.phys_info.velocity);
+        vec::vm_MakeZero(&movement_vec);
         movement_pos = obj->pos;
         goto end_of_sim;
       }
 
-      if ((vm_VectorDistanceQuick(&obj->mtype.phys_info.dest_pos, &obj->pos)) < 1) {
-        vm_MakeZero(&obj->mtype.phys_info.velocity);
+      if ((vec::vm_VectorDistanceQuick(&obj->mtype.phys_info.dest_pos, &obj->pos)) < 1) {
+        vec::vm_MakeZero(&obj->mtype.phys_info.velocity);
         obj->mtype.phys_info.flags &= ~PF_DESTINATION_POS;
         goto end_of_sim;
       }
@@ -973,7 +973,7 @@ void do_physics_sim(object *obj) {
     // Cap ignore list -- (Objects we already hit this frame)
     ignore_obj_list[n_ignore_objs] = -1;
 
-    vector temp_vel = obj->mtype.phys_info.velocity;
+    simd::float3 temp_vel = obj->mtype.phys_info.velocity;
     obj->mtype.phys_info.velocity = (movement_pos - start_pos) / sim_time_remaining;
 
     fq.p0 = &obj->pos;
@@ -1029,7 +1029,7 @@ void do_physics_sim(object *obj) {
 
     if (fate != HIT_NONE) {
       if (obj->type == OBJ_PLAYER && hit_info.num_hits > 1) {
-        vector n = Zero_vector;
+        simd::float3 n = vec::Zero_vector;
         int i;
 
         for (i = 0; i < hit_info.num_hits; i++) {
@@ -1038,14 +1038,14 @@ void do_physics_sim(object *obj) {
 
         hit_info.hit_wallnorm[0] = n;
       }
-      vm_NormalizeVector(&hit_info.hit_wallnorm[0]);
+      vec::vm_NormalizeVector(&hit_info.hit_wallnorm[0]);
     }
 
     obj->mtype.phys_info.velocity = temp_vel;
 
     // Accounts for precomputed hit rays
     if ((obj->type == OBJ_WEAPON) && (obj->ctype.laser_info.hit_status == WPC_HIT_WALL)) {
-      vector to_hit_pnt, to_fvi_pos;
+      simd::float3 to_hit_pnt, to_fvi_pos;
 
       if (fate == HIT_NONE) {
         to_hit_pnt = obj->ctype.laser_info.hit_pnt - obj->pos;
@@ -1055,7 +1055,7 @@ void do_physics_sim(object *obj) {
         to_fvi_pos = obj->ctype.laser_info.hit_wall_pnt - hit_info.hit_face_pnt[0];
       }
 
-      if ((to_hit_pnt * to_fvi_pos) <= 0.0f) {
+      if (simd::dot(to_hit_pnt, to_fvi_pos) <= 0.0f) {
         fate = hit_info.hit_type[0] = HIT_WALL;
 
         hit_info.hit_pnt = obj->ctype.laser_info.hit_pnt;
@@ -1088,7 +1088,7 @@ void do_physics_sim(object *obj) {
         objnum = ObjCreate(OBJ_DEBUG_LINE, 1, hit_info.hit_room, &hit_info.hit_face_pnt[0], NULL);
         if (objnum >= 0) { // DAJ -1FIX
           Objects[objnum].rtype.line_info.end_pos = hit_info.hit_face_pnt[0] + hit_info.hit_wallnorm[0];
-          Objects[objnum].size = vm_VectorDistance(&Player_object->pos, &hit_info.hit_pnt);
+          Objects[objnum].size = vec::vm_VectorDistance(&Player_object->pos, &hit_info.hit_pnt);
           ObjSetAABB(&Objects[objnum]);
 
           Objects[objnum].flags |= OF_USES_LIFELEFT;
@@ -1146,16 +1146,16 @@ void do_physics_sim(object *obj) {
       sim_time_remaining = 0.0;
       f_continue_sim = false;
     } else {
-      vm_NormalizeVector(&hit_info.hit_wallnorm[0]);
+      vec::vm_NormalizeVector(&hit_info.hit_wallnorm[0]);
 
-      vector moved_vec_n;
+      simd::float3 moved_vec_n;
       float attempted_dist, actual_dist;
 
       // Save results of this simulation
       old_sim_time_remaining = sim_time_remaining;
       moved_vec_n = obj->pos - start_pos; // chrishack -- use this copy
-      if (moved_vec_n != Zero_vector) {
-        actual_dist = vm_NormalizeVector(&moved_vec_n);
+      if (simd::any(moved_vec_n != vec::Zero_vector)) {
+        actual_dist = vec::vm_NormalizeVector(&moved_vec_n);
       } else {
         actual_dist = 0.0f;
       }
@@ -1163,13 +1163,13 @@ void do_physics_sim(object *obj) {
       // chrishack -- potentially bad -- outside to inside stuff
       // We where sitting in a wall -- invalid starting point
       // moved backwards
-      if (fate == HIT_WALL && moved_vec_n * movement_vec < -0.000001 && actual_dist != 0.0) {
+      if (fate == HIT_WALL && simd::dot(moved_vec_n, movement_vec) < -0.000001 && actual_dist != 0.0) {
         ObjSetPos(obj, &start_pos, start_room, NULL, false);
 
         moved_time = 0.0;
       } else {
         // Compute more results of this simulation
-        attempted_dist = vm_GetMagnitude(&movement_vec);
+        attempted_dist = vec::vm_GetMagnitude(&movement_vec);
         sim_time_remaining = sim_time_remaining * ((attempted_dist - actual_dist) / attempted_dist);
         moved_time = old_sim_time_remaining - sim_time_remaining;
 
@@ -1211,7 +1211,7 @@ void do_physics_sim(object *obj) {
     switch (fate) {
     case HIT_NONE:
       if (obj->type == OBJ_WEAPON && (obj->mtype.phys_info.flags & (PF_GRAVITY | PF_WIND))) {
-        if (obj->mtype.phys_info.velocity != Zero_vector)
+        if (simd::any(obj->mtype.phys_info.velocity != vec::Zero_vector))
           vm_VectorToMatrix(&obj->orient, &obj->mtype.phys_info.velocity, &obj->orient.uvec, NULL);
       }
       f_continue_sim = false;
@@ -1245,24 +1245,24 @@ void do_physics_sim(object *obj) {
       }
 
       {
-        vector moved_v;
+        simd::float3 moved_v;
         float hit_speed, wall_part;
         float hit_dot = 1.0;
 
         float luke_test;
 
         if (obj->type == OBJ_PLAYER) {
-          luke_test = vm_GetMagnitude(&obj->mtype.phys_info.velocity);
+          luke_test = vec::vm_GetMagnitude(&obj->mtype.phys_info.velocity);
         }
 
         // Find hit speed
         moved_v = obj->pos - start_pos; // chrishack -- We already computed this!!!!!!!
-        wall_part = moved_v * hit_info.hit_wallnorm[0];
+        wall_part = simd::dot(moved_v, hit_info.hit_wallnorm[0]);
 
         if (obj->mtype.phys_info.hit_die_dot > 0.0) {
-          vector m_normal = start_pos - obj->pos;
-          vm_NormalizeVector(&m_normal);
-          hit_dot = m_normal * hit_info.hit_wallnorm[0];
+          simd::float3 m_normal = start_pos - obj->pos;
+          vec::vm_NormalizeVector(&m_normal);
+          hit_dot = simd::dot(m_normal, hit_info.hit_wallnorm[0]);
         }
 
         hit_speed = -(wall_part / moved_time);
@@ -1284,7 +1284,7 @@ void do_physics_sim(object *obj) {
           // Slide object along wall
 
           // We're constrained by wall, so subtract wall part from the velocity vector
-          wall_part = hit_info.hit_wallnorm[0] * obj->mtype.phys_info.velocity;
+          wall_part = simd::dot(hit_info.hit_wallnorm[0], obj->mtype.phys_info.velocity);
 
           if (!f_forcefield && !f_volatile_lava && (obj->mtype.phys_info.num_bounces <= 0) &&
               (obj->mtype.phys_info.flags & PF_STICK)) {
@@ -1310,7 +1310,7 @@ void do_physics_sim(object *obj) {
                   Rooms[hit_info.hit_face_room[0]].faces[hit_info.hit_face[0]].portal_num;
             }
 
-            vm_MakeZero(&obj->mtype.phys_info.velocity);
+            vec::vm_MakeZero(&obj->mtype.phys_info.velocity);
             obj->last_pos = init_pos;
             goto end_of_sim;
           } else if (f_volatile_lava || f_forcefield || (obj->mtype.phys_info.flags & PF_BOUNCE)) {
@@ -1340,10 +1340,10 @@ void do_physics_sim(object *obj) {
             }
 
             {
-              float v_mag = vm_GetMagnitude(&obj->mtype.phys_info.velocity);
+              float v_mag = vec::vm_GetMagnitude(&obj->mtype.phys_info.velocity);
 
               if (obj->type == OBJ_CLUTTER && hit_info.hit_wallnorm[0].y > .4 &&
-                  (obj->mtype.phys_info.velocity * hit_info.hit_wallnorm[0] > -2.0f)) {
+                  (simd::dot(obj->mtype.phys_info.velocity, hit_info.hit_wallnorm[0]) > -2.0f)) {
 
                 if (obj->mtype.phys_info.flags & PF_GRAVITY) {
                   f_turn_gravity_on = true;
@@ -1352,8 +1352,8 @@ void do_physics_sim(object *obj) {
                 }
 
                 if (v_mag < 1.8f) {
-                  obj->mtype.phys_info.velocity = Zero_vector;
-                  obj->mtype.phys_info.rotvel = Zero_vector;
+                  obj->mtype.phys_info.velocity = vec::Zero_vector;
+                  obj->mtype.phys_info.rotvel = vec::Zero_vector;
                   goto skip_sim;
                 } else {
                   goto slide_sim;
@@ -1371,7 +1371,7 @@ void do_physics_sim(object *obj) {
 
             float wall_force;
 
-            wall_force = total_force * hit_info.hit_wallnorm[0];
+            wall_force = simd::dot(total_force, hit_info.hit_wallnorm[0]);
 
             if (obj->type != OBJ_CLUTTER)
               total_force +=
@@ -1396,19 +1396,19 @@ void do_physics_sim(object *obj) {
             if (obj->type == OBJ_PLAYER) {
               float real_vel;
 
-              real_vel = vm_NormalizeVector(&obj->mtype.phys_info.velocity);
+              real_vel = vec::vm_NormalizeVector(&obj->mtype.phys_info.velocity);
               obj->mtype.phys_info.velocity *= ((real_vel + luke_test) / 2);
               // obj->mtype.phys_info.velocity *= (luke_test);
             } else if (obj->type == OBJ_CLUTTER && !(obj->mtype.phys_info.flags & PF_LOCK_MASK)) {
               // Do rolling rotvel hack
-              obj->mtype.phys_info.rotvel = Zero_vector;
+              obj->mtype.phys_info.rotvel = vec::Zero_vector;
 
-              if (obj->mtype.phys_info.velocity != Zero_vector) {
-                vector axis;
-                float speed = vm_GetMagnitude(&obj->mtype.phys_info.velocity);
+              if (simd::any(obj->mtype.phys_info.velocity != vec::Zero_vector)) {
+                simd::float3 axis;
+                float speed = vec::vm_GetMagnitude(&obj->mtype.phys_info.velocity);
 
-                vm_CrossProduct(&axis, &obj->mtype.phys_info.velocity, &hit_info.hit_wallnorm[0]);
-                vm_NormalizeVector(&axis);
+                axis = simd::cross(obj->mtype.phys_info.velocity, hit_info.hit_wallnorm[0]);
+                vec::vm_NormalizeVector(&axis);
 
                 axis = axis * obj->orient;
 
@@ -1428,7 +1428,7 @@ void do_physics_sim(object *obj) {
           if (!(fabs(obj->mtype.phys_info.velocity.x) < MAX_OBJECT_VEL &&
                 fabs(obj->mtype.phys_info.velocity.y) < MAX_OBJECT_VEL &&
                 fabs(obj->mtype.phys_info.velocity.z) < MAX_OBJECT_VEL)) {
-            float mag = vm_NormalizeVector(&obj->mtype.phys_info.velocity);
+            float mag = vec::vm_NormalizeVector(&obj->mtype.phys_info.velocity);
 
             LOG_DEBUG.printf("Bashing vel for Obj %d of type %d with %f velocity", objnum, obj->type, mag);
             obj->mtype.phys_info.velocity *= MAX_OBJECT_VEL * 0.1f;
@@ -1436,8 +1436,8 @@ void do_physics_sim(object *obj) {
 
           // Weapons should face their new heading.  This is so missiles are pointing in the correct direct.
           if (obj->type == OBJ_WEAPON && (bounced || (obj->mtype.phys_info.flags & (PF_GRAVITY | PF_WIND))))
-            if (obj->mtype.phys_info.velocity != Zero_vector)
-              vm_VectorToMatrix(&obj->orient, &obj->mtype.phys_info.velocity, &obj->orient.uvec, NULL);
+            if (simd::any(obj->mtype.phys_info.velocity != vec::Zero_vector))
+              vec::vm_VectorToMatrix(&obj->orient, &obj->mtype.phys_info.velocity, &obj->orient.uvec, NULL);
         }
       }
       f_continue_sim = true;
@@ -1445,21 +1445,21 @@ void do_physics_sim(object *obj) {
     } break;
 
     case HIT_CEILING: {
-      vector moved_v;
+      simd::float3 moved_v;
       float wall_part;
 
       float luke_test;
 
       if (obj->type == OBJ_PLAYER) {
-        luke_test = vm_GetMagnitude(&obj->mtype.phys_info.velocity);
+        luke_test = vec::vm_GetMagnitude(&obj->mtype.phys_info.velocity);
       }
 
       // Find hit speed
       moved_v = obj->pos - start_pos; // chrishack -- We already computed this!!!!!!!
-      wall_part = moved_v * hit_info.hit_wallnorm[0];
+      wall_part = simd::dot(moved_v, hit_info.hit_wallnorm[0]);
 
       // We're constrained by wall, so subtract wall part from the velocity vector
-      wall_part = hit_info.hit_wallnorm[0] * obj->mtype.phys_info.velocity;
+      wall_part = simd::dot(hit_info.hit_wallnorm[0], obj->mtype.phys_info.velocity);
 
       if (obj->mtype.phys_info.flags & PF_BOUNCE) {
         wall_part *= 2.0; // Subtract out wall part twice to achieve bounce
@@ -1472,7 +1472,7 @@ void do_physics_sim(object *obj) {
       } else {
         float wall_force;
 
-        wall_force = total_force * hit_info.hit_wallnorm[0];
+        wall_force = simd::dot(total_force, hit_info.hit_wallnorm[0]);
         total_force += hit_info.hit_wallnorm[0] * (wall_force * -1.001); // 1.001 so that we are not quite tangential
 
         // Update velocity from wall hit.
@@ -1481,7 +1481,7 @@ void do_physics_sim(object *obj) {
         if (obj->type == OBJ_PLAYER) {
           float real_vel;
 
-          real_vel = vm_NormalizeVector(&obj->mtype.phys_info.velocity);
+          real_vel = vec::vm_NormalizeVector(&obj->mtype.phys_info.velocity);
           obj->mtype.phys_info.velocity *= ((real_vel + luke_test) / 2.0f);
           // obj->mtype.phys_info.velocity *= (luke_test);
         }
@@ -1501,7 +1501,7 @@ void do_physics_sim(object *obj) {
 
     case HIT_OBJECT:
     case HIT_SPHERE_2_POLY_OBJECT: {
-      vector old_force; // -- chrishack
+      simd::float3 old_force; // -- chrishack
 
       // Mark the hit object so that on the following sim frames, in this game frame, ignore this object.
       ASSERT(hit_info.hit_object[0] != -1); // chrishack move this ASSERT fvi stuff above
@@ -1526,7 +1526,7 @@ void do_physics_sim(object *obj) {
            (obj->type == OBJ_BUILDING && obj->ai_info)) &&
           sim_time_remaining == old_sim_time_remaining &&
           (Objects[hit_info.hit_object[0]].movement_type == MT_NONE ||
-           (Objects[hit_info.hit_object[0]].mtype.phys_info.velocity == Zero_vector &&
+           (simd::all(Objects[hit_info.hit_object[0]].mtype.phys_info.velocity == vec::Zero_vector) &&
             (Objects[hit_info.hit_object[0]].mtype.phys_info.flags & PF_LOCK_MASK)))) {
         obj->mtype.phys_info.velocity += hit_info.hit_wallnorm[0];
       }
@@ -1587,7 +1587,7 @@ void do_physics_sim(object *obj) {
   if (count >= sim_loop_limit) {
     if (obj->type == OBJ_PLAYER) {
       LOG_WARNING << "Too many collisions for player!";
-      obj->mtype.phys_info.velocity = Zero_vector;
+      obj->mtype.phys_info.velocity = vec::Zero_vector;
     }
   }
 
@@ -1608,8 +1608,8 @@ end_of_sim:
   return;
 }
 
-int PhysCastWalkRay(object *obj, vector *p0, vector *p1, vector *hitpnt, int *start_roomnum = NULL,
-                    int *end_roomnum = NULL, vector *hit_normal = NULL) {
+int PhysCastWalkRay(object *obj, simd::float3 *p0, simd::float3 *p1, simd::float3 *hitpnt, int *start_roomnum = NULL,
+                    int *end_roomnum = NULL, simd::float3 *hit_normal = NULL) {
   int fate;
 
   fvi_info hit_info;
@@ -1649,17 +1649,17 @@ int PhysCastWalkRay(object *obj, vector *p0, vector *p1, vector *hitpnt, int *st
   return fate;
 }
 
-void PhysCalPntOnCPntPlane(object *obj, vector *s_pnt, vector *d_pnt, float *dist) {
-  vector tpnt = *s_pnt - obj->pos;
-  *dist = obj->orient.uvec * tpnt;
+void PhysCalPntOnCPntPlane(object *obj, simd::float3 *s_pnt, simd::float3 *d_pnt, float *dist) {
+  simd::float3 tpnt = *s_pnt - obj->pos;
+  *dist = simd::dot(obj->orient.uvec, tpnt);
 
   *d_pnt = *s_pnt + ((-(*dist)) * obj->orient.uvec);
 }
 
-bool PhysComputeWalkerPosOrient(object *obj, vector *pos, matrix *orient) {
-  vector pnt[3];
-  vector tpnt = obj->pos;
-  matrix tmatrix = obj->orient;
+bool PhysComputeWalkerPosOrient(object *obj, simd::float3 *pos, vec::matrix *orient) {
+  simd::float3 pnt[3];
+  simd::float3 tpnt = obj->pos;
+  vec::matrix tmatrix = obj->orient;
   poly_model *pm = &Poly_models[obj->rtype.pobj_info.model_num];
   int num_gps = (pm->n_ground == 5) ? 3 : 1;
   int i;
@@ -1677,22 +1677,22 @@ bool PhysComputeWalkerPosOrient(object *obj, vector *pos, matrix *orient) {
   obj->orient = tmatrix;
 
   if (num_gps == 3) {
-    vector pp[3];
+    simd::float3 pp[3];
     float pdist[3];
     int proom[3];
-    vector hp[3];
+    simd::float3 hp[3];
 
     for (i = 0; i < 3; i++)
       PhysCalPntOnCPntPlane(obj, &pnt[i], &pp[i], &pdist[i]);
 
     // Moves the points to valid locations in the mine and determines the points' room numbers
     for (i = 0; i < 3; i++) {
-      vector x;
-      vector norm;
+      simd::float3 x;
+      simd::float3 norm;
 
       int fate = PhysCastWalkRay(obj, &obj->pos, &pp[i], &x, NULL, &proom[i], &norm);
       if (fate != HIT_NONE) {
-        if (norm * obj->orient.uvec < 0.4717f) {
+        if (simd::dot(norm, obj->orient.uvec) < 0.4717f) {
           return false;
         }
 
@@ -1701,17 +1701,17 @@ bool PhysComputeWalkerPosOrient(object *obj, vector *pos, matrix *orient) {
     }
 
     int num_ave = 0;
-    vector ave_diff = Zero_vector;
+    simd::float3 ave_diff = vec::Zero_vector;
 
     for (i = 0; i < 3; i++) {
       int fate;
-      vector foot_pnt = pp[i] + obj->orient.uvec * -(obj->size * 1.5f);
-      vector norm;
+      simd::float3 foot_pnt = pp[i] + obj->orient.uvec * -(obj->size * 1.5f);
+      simd::float3 norm;
 
       fate = PhysCastWalkRay(obj, &pp[i], &foot_pnt, &hp[i], &proom[i], NULL, &norm);
 
       if (fate != HIT_NONE) {
-        if (norm * obj->orient.uvec < 0.4717f) {
+        if (simd::dot(norm, obj->orient.uvec) < 0.4717f) {
           return false;
         }
 
@@ -1725,26 +1725,26 @@ bool PhysComputeWalkerPosOrient(object *obj, vector *pos, matrix *orient) {
     if (num_ave > 0) {
       ave_diff /= num_ave;
     } else
-      ave_diff = Zero_vector;
+      ave_diff = vec::Zero_vector;
 
-    vector uvec;
-    vm_GetPerp(&uvec, &hp[0], &hp[1], &hp[2]);
-    vm_NormalizeVector(&uvec);
+    simd::float3 uvec;
+    vec::vm_GetPerp(&uvec, &hp[0], &hp[1], &hp[2]);
+    vec::vm_NormalizeVector(&uvec);
 
     //		if(uvec.y < 0.0)
     //			uvec *= -1.0f;
 
-    float dot = orient->fvec * uvec;
-    vector fvec = orient->fvec;
+    float dot = simd::dot(orient->fvec, uvec);
+    simd::float3 fvec = orient->fvec;
     fvec -= (uvec * dot);
-    vm_NormalizeVector(&fvec);
+    vec::vm_NormalizeVector(&fvec);
 
-    vm_VectorToMatrix(orient, &fvec, &uvec, NULL);
+    vec::vm_VectorToMatrix(orient, &fvec, &uvec, NULL);
     *pos += ave_diff;
   } else { // Alignd to Y-axis
     int fate;
-    vector hp;
-    vector foot_pnt = obj->pos;
+    simd::float3 hp;
+    simd::float3 foot_pnt = obj->pos;
     foot_pnt.y -= obj->size * 3.0f;
 
     fate = PhysCastWalkRay(obj, &obj->pos, &foot_pnt, &hp);
@@ -1758,9 +1758,9 @@ bool PhysComputeWalkerPosOrient(object *obj, vector *pos, matrix *orient) {
 
       pos->y += diff;
 
-      angvec a;
-      vm_ExtractAnglesFromMatrix(&a, orient);
-      vm_AnglesToMatrix(orient, 0.0f, a.h, 0.0f);
+      vec::angvec a;
+      vec::vm_ExtractAnglesFromMatrix(&a, orient);
+      vec::vm_AnglesToMatrix(orient, 0.0f, a.h, 0.0f);
     }
   }
 
@@ -1775,7 +1775,8 @@ bool IsNodeValid(int cell, float min_vert_dot) {
     return false;
 }
 
-bool PhysValidateGroundPath(object *obj, vector *s, int sroom, vector *e, int eroom, float rad, float min_vert_dot) {
+bool PhysValidateGroundPath(object *obj, simd::float3 *s, int sroom, simd::float3 *e, int eroom, float rad,
+                            float min_vert_dot) {
   if (ROOMNUM_OUTSIDE(sroom)) {
     int x1, x2, y1, y2, x, y, delta_y, delta_x, change_x, change_y, length, cur_node, error_term, i;
 
@@ -1918,9 +1919,9 @@ void do_walking_sim(object *obj) {
   int n_ignore_objs = 0;                    // The number of ignored objects
   int ignore_obj_list[MAX_IGNORE_OBJS + 1]; // List of ignored objects
 
-  int fate;            // Collision type for response code
-  vector movement_vec; // Movement in this frame
-  vector movement_pos; // End point of the movement
+  int fate;                  // Collision type for response code
+  simd::float3 movement_vec; // Movement in this frame
+  simd::float3 movement_pos; // End point of the movement
 
   int count = 0; // Simulation loop counter
   int sim_loop_limit = (obj->type == OBJ_PLAYER) ? MAX_PLAYER_SIM_LOOPS : MAX_NON_PLAYER_SIM_LOOPS;
@@ -1932,11 +1933,11 @@ void do_walking_sim(object *obj) {
   float sim_time_remaining = Frametime;     // Amount of simulation time remaining (current iteration)
   float old_sim_time_remaining = Frametime; // Amount of simulation time remaining (previous iteration)
 
-  vector init_pos = obj->pos;   // Initial position
-  int init_room = obj->roomnum; // Initial room
+  simd::float3 init_pos = obj->pos; // Initial position
+  int init_room = obj->roomnum;     // Initial room
 
-  vector start_pos = obj->pos; // Values at the start of current simulation loop
-  vector start_vel = obj->mtype.phys_info.velocity;
+  simd::float3 start_pos = obj->pos; // Values at the start of current simulation loop
+  simd::float3 start_vel = obj->mtype.phys_info.velocity;
   int start_room = obj->roomnum;
 
   float moved_time;                         // How long objected moved before hit something
@@ -1944,7 +1945,7 @@ void do_walking_sim(object *obj) {
 
   int bounced = 0; // Did the object bounce?
 
-  vector total_force = Zero_vector; // Constant force acting on an object
+  simd::float3 total_force = vec::Zero_vector; // Constant force acting on an object
 
   bool f_continue_sim;            // Should we run another simulation loop
   bool f_start_fvi_record = true; // Records the rooms that are passed thru
@@ -1980,7 +1981,7 @@ void do_walking_sim(object *obj) {
         fabs(pi->rotvel.x) > .000001 || fabs(pi->rotvel.y) > .000001 || fabs(pi->rotvel.z) > .000001 ||
         fabs(pi->rotthrust.x) > .000001 || fabs(pi->rotthrust.y) > .000001 || fabs(pi->rotthrust.z) > .000001 ||
         (obj->mtype.phys_info.flags & PF_GRAVITY) ||
-        ((!ROOMNUM_OUTSIDE(obj->roomnum)) && Rooms[obj->roomnum].wind != Zero_vector) ||
+        ((!ROOMNUM_OUTSIDE(obj->roomnum)) && simd::any(Rooms[obj->roomnum].wind != vec::Zero_vector)) ||
         (obj->mtype.phys_info.flags & PF_WIGGLE) ||
         ((obj->ai_info != NULL) && ((obj->ai_info->flags & AIF_REPORT_NEW_ORIENT) != 0)))) {
     if ((obj->flags & OF_MOVED_THIS_FRAME)) {
@@ -1994,12 +1995,13 @@ void do_walking_sim(object *obj) {
   if (obj->ai_info) {
     if (obj->ai_info->flags & AIF_REPORT_NEW_ORIENT) {
       if (pm->n_ground == 5) {
-        vector pos = obj->pos;
-        matrix orient = obj->orient;
+        simd::float3 pos = obj->pos;
+        vec::matrix orient = obj->orient;
 
         if (PhysComputeWalkerPosOrient(obj, &pos, &orient) &&
-            ((!obj->ai_info) || (orient.uvec * obj->orient.uvec > .7101 && orient.fvec * obj->orient.fvec > .7101 &&
-                                 orient.rvec * obj->orient.rvec > .7101)))
+            ((!obj->ai_info) ||
+             (simd::dot(orient.uvec, obj->orient.uvec) > .7101 && simd::dot(orient.fvec, obj->orient.fvec) > .7101 &&
+              simd::dot(orient.rvec, obj->orient.rvec) > .7101)))
           ObjSetPos(obj, &pos, obj->roomnum, &orient, false);
         else
           ObjSetOrient(obj, &obj->ai_info->saved_orient);
@@ -2025,7 +2027,7 @@ void do_walking_sim(object *obj) {
 
   // Simulate movement until we are done (i.e. Frametime has passed or object is done moving)
   do {
-    obj->mtype.phys_info.rotvel = Zero_vector;
+    obj->mtype.phys_info.rotvel = vec::Zero_vector;
 
 #ifdef _DEBUG
     // This records the sim.
@@ -2033,7 +2035,7 @@ void do_walking_sim(object *obj) {
 #endif
 
     // Remove transient portions of the velocity
-    vector t = (obj->mtype.phys_info.velocity * obj->orient.uvec) * obj->orient.uvec;
+    simd::float3 t = (obj->mtype.phys_info.velocity * obj->orient.uvec) * obj->orient.uvec;
     obj->mtype.phys_info.velocity -= t;
 
     // Initailly assume that this is the last sim cycle
@@ -2047,7 +2049,7 @@ void do_walking_sim(object *obj) {
     {
       movement_vec = pi->velocity * Frametime;
       movement_pos = obj->pos + movement_vec;
-      vector footstep = movement_pos;
+      simd::float3 footstep = movement_pos;
       int new_room;
 
       if (ROOMNUM_OUTSIDE(obj->roomnum)) {
@@ -2062,11 +2064,11 @@ void do_walking_sim(object *obj) {
         f_step = true;
 
         // Determine endpos
-        matrix norient;
+        vec::matrix norient;
         norient = obj->orient;
         if (PhysComputeWalkerPosOrient(obj, &footstep, &norient)) {
-          if (norient.uvec * obj->orient.uvec > .7101 && norient.fvec * obj->orient.fvec > .7101 &&
-              norient.rvec * obj->orient.rvec > .7101) {
+          if (simd::dot(norient.uvec, obj->orient.uvec) > .7101 && simd::dot(norient.fvec, obj->orient.fvec) > .7101 &&
+              simd::dot(norient.rvec, obj->orient.rvec) > .7101) {
             ObjSetOrient(obj, &norient);
 
             movement_vec = footstep - obj->pos;
@@ -2105,18 +2107,18 @@ void do_walking_sim(object *obj) {
             }
           } else {
             f_step = false;
-            movement_vec = Zero_vector;
+            movement_vec = vec::Zero_vector;
           }
         } else {
           f_step = false;
-          movement_vec = Zero_vector;
+          movement_vec = vec::Zero_vector;
         }
       } else {
         f_step = false;
       }
 
       if (!f_step) {
-        pi->velocity = Zero_vector;
+        pi->velocity = vec::Zero_vector;
         break;
       }
 
@@ -2149,14 +2151,14 @@ void do_walking_sim(object *obj) {
       sim_time_remaining = 0.0;
       f_continue_sim = false;
     } else {
-      vector moved_vec_n;
+      simd::float3 moved_vec_n;
       float attempted_dist, actual_dist;
 
       // Save results of this simulation
       old_sim_time_remaining = sim_time_remaining;
       moved_vec_n = obj->pos - start_pos; // chrishack -- use this copy
-      if (moved_vec_n != Zero_vector) {
-        actual_dist = vm_NormalizeVector(&moved_vec_n);
+      if (simd::any(moved_vec_n != vec::Zero_vector)) {
+        actual_dist = vec::vm_NormalizeVector(&moved_vec_n);
       } else {
         actual_dist = 0.0f;
       }
@@ -2164,7 +2166,7 @@ void do_walking_sim(object *obj) {
       // chrishack -- potentially bad -- outside to inside stuff
       // We where sitting in a wall -- invalid starting point
       // moved backwards
-      if (fate == HIT_WALL && moved_vec_n * movement_vec < -0.000001 && actual_dist != 0.0) {
+      if (fate == HIT_WALL && simd::dot(moved_vec_n, movement_vec) < -0.000001 && actual_dist != 0.0) {
 
         LOG_WARNING.printf("Obj %d Walked backwards!", OBJNUM(obj));
         /*
@@ -2178,7 +2180,7 @@ void do_walking_sim(object *obj) {
         moved_time = 0.0;
       } else {
         // Compute more results of this simulation
-        attempted_dist = vm_GetMagnitude(&movement_vec);
+        attempted_dist = vec::vm_GetMagnitude(&movement_vec);
         sim_time_remaining = sim_time_remaining * ((attempted_dist - actual_dist) / attempted_dist);
         moved_time = old_sim_time_remaining - sim_time_remaining;
 
@@ -2217,24 +2219,24 @@ void do_walking_sim(object *obj) {
     case HIT_TERRAIN: {
       //				if(obj->type != OBJ_CLUTTER)
       {
-        vector moved_v;
+        simd::float3 moved_v;
         float hit_speed, wall_part;
         float hit_dot = 1.0;
 
         float luke_test;
 
         if (obj->type == OBJ_PLAYER || OBJ_CLUTTER) {
-          luke_test = vm_GetMagnitude(&obj->mtype.phys_info.velocity);
+          luke_test = vec::vm_GetMagnitude(&obj->mtype.phys_info.velocity);
         }
 
         // Find hit speed
         moved_v = obj->pos - start_pos; // chrishack -- We already computed this!!!!!!!
-        wall_part = moved_v * hit_info.hit_wallnorm[0];
+        wall_part = simd::dot(moved_v, hit_info.hit_wallnorm[0]);
 
         if (obj->mtype.phys_info.hit_die_dot > 0.0) {
-          vector m_normal = start_pos - obj->pos;
-          vm_NormalizeVector(&m_normal);
-          hit_dot = m_normal * hit_info.hit_wallnorm[0];
+          simd::float3 m_normal = start_pos - obj->pos;
+          vec::vm_NormalizeVector(&m_normal);
+          hit_dot = simd::dot(m_normal, hit_info.hit_wallnorm[0]);
         }
 
         hit_speed = -(wall_part / moved_time);
@@ -2256,11 +2258,11 @@ void do_walking_sim(object *obj) {
           // Slide object along wall
 
           // We're constrained by wall, so subtract wall part from the velocity vector
-          wall_part = hit_info.hit_wallnorm[0] * obj->mtype.phys_info.velocity;
+          wall_part = simd::dot(hit_info.hit_wallnorm[0], obj->mtype.phys_info.velocity);
 
           if ((obj->mtype.phys_info.num_bounces <= 0) && (obj->mtype.phys_info.flags & PF_STICK)) {
             obj->movement_type = MT_NONE;
-            vm_MakeZero(&obj->mtype.phys_info.velocity);
+            vec::vm_MakeZero(&obj->mtype.phys_info.velocity);
             obj->last_pos = init_pos;
             goto end_of_sim;
           } else if (f_forcefield || (obj->mtype.phys_info.flags & PF_BOUNCE)) {
@@ -2284,7 +2286,7 @@ void do_walking_sim(object *obj) {
           } else {
             float wall_force;
 
-            wall_force = total_force * hit_info.hit_wallnorm[0];
+            wall_force = simd::dot(total_force, hit_info.hit_wallnorm[0]);
             total_force +=
                 hit_info.hit_wallnorm[0] * (wall_force * -1.001f); // 1.001 so that we are not quite tangential
 
@@ -2301,7 +2303,7 @@ void do_walking_sim(object *obj) {
             if (obj->type == OBJ_PLAYER || OBJ_CLUTTER) {
               float real_vel;
 
-              real_vel = vm_NormalizeVector(&obj->mtype.phys_info.velocity);
+              real_vel = vec::vm_NormalizeVector(&obj->mtype.phys_info.velocity);
               obj->mtype.phys_info.velocity *= ((real_vel + luke_test) / 2);
             }
           }
@@ -2313,7 +2315,7 @@ void do_walking_sim(object *obj) {
           if (!(fabs(obj->mtype.phys_info.velocity.x) < MAX_OBJECT_VEL &&
                 fabs(obj->mtype.phys_info.velocity.y) < MAX_OBJECT_VEL &&
                 fabs(obj->mtype.phys_info.velocity.z) < MAX_OBJECT_VEL)) {
-            float mag = vm_NormalizeVector(&obj->mtype.phys_info.velocity);
+            float mag = vec::vm_NormalizeVector(&obj->mtype.phys_info.velocity);
 
             LOG_WARNING.printf("Bashing vel for Obj %d of type %d with %f velocity", objnum, obj->type, mag);
             obj->mtype.phys_info.velocity *= MAX_OBJECT_VEL * 0.1f;
@@ -2321,8 +2323,8 @@ void do_walking_sim(object *obj) {
 
           // Weapons should face their new heading.  This is so missiles are pointing in the correct direct.
           if (obj->type == OBJ_WEAPON && (bounced || (obj->mtype.phys_info.flags & (PF_GRAVITY | PF_WIND))))
-            if (obj->mtype.phys_info.velocity != Zero_vector)
-              vm_VectorToMatrix(&obj->orient, &obj->mtype.phys_info.velocity, &obj->orient.uvec, NULL);
+            if (simd::any(obj->mtype.phys_info.velocity != vec::Zero_vector))
+              vec::vm_VectorToMatrix(&obj->orient, &obj->mtype.phys_info.velocity, &obj->orient.uvec, NULL);
         }
       }
       f_continue_sim = true;
@@ -2331,7 +2333,7 @@ void do_walking_sim(object *obj) {
 
     case HIT_OBJECT:
     case HIT_SPHERE_2_POLY_OBJECT: {
-      vector old_force; // -- chrishack
+      simd::float3 old_force; // -- chrishack
 
       // Mark the hit object so that on the following sim frames, in this game frame, ignore this object.
       ASSERT(hit_info.hit_object[0] != -1); // chrishack move this ASSERT fvi stuff above
@@ -2425,8 +2427,8 @@ void do_vis_physics_sim(vis_effect *vis) {
   if (Frametime <= 0.0f)
     return;
 
-  vector total_force;
-  vector old_pos = vis->pos;
+  simd::float3 total_force;
+  simd::float3 old_pos = vis->pos;
 
 #ifdef _DEBUG
   if (!Game_do_vis_sim) {
@@ -2486,7 +2488,7 @@ void do_vis_physics_sim(vis_effect *vis) {
       vis->velocity.y = float(visNewVel[1]);
       vis->velocity.z = float(visNewVel[2]);
     } else {
-      vector delta_velocity = {0.0f, 0.0f, 0.0f};
+      simd::float3 delta_velocity = {0.0f, 0.0f, 0.0f};
 
       if (vis->phys_flags & PF_GRAVITY) {
         delta_velocity.y += Gravity_strength * Frametime;
@@ -2543,7 +2545,7 @@ void do_vis_physics_sim(vis_effect *vis) {
   }
 }
 
-void phys_apply_force(object *obj, vector *force_vec, int16_t weapon_index) {
+void phys_apply_force(object *obj, simd::float3 *force_vec, int16_t weapon_index) {
   if (obj->mtype.phys_info.mass == 0.0)
     return;
 
@@ -2561,11 +2563,11 @@ void phys_apply_force(object *obj, vector *force_vec, int16_t weapon_index) {
   // Do Force Feedback for the hit
   if (obj->id == Player_num) {
     // we need to convert collision_normal from world space to local space
-    vector local_norm;
+    simd::float3 local_norm;
     float scale = 0, magnitude = 0;
 
     // compute how much force to do
-    magnitude = vm_GetMagnitude(force_vec);
+    magnitude = vec::vm_GetMagnitude(force_vec);
     if (magnitude) {
       scale = magnitude / 2500.0f;
       if (scale < 0.0f)
@@ -2589,4 +2591,4 @@ void phys_apply_force(object *obj, vector *force_vec, int16_t weapon_index) {
   obj->mtype.phys_info.velocity += (*force_vec / obj->mtype.phys_info.mass);
 }
 
-void phys_apply_rot(object *obj, vector *force_vec) {}
+void phys_apply_rot(object *obj, simd::float3 *force_vec) {}

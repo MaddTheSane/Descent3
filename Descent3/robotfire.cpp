@@ -126,9 +126,9 @@ void WBFireBattery(object *obj, otype_wb_info *static_wb, int poly_wb_index, int
                    float damage_scalar) {
   int cur_m_bit;
   poly_model *pm = &Poly_models[obj->rtype.pobj_info.model_num];
-  vector ave_pos;
+  simd::float3 ave_pos;
   int num_fired = 0;
-  vm_MakeZero(&ave_pos);
+  vec::vm_MakeZero(&ave_pos);
   pos_state cur_pos;
   dynamic_wb_info *p_dwb = &obj->dynamic_wb[dynamic_wb_index];
   int weapon_obj;
@@ -154,7 +154,7 @@ void WBFireBattery(object *obj, otype_wb_info *static_wb, int poly_wb_index, int
         first = 0;
         if (obj->type == OBJ_PLAYER && obj->id == Player_num &&
             Weapons[static_wb->gp_weapon_index[cur_m_bit]].recoil_force > 0) {
-          vector force_vec = obj->orient.fvec * -Weapons[static_wb->gp_weapon_index[cur_m_bit]].recoil_force;
+          simd::float3 force_vec = obj->orient.fvec * -Weapons[static_wb->gp_weapon_index[cur_m_bit]].recoil_force;
           phys_apply_force(obj, &force_vec);
         }
       }
@@ -325,7 +325,7 @@ void WBClearInfo(object *obj) {
     obj->dynamic_wb[i].wb_anim_mask = 0;
     obj->dynamic_wb[i].wb_anim_frame = 0.0f;
 
-    vm_MakeZero(&obj->dynamic_wb[i].cur_target);
+    vec::vm_MakeZero(&obj->dynamic_wb[i].cur_target);
 
     obj->dynamic_wb[i].flags = DWBF_ENABLED | DWBF_AUTOMATIC;
   }

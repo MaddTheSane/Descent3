@@ -168,31 +168,33 @@ extern const matrix Identity_matrix;
 // to print all the coordinates.
 #define XYZ(v) (v)->x, (v)->y, (v)->z
 
-// Given a matrix, makes it an identity matrix
+/// Given a matrix, makes it an identity matrix
 extern void vm_MakeIdentity(matrix *);
 
-// Set a vector to {0,0,0}
+/// Set a vector to {0,0,0}
 extern void vm_MakeZero(simd::float3 *v);
 
-// Set an angvec to {0,0,0}
+/// Set an angvec to {0,0,0}
 extern void vm_MakeZero(angvec *a);
 
-// Rotates a vector thru a matrix
+/// Rotates a vector thru a matrix
 extern void vm_MatrixMulVector(simd::float3 *, simd::float3 *, matrix *);
 
-// Multiply a vector times the transpose of a matrix
+/// Multiply a vector times the transpose of a matrix
 void vm_VectorMulTMatrix(simd::float3 *result, simd::float3 *v, matrix *m);
 
-// Multiplies 2 3x3 matrixes, returning the result in first argument
+/// Multiplies 2 3x3 matrixes, returning the result in first argument
 extern void vm_MatrixMul(matrix *, matrix *, matrix *);
 
-// Multiply a matrix times the transpose of a matrix
+/// Multiply a matrix times the transpose of a matrix
 void vm_MatrixMulTMatrix(matrix *dest, matrix *src0, matrix *src1);
 
-// Given a vector, returns the magnitude.  Uses sqrt so it's slow
+/// Given a vector, returns the magnitude.  Uses sqrt so it's slow.
+///
+/// Use \c simd::length instead.
 extern float vm_GetMagnitude(simd::float3 *);
 
-// Given a vector, returns an approximation of the magnitude
+/// Given a vector, returns an approximation of the magnitude
 extern float vm_GetMagnitudeFast(simd::float3 *);
 
 /// Returns the dot product of the two given vectors.
@@ -215,68 +217,77 @@ extern void vm_SubVectors(simd::float3 *, const simd::float3 *, const simd::floa
 /// Just use the addition symbol.
 extern void vm_AddVectors(simd::float3 *, simd::float3 *, simd::float3 *);
 
-// Inits vector to 0,0,0
+/// Inits vector to 0,0,0
 extern void vm_CenterVector(simd::float3 *);
 
-// Given a vector, divides second arg by vector components
+/// Given a vector, divides second arg by vector components
 extern void vm_AverageVector(simd::float3 *, int);
 
-// Normalizes a vector
-// Returns the magnitude before normalization
+/// Normalizes a vector
+/// Returns the magnitude before normalization.
+///
+/// \b Do \b not replace with \c simd::normalize as this does some extra checking!
 extern float vm_NormalizeVector(simd::float3 *);
 
-// Scales second arg vector by 3rd arg, placing result in first arg
+/// Scales second arg vector by 3rd arg, placing result in first arg
 extern void vm_ScaleVector(simd::float3 *, simd::float3 *, float);
 
-// Scales all components of vector v by value s adds the result to p and stores result in vector d
+/// Scales all components of vector v by value s adds the result to p and stores result in vector d
 extern void vm_ScaleAddVector(simd::float3 *d, simd::float3 *p, simd::float3 *v, float s);
 
-// Divides second vector components by 3rd arg, placing result in first arg.  Useful for parametric lines
+/// Divides second vector components by 3rd arg, placing result in first arg.  Useful for parametric lines
 extern void vm_DivVector(simd::float3 *, simd::float3 *, float);
 
-// Same as NormalizeVector, but uses approximation
+/// Same as NormalizeVector, but uses approximation
 extern float vm_NormalizeVectorFast(simd::float3 *);
 
-// Clears a matrix to zero
+/// Clears a matrix to zero
 extern void vm_ClearMatrix(matrix *);
 
-// Transposes a matrix in place
+/// Transposes a matrix in place
 extern void vm_TransposeMatrix(matrix *);
 
-// Given 3 angles (p,h,b), makes a rotation matrix out of them
+/// Given 3 angles (p,h,b), makes a rotation matrix out of them
 extern void vm_AnglesToMatrix(matrix *, angle p, angle h, angle b);
 
-// Ensure that a matrix is orthogonal
+/// Ensure that a matrix is orthogonal
 void vm_Orthogonalize(matrix *m);
 
-// Compute a matrix from one or two vectors.  At least one and at most two vectors must/can be specified.
-// Parameters:	m - filled in with the orienation matrix
-//					fvec,uvec,rvec - pointers to vectors that determine the matrix.
-//						One or two of these must be specified, with the other(s) set to NULL.
+/// Compute a matrix from one or two vectors.  At least one and at most two vectors must/can be specified.
+/// - parameter m: filled in with the orienation matrix
+/// - parameter fvec: pointers to vectors that determine the matrix.
+/// - parameter uvec: pointers to vectors that determine the matrix.
+/// - parameter rvec: pointers to vectors that determine the matrix.
+///
+/// One or two of fvec, uvec, or rvec must be specified, with the other(s) set to NULL.
 void vm_VectorToMatrix(matrix *m, simd::float3 *fvec, simd::float3 *uvec = nullptr, simd::float3 *rvec = nullptr);
 
-// Computes a matrix from a vector and and angle of rotation around that vector
-// Parameters:	m - filled in with the computed matrix
-//					v - the forward vector of the new matrix
-//					a - the angle of rotation around the forward vector
+/// Computes a matrix from a vector and and angle of rotation around that vector
+/// - parameter m: filled in with the computed matrix
+/// - parameter v: the forward vector of the new matrix
+/// - parameter a: the angle of rotation around the forward vector
 void vm_VectorAngleToMatrix(matrix *m, simd::float3 *v, angle a);
 
-// Given an angle, places sin in 2nd arg, cos in 3rd.  Either can be null
+/// Given an angle, places sin in 2nd arg, cos in 3rd.  Either can be \c NULL
 extern void vm_SinCos(angle, float *, float *);
 
-// Given x1,y1,x2,y2, returns the slope
+/// Given x1,y1,x2,y2, returns the slope
 extern float vm_GetSlope(float, float, float, float);
 
-// Calculates the perpendicular vector given three points
-// Parms:	n - the computed perp vector (filled in)
-//			v0,v1,v2 - three clockwise vertices
+/// Calculates the perpendicular vector given three points
+/// - parameter n: The computed perp vector (filled in)
+/// - parameter v0: One of the three clockwise vertices
+/// - parameter v1: One of the three clockwise vertices
+/// - parameter v2: One of the three clockwise vertices
 void vm_GetPerp(simd::float3 *n, simd::float3 *a, simd::float3 *b, simd::float3 *c);
 
-// Calculates the (normalized) surface normal give three points
-// Parms:	n - the computed surface normal (filled in)
-//			v0,v1,v2 - three clockwise vertices
-// Returns the magnitude of the normal before it was normalized.
-// The bigger this value, the better the normal.
+/// Calculates the (normalized) surface normal give three points
+///- parameter n: The computed surface normal (filled in)
+/// - parameter v0: One of the three clockwise vertices
+/// - parameter v1: One of the three clockwise vertices
+/// - parameter v2: One of the three clockwise vertices
+/// - Returns: the magnitude of the normal before it was normalized.
+/// The bigger this value, the better the normal.
 float vm_GetNormal(simd::float3 *n, simd::float3 *v0, simd::float3 *v1, simd::float3 *v2);
 
 /// Gets the distances (magnitude) between two vectors. Slow.
@@ -284,52 +295,53 @@ float vm_GetNormal(simd::float3 *n, simd::float3 *v0, simd::float3 *v1, simd::fl
 /// Replace with \c simd::distance
 extern float vm_VectorDistance(const simd::float3 *a, const simd::float3 *b);
 
-// Gets the approx distances (magnitude) between two vectors. Faster.
+/// Gets the approx distances (magnitude) between two vectors. Faster.
 extern float vm_VectorDistanceQuick(vector *a, vector *b);
 
-// Computes a normalized direction vector between two points
-// Parameters:	dest - filled in with the normalized direction vector
-//					start,end - the start and end points used to calculate the vector
-// Returns:		the distance between the two input points
+/// Computes a normalized direction vector between two points
+/// - Parameter dest: Filled in with the normalized direction vector.
+/// - parameter start: the start points used to calculate the vector.
+/// - parameter end: - the end point used to calculate the vector.
+/// - Returns: the distance between the two input points.
 float vm_GetNormalizedDir(vector *dest, vector *end, vector *start);
 
-// Returns a normalized direction vector between two points
-// Uses sloppier magnitude, less precise
+/// Returns a normalized direction vector between two points
+/// Uses sloppier magnitude, less precise
 float vm_GetNormalizedDirFast(vector *dest, vector *end, vector *start);
 
-// extract angles from a matrix
+/// extract angles from a matrix
 angvec *vm_ExtractAnglesFromMatrix(angvec *a, matrix *m);
 
-//	returns the angle between two vectors and a forward vector
+///	returns the angle between two vectors and a forward vector
 angle vm_DeltaAngVec(vector *v0, vector *v1, vector *fvec);
 
-//	returns the angle between two normalized vectors and a forward vector
+///	returns the angle between two normalized vectors and a forward vector
 angle vm_DeltaAngVecNorm(vector *v0, vector *v1, vector *fvec);
 
-// Computes the distance from a point to a plane.
-// Parms:	checkp - the point to check
-// Parms:	norm - the (normalized) surface normal of the plane
-//				planep - a point on the plane
-// Returns:	The signed distance from the plane; negative dist is on the back of the plane
+/// Computes the distance from a point to a plane.
+/// - parameter checkp: the point to check.
+/// - parameter norm: the (normalized) surface normal of the plane.
+/// - parameter planep: a pointer on the plane.
+/// - Returns: The signed distance from the plane; negative dist is on the back of the plane.
 float vm_DistToPlane(vector *checkp, vector *norm, vector *planep);
 
-// returns the value of a determinant
+/// returns the value of a determinant
 float calc_det_value(matrix *det);
 
 void vm_MakeInverseMatrix(matrix *dest);
 void vm_SinCosToMatrix(matrix *m, float sinp, float cosp, float sinb, float cosb, float sinh, float cosh);
 
-// Gets the real center of a polygon
+/// Gets the real center of a polygon
 float vm_GetCentroid(vector *centroid, vector *src, int nv);
 
-//	retrieves a random vector in values -RAND_MAX/2 to RAND_MAX/2
+///	retrieves a random vector in values -RAND_MAX/2 to RAND_MAX/2
 void vm_MakeRandomVector(vector *vec);
 
-// Given a set of points, computes the minimum bounding sphere of those points
+/// Given a set of points, computes the minimum bounding sphere of those points
 float vm_ComputeBoundingSphere(vector *center, vector *vecs, int num_verts);
 
-// Gets the real center of a polygon, but uses fast magnitude calculation
-// Returns the size of the passed in stuff
+/// Gets the real center of a polygon, but uses fast magnitude calculation
+/// Returns the size of the passed in stuff
 float vm_GetCentroidFast(vector *centroid, vector *src, int nv);
 
 } // namespace vec

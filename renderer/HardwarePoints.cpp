@@ -89,13 +89,13 @@ void g3_ProjectPoint(g3Point *p) {
 // from a 2d point, compute the vector through that point
 void g3_Point2Vec(simd::float3 *v, int16_t sx, int16_t sy) {
   simd::float3 tempv;
-  simd::float3 tempm;
+  vec::matrix tempm;
 
   tempv.x = (((sx - Window_w2) / Window_w2) * Matrix_scale.z / Matrix_scale.x);
   tempv.y = -(((sy - Window_h2) / Window_h2) * Matrix_scale.z / Matrix_scale.y);
   tempv.z = 1.0f;
 
-  vm_NormalizeVector(&tempv);
+  vec::vm_NormalizeVector(&tempv);
 
   tempm = ~Unscaled_matrix;
 
@@ -127,7 +127,7 @@ simd::float3 *g3_RotateDeltaZ(simd::float3 *dest, float dz) {
   return dest;
 }
 
-simd::float3 *g3_RotateDeltaVec(simd::float3 *dest, vector *src) {
+simd::float3 *g3_RotateDeltaVec(simd::float3 *dest, simd::float3 *src) {
   *dest = *src * View_matrix;
 
   return dest;

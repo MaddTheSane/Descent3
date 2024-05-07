@@ -97,7 +97,6 @@
  * $NoKeywords: $
  */
 
-
 #include "memory.h"
 #include "bnode.h"
 #include "room.h"
@@ -172,7 +171,7 @@ public:
   }
 };
 
-static float BNode_QuickDist(vector *pos1, vector *pos2) {
+static float BNode_QuickDist(simd::float3 *pos1, simd::float3 *pos2) {
   return fabs(pos1->x - pos2->x) + fabs(pos1->y - pos2->y) + fabs(pos1->z - pos2->z);
 }
 
@@ -289,7 +288,7 @@ done:
 
 // TODO: MTS: Unused?
 int BNode_GenerateBestPathThroughRoom(int sroom, int spnt, int croom, int eroom, int eportal, int max_nodes,
-                                      vector *pos_list) {
+                                      simd::float3 *pos_list) {
   return -1;
 }
 
@@ -298,7 +297,7 @@ static char BNode_vis[MAX_BNODES_PER_ROOM];
 #define VIS_OK 1
 #define VIS_NO 2
 
-int BNode_FindDirLocalVisibleBNode(int roomnum, vector *pos, vector *fvec, float rad) {
+int BNode_FindDirLocalVisibleBNode(int roomnum, simd::float3 *pos, simd::float3 *fvec, float rad) {
   int i;
   float best_dot = -1.01f;
   float closest_dist = 800.0f;
@@ -315,11 +314,11 @@ int BNode_FindDirLocalVisibleBNode(int roomnum, vector *pos, vector *fvec, float
 retry:
 
   for (i = 0; i < bnlist->num_nodes; i++) {
-    vector to = bnlist->nodes[i].pos - *pos;
-    float dist = vm_NormalizeVector(&to);
+    simd::float3 to = bnlist->nodes[i].pos - *pos;
+    float dist = vec::vm_NormalizeVector(&to);
 
     if (dist < closest_dist) {
-      float dot = *fvec * to;
+      float dot = simd::dot(*fvec, to);
 
       if (dot > 0.0f || f_retry) {
         float node_size = 0.0f;
@@ -390,7 +389,7 @@ retry:
   return closest_node;
 }
 
-int BNode_FindClosestLocalVisibleBNode(int roomnum, vector *pos, float rad) {
+int BNode_FindClosestLocalVisibleBNode(int roomnum, simd::float3 *pos, float rad) {
   int i, j;
   float closest_dist = 800.0f;
   int closest_node = -1;

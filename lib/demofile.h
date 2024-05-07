@@ -167,10 +167,10 @@ void DemoWriteHudMessage(uint32_t color, bool blink, char *msg);
 
 void DemoWriteChangedObjects();
 
-void DemoWriteWeaponFire(uint16_t objectnum, vector *pos, vector *dir, uint16_t weaponnum,
+void DemoWriteWeaponFire(uint16_t objectnum, simd::float3 *pos, simd::float3 *dir, uint16_t weaponnum,
                          uint16_t weapobjnum, int16_t gunnum);
 
-void DemoWriteObjCreate(uint8_t type, uint16_t id, int roomnum, vector *pos, const matrix *orient, int parent_handle,
+void DemoWriteObjCreate(uint8_t type, uint16_t id, int roomnum, simd::float3 *pos, const vec::matrix *orient, int parent_handle,
                         object *obj);
 
 void DemoWriteTurretChanged(uint16_t objnum);
@@ -191,11 +191,11 @@ void DemoWritePlayerDeath(object *player, bool melee, int fate = -1);
 
 void DemoWrite3DSound(int16_t soundidx, uint16_t objnum, int priority, float volume = 0.5f);
 
-void DemoWriteCollidePlayerWeapon(object *playerobj, object *weapon, vector *collision_point, vector *collision_normal,
-                                  bool f_reverse_normal, void *hit_info);
+void DemoWriteCollidePlayerWeapon(object *playerobj, object *weapon, simd::float3 *collision_point,
+                                  simd::float3 *collision_normal, bool f_reverse_normal, void *hit_info);
 
-void DemoWriteCollideGenericWeapon(object *robotobj, object *weapon, vector *collision_point, vector *collision_normal,
-                                   bool f_reverse_normal, void *hit_info);
+void DemoWriteCollideGenericWeapon(object *robotobj, object *weapon, simd::float3 *collision_point,
+                                   simd::float3 *collision_normal, bool f_reverse_normal, void *hit_info);
 
 void DemoReadCollidePlayerWeapon(void);
 

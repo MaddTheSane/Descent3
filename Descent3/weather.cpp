@@ -52,13 +52,13 @@ void DoRainEffect() {
   if (randval < 20)
     randval = 20;
 
-  vector vel = Viewer_object->mtype.phys_info.velocity;
-  float mag = vm_GetMagnitudeFast(&vel);
+  simd::float3 vel = Viewer_object->mtype.phys_info.velocity;
+  float mag = vec::vm_GetMagnitudeFast(&vel);
   vel /= mag;
 
-  float scalar = vm_DotProduct(&vel, &Viewer_object->orient.fvec);
+  float scalar = simd::dot(vel, Viewer_object->orient.fvec);
 
-  vector upvec = {0, 1.0, 0};
+  simd::float3 upvec = {0, 1.0, 0};
 
   scalar *= (1 + (mag / 100));
 
@@ -69,12 +69,12 @@ void DoRainEffect() {
   else if (randval > 80)
     randval = 80;
 
-  if ((upvec * Viewer_object->orient.uvec) < 0)
+  if (simd::dot(upvec, Viewer_object->orient.uvec) < 0)
     randval = 8000; // Make sure rain does fall upwards
 
   if (Viewer_object->type == OBJ_PLAYER && OBJECT_OUTSIDE(Viewer_object) && (ps_rand() % randval) == 0) {
     // Put some droplets on the windshield
-    vector pos = {0, 0, 0};
+    simd::float3 pos = {0, 0, 0};
 
     pos.x = ((ps_rand() % 1000) - 500) / 250.0;
     pos.y = ((ps_rand() % 1000) - 500) / 350.0;
@@ -100,15 +100,15 @@ void DoRainEffect() {
 
   if (OBJECT_OUTSIDE(Viewer_object)) {
     int num = 20 + (ps_rand() % 15);
-    angvec angs;
+    vec::angvec angs;
     int i;
 
     vm_ExtractAnglesFromMatrix(&angs, &Viewer_object->orient);
-    matrix mat;
+    vec::matrix mat;
     vm_AnglesToMatrix(&mat, 0, angs.h, 0);
 
     for (i = 0; i < num; i++) {
-      vector pos = Viewer_object->pos;
+      simd::float3 pos = Viewer_object->pos;
 
       float z = ((ps_rand() % 1000) / 1000.0) * 700;
       float x = (((ps_rand() % 1000) - 500) / 500.0) * 300;
@@ -135,7 +135,7 @@ void DoRainEffect() {
 
     num /= 2;
     for (i = 0; i < num; i++) {
-      vector pos = Viewer_object->pos;
+      simd::float3 pos = Viewer_object->pos;
 
       float z = ((ps_rand() % 1000) / 1000.0) * 700;
       float x = (((ps_rand() % 1000) - 500) / 500.0) * 300;
@@ -151,7 +151,7 @@ void DoRainEffect() {
         continue;
 
       // Create puddle drops on the terrain
-      vector norm;
+      simd::float3 norm;
       float ypos = GetTerrainGroundPoint(&pos, &norm);
       pos.y = ypos;
       int visnum = VisEffectCreate(VIS_FIREBALL, PUDDLEDROP_INDEX, Viewer_object->roomnum, &pos);
@@ -183,7 +183,7 @@ void DoSnowEffect() {
     }
 
     // angvec angs;
-    matrix mat;
+    vec::matrix mat;
 
     // vm_ExtractAnglesFromMatrix (&angs,&Viewer_object->orient);
     // vm_AnglesToMatrix (&mat,0,angs.h,0);
@@ -191,7 +191,7 @@ void DoSnowEffect() {
     mat = Viewer_object->orient;
 
     for (int i = 0; i < num; i++) {
-      vector pos = Viewer_object->pos;
+      simd::float3 pos = Viewer_object->pos;
 
       float z = ((ps_rand() % 1000) / 1000.0) * 300;
       float x = (((ps_rand() % 1000) - 500) / 500.0) * 200;
@@ -207,7 +207,7 @@ void DoSnowEffect() {
         continue;
 
       // Create falling rain
-      vector down_vec = {0, -30, 0};
+      simd::float3 down_vec = {0, -30, 0};
       int visnum = VisEffectCreate(VIS_FIREBALL, SNOWFLAKE_INDEX, Viewer_object->roomnum, &pos);
       if (visnum >= 0) {
         vis_effect *vis = &VisEffects[visnum];

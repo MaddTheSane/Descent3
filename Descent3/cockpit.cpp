@@ -234,12 +234,12 @@ struct tCockpitInfo {
   unsigned layered_mask;              // layered submodel mask
   bool animating;                     // is cockpit moving?
   bool resized;                       // if cockpit is being resized....
-  vector buffet_vec;                  // buffet direction
+  simd::float3 buffet_vec;            // buffet direction
   float buffet_amp;                   // used to calculate real magnitude
   float buffet_wave;                  // current sin angle of buffet
   float buffet_time;                  // current position in buffet wave along time axis.
 
-  matrix orient; // orientation of cockpit
+  vec::matrix orient; // orientation of cockpit
 };
 
 static tCockpitInfo Cockpit_info;
@@ -279,7 +279,7 @@ void InitCockpit(int ship_index) {
   Cockpit_info.resized = false;
   Cockpit_info.buffet_amp = 0.0f;
   Cockpit_info.snd_open = SOUND_COCKPIT;
-  vm_MakeZero(&Cockpit_info.buffet_vec);
+  vec::vm_MakeZero(&Cockpit_info.buffet_vec);
   //	find layered submodel mask
   Cockpit_info.layered_mask = 0x00000000;
   Cockpit_info.nonlayered_mask = 0x00000000;
@@ -430,7 +430,7 @@ void QuickCloseCockpit() {
 //	resizes cockpit.
 void ResizeCockpit() { Cockpit_info.resized = true; }
 //	cockpit orientation.
-void StartCockpitShake(float mag, vector *vec) {
+void StartCockpitShake(float mag, simd::float3 *vec) {
   ASSERT(vec);
   if (mag > MAX_BUFFET_STRENGTH)
     mag = MAX_BUFFET_STRENGTH;
@@ -441,13 +441,13 @@ void StartCockpitShake(float mag, vector *vec) {
 }
 //////////////////////////////////////////////////////////////////////////////
 //	renders the cockpit.
-extern float GetTerrainDynamicScalar(vector *pos, int seg);
-extern void GetRoomDynamicScalar(vector *pos, room *rp, float *r, float *g, float *b);
+extern float GetTerrainDynamicScalar(simd::float3 *pos, int seg);
+extern void GetRoomDynamicScalar(simd::float3 *pos, room *rp, float *r, float *g, float *b);
 void RenderCockpit() {
   object *player_obj = &Objects[Players[Player_num].objnum];
   physics_info *player_phys = &player_obj->mtype.phys_info;
-  vector view_pos, light_vec;
-  matrix view_tmat;
+  simd::float3 view_pos, light_vec;
+  vec::matrix view_tmat;
   float view_z, view_y, view_x, keyframe;
   float light_scalar_r, light_scalar_g, light_scalar_b;
   float normalized_time[MAX_SUBOBJECTS];

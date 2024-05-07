@@ -246,7 +246,7 @@ int SlewStop(object *obj) {
   if (!obj)
     return 0;
 
-  vm_MakeZero(&obj->mtype.phys_info.velocity);
+  vec::vm_MakeZero(&obj->mtype.phys_info.velocity);
 
   return 1;
 }
@@ -256,18 +256,18 @@ void SlewResetOrient(object *obj) {
   if (!obj)
     return;
 
-  ObjSetOrient(obj, &Identity_matrix);
+  ObjSetOrient(obj, &vec::Identity_matrix);
 }
 
 // Moves the object for one frame
 int SlewFrame(object *obj, int movement_limitations) {
   static int16_t old_joy_x = 0, old_joy_y = 0; // position last time around
   int ret_flags = 0;
-  vector svel, movement; // scaled velocity (per this frame)
-  matrix rotmat, new_pm;
-  angvec rotang;
-  vector rottime;
-  vector new_pos;
+  simd::float3 svel, movement; // scaled velocity (per this frame)
+  vec::matrix rotmat, new_pm;
+  vec::angvec rotang;
+  simd::float3 rottime;
+  simd::float3 new_pos;
   int new_room;
   fvi_query fq;
   fvi_info hit_info;

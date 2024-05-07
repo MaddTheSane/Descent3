@@ -49,13 +49,13 @@ void llsGeometry::RenderGroup(int group) {}
 
 // primatives, nv = number of verts, and verts is an array of pointers to vertices.
 // you can pass a sound material value if you want special reflective properties on this polygon.
-void llsGeometry::AddPoly(int nv, vector **verts, unsigned tag, tSoundMaterial material) {}
+void llsGeometry::AddPoly(int nv, simd::float3 **verts, unsigned tag, tSoundMaterial material) {}
 
 // 4 verts here.
-void llsGeometry::AddQuad(unsigned tag, vector **verts) {}
+void llsGeometry::AddQuad(unsigned tag, simd::float3 **verts) {}
 
 // 3 verts here.
-void llsGeometry::AddTriangle(unsigned tag, vector **verts) {}
+void llsGeometry::AddTriangle(unsigned tag, simd::float3 **verts) {}
 
 void llsGeometry::CreateMaterial(tSoundMaterial material, float transmit_gain, float transmit_highfreq,
                                  float reflect_gain, float reflect_highfreq) {}

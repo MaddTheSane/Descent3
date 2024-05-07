@@ -870,26 +870,26 @@ static bool IsOKToApplyForce(object *objp);
 //! Creates some effects where a weapon has collided with a wall.
 static void DoWallEffects(object *weapon, int surface_tmap);
 //! Check for lava, volatile, or water surface.  If contact, make special sound & kill the weapon.
-static void check_for_special_surface(object *weapon, int surface_tmap, vector *surface_normal, float hit_dot);
+static void check_for_special_surface(object *weapon, int surface_tmap, simd::float3 *surface_normal, float hit_dot);
 /// Process a collision between a weapon and a wall.
 /// - Returns: true if the weapon hits the wall, and false if should keep going though the wall (for breakable glass).
-static bool collide_weapon_and_wall(object *weapon, fix hitspeed, int hitseg, int hitwall, vector *hitpnt,
-                                    vector *wall_normal, float hit_dot);
+static bool collide_weapon_and_wall(object *weapon, fix hitspeed, int hitseg, int hitwall, simd::float3 *hitpnt,
+                                    simd::float3 *wall_normal, float hit_dot);
 /// Prints out a marker hud message if needed.
-static void collide_player_and_marker(object *playerobj, object *marker_obj, vector *collision_point,
-                                      vector *collision_normal, bool f_reverse_normal, fvi_info *hit_info);
-static void collide_player_and_wall(object *playerobj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                                    vector *wall_normal, float hit_dot);
-static void collide_generic_and_wall(object *genericobj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                                     vector *wall_normal, float hit_dot);
-static void CollideAnglesToMatrix(matrix *m, float p, float h, float b);
-static vector *CollideExtractAnglesFromMatrix(vector *a, matrix *m);
-static void bump_two_objects(object *object0, object *object1, vector *collision_point, vector *collision_normal,
+static void collide_player_and_marker(object *playerobj, object *marker_obj, simd::float3 *collision_point,
+                                      simd::float3 *collision_normal, bool f_reverse_normal, fvi_info *hit_info);
+static void collide_player_and_wall(object *playerobj, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                                    simd::float3 *wall_normal, float hit_dot);
+static void collide_generic_and_wall(object *genericobj, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                                     simd::float3 *wall_normal, float hit_dot);
+static void CollideAnglesToMatrix(vec::matrix *m, float p, float h, float b);
+static simd::float3 *CollideExtractAnglesFromMatrix(simd::float3 *a, vec::matrix *m);
+static void bump_two_objects(object *object0, object *object1, simd::float3 *collision_point, simd::float3 *collision_normal,
                              int damage_flag);
-static void collide_player_and_player(object *p1, object *p2, vector *collision_point, vector *collision_normal,
+static void collide_player_and_player(object *p1, object *p2, simd::float3 *collision_point, simd::float3 *collision_normal,
                                       bool f_reverse_normal, fvi_info *hit_info);
-static void collide_generic_and_player(object *robotobj, object *playerobj, vector *collision_point,
-                                       vector *collision_normal, bool f_reverse_normal, fvi_info *hit_info);
+static void collide_generic_and_player(object *robotobj, object *playerobj, simd::float3 *collision_point,
+                                       simd::float3 *collision_normal, bool f_reverse_normal, fvi_info *hit_info);
 static void MakeWeaponStick(object *weapon, object *parent, fvi_info *hit_info);
 static void check_lg_inform(object *A, object *B);
 
@@ -927,7 +927,7 @@ struct vec2d {
 
 // finds the uv coords of the given point on the given seg & side
 // fills in u & v. if l is non-NULL fills it in also
-void FindHitpointUV(float *u, float *v, vector *point, room *rp, int facenum) {
+void FindHitpointUV(float *u, float *v, simd::float3 *point, room *rp, int facenum) {
   face *fp = &rp->faces[facenum];
   int ii, jj;
   vec2d pnt[3], checkp, vec0, vec1;
@@ -991,7 +991,7 @@ void DoWallEffects(object *weapon, int surface_tmap) {
 
         vis->movement_type = MT_PHYSICS;
         vis->size = 3.0;
-        vm_MakeZero(&vis->velocity);
+        vec::vm_MakeZero(&vis->velocity);
         vis->velocity.y = 10;
       }
     }
@@ -1027,7 +1027,7 @@ void DoWallEffects(object *weapon, int surface_tmap) {
             vis->velocity.z = (ps_rand() % 300) - 50;
           }
 
-          vm_NormalizeVectorFast(&vis->velocity);
+          vec::vm_NormalizeVectorFast(&vis->velocity);
           vis->velocity *= 4 + (ps_rand() % 20);
           vis->size = .5 + (((ps_rand() % 11) - 5) * .05);
           vis->flags |= VF_USES_LIFELEFT;
@@ -1043,10 +1043,10 @@ void DoWallEffects(object *weapon, int surface_tmap) {
 
 #define FORCEFIELD_DAMAGE 5.0f
 
-extern void DeformTerrain(vector *pos, int depth, float size);
+extern void DeformTerrain(simd::float3 *pos, int depth, float size);
 
 // Check for lava, volatile, or water surface.  If contact, make special sound & kill the weapon
-void check_for_special_surface(object *weapon, int surface_tmap, vector *surface_normal, float hit_dot) {
+void check_for_special_surface(object *weapon, int surface_tmap, simd::float3 *surface_normal, float hit_dot) {
   bool f_forcefield, f_volatile, f_lava, f_water;
 
   f_forcefield = (GameTextures[surface_tmap].flags & TF_FORCEFIELD) != 0;
@@ -1084,8 +1084,8 @@ void check_for_special_surface(object *weapon, int surface_tmap, vector *surface
 
 // Process a collision between a weapon and a wall
 // Returns true if the weapon hits the wall, and false if should keep going though the wall (for breakable glass)
-bool collide_weapon_and_wall(object *weapon, fix hitspeed, int hitseg, int hitwall, vector *hitpnt, vector *wall_normal,
-                             float hit_dot) {
+bool collide_weapon_and_wall(object *weapon, fix hitspeed, int hitseg, int hitwall, simd::float3 *hitpnt,
+                             simd::float3 *wall_normal, float hit_dot) {
   bool f_forcefield;
   bool f_volatile, f_lava, f_water;
   // mprintf(0, "Weapon hit wall, how nice.\n");
@@ -1150,12 +1150,12 @@ bool collide_weapon_and_wall(object *weapon, fix hitspeed, int hitseg, int hitwa
 
       if (visnum >= 0) {
         // Alter the size of this explosion based on the face size
-        vector verts[MAX_VERTS_PER_FACE];
-        vector center;
+        simd::float3 verts[MAX_VERTS_PER_FACE];
+        simd::float3 center;
         for (int t = 0; t < fp->num_verts; t++)
           verts[t] = rp->verts[fp->face_verts[t]];
 
-        float size = sqrt(vm_GetCentroid(&center, verts, fp->num_verts));
+        float size = sqrt(vec::vm_GetCentroid(&center, verts, fp->num_verts));
         VisEffects[visnum].size = (size / 2);
       }
 
@@ -1261,8 +1261,8 @@ bool collide_weapon_and_wall(object *weapon, fix hitspeed, int hitseg, int hitwa
 }
 
 // Prints out a marker hud message if needed
-void collide_player_and_marker(object *playerobj, object *marker_obj, vector *collision_point, vector *collision_normal,
-                               bool f_reverse_normal, fvi_info *hit_info) {
+void collide_player_and_marker(object *playerobj, object *marker_obj, simd::float3 *collision_point,
+                               simd::float3 *collision_normal, bool f_reverse_normal, fvi_info *hit_info) {
   if (playerobj->id == Player_num) {
     char str[100];
     snprintf(str, sizeof(str), "Marker: %s", MarkerMessages[marker_obj->id]);
@@ -1279,8 +1279,8 @@ void collide_player_and_marker(object *playerobj, object *marker_obj, vector *co
 
 #define VOLATILE_DAMAGE 7.0f // damage per hit
 
-void collide_player_and_wall(object *playerobj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                             vector *wall_normal, float hit_dot) {
+void collide_player_and_wall(object *playerobj, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                             simd::float3 *wall_normal, float hit_dot) {
   float volume = MAX_GAME_VOLUME;
   bool f_volatile, f_lava;
   bool f_forcefield;
@@ -1396,8 +1396,8 @@ void collide_player_and_wall(object *playerobj, float hitspeed, int hitseg, int 
   return;
 }
 
-void collide_generic_and_wall(object *genericobj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                              vector *wall_normal, float hit_dot) {
+void collide_generic_and_wall(object *genericobj, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt,
+                              simd::float3 *wall_normal, float hit_dot) {
   bool f_volatile, f_lava;
   bool f_forcefield;
   float volume = MAX_GAME_VOLUME;
@@ -1466,7 +1466,7 @@ void collide_generic_and_wall(object *genericobj, float hitspeed, int hitseg, in
   }
 }
 
-void CollideAnglesToMatrix(matrix *m, float p, float h, float b) {
+void CollideAnglesToMatrix(vec::matrix *m, float p, float h, float b) {
   float sinp, cosp, sinb, cosb, sinh, cosh;
 
   sinp = sin(p);
@@ -1489,7 +1489,7 @@ void CollideAnglesToMatrix(matrix *m, float p, float h, float b) {
   m->fvec.z = cosp * cosh;
 }
 
-vector *CollideExtractAnglesFromMatrix(vector *a, matrix *m) {
+simd::float3 *CollideExtractAnglesFromMatrix(simd::float3 *a, vec::matrix *m) {
   float sinh, cosh, sinp, sinb;
 
   sinh = -m->fvec.x;
@@ -1520,15 +1520,15 @@ vector *CollideExtractAnglesFromMatrix(vector *a, matrix *m) {
   return a;
 }
 
-void ConvertEulerToAxisAmount(vector *e, vector *n, float *w) {
-  float rotspeed = vm_GetMagnitude(e);
-  matrix rotmat;
-  vector e_n;
+void ConvertEulerToAxisAmount(simd::float3 *e, simd::float3 *n, float *w) {
+  float rotspeed = vec::vm_GetMagnitude(e);
+  vec::matrix rotmat;
+  simd::float3 e_n;
   float scale = rotspeed / .0001f;
 
   // If there isn't a rotation, return something valid
   if (rotspeed == 0.0f || scale == 0.0f) {
-    *n = Zero_vector;
+    *n = vec::Zero_vector;
     n->y = 1.0f;
     *w = 0.0f;
 
@@ -1546,8 +1546,8 @@ void ConvertEulerToAxisAmount(vector *e, vector *n, float *w) {
   n->y = rotmat.fvec.x - rotmat.rvec.z;
   n->z = rotmat.rvec.y - rotmat.uvec.x;
 
-  if (*n != Zero_vector) {
-    vm_NormalizeVector(n);
+  if (simd::all(*n != vec::Zero_vector)) {
+    vec::vm_NormalizeVector(n);
 
     float ct = (rotmat.rvec.x + rotmat.uvec.y + rotmat.fvec.z - 1.0f) / 2.0f;
     if (ct < -1.0f)
@@ -1567,17 +1567,17 @@ void ConvertEulerToAxisAmount(vector *e, vector *n, float *w) {
   }
 }
 
-void ConvertAxisAmountToEuler(vector *n, float *w, vector *e) {
+void ConvertAxisAmountToEuler(simd::float3 *n, float *w, simd::float3 *e) {
   float s;
   float c;
   float t;
 
   float scale = *w / .0001f;
   float w_n = .0001f;
-  vector s_result;
+  simd::float3 s_result;
 
   if (*w == 0.0f) {
-    *e = Zero_vector;
+    *e = vec::Zero_vector;
     return;
   }
 
@@ -1585,7 +1585,7 @@ void ConvertAxisAmountToEuler(vector *n, float *w, vector *e) {
   c = cos(.0001f);
   t = 1.0f - c;
 
-  matrix rotmat;
+  vec::matrix rotmat;
   const float sx = s * n->x;
   const float sy = s * n->y;
   const float sz = s * n->z;
@@ -1613,7 +1613,7 @@ void ConvertAxisAmountToEuler(vector *n, float *w, vector *e) {
   e->z = (s_result.z) * scale * (65535.0f / (2.0 * PI));
 }
 
-void bump_obj_against_fixed(object *obj, vector *collision_point, vector *collision_normal) {
+void bump_obj_against_fixed(object *obj, simd::float3 *collision_point, simd::float3 *collision_normal) {
   ASSERT(std::isfinite(obj->mtype.phys_info.rotvel.x));
   ASSERT(std::isfinite(obj->mtype.phys_info.rotvel.y));
   ASSERT(std::isfinite(obj->mtype.phys_info.rotvel.z));
@@ -1624,29 +1624,29 @@ void bump_obj_against_fixed(object *obj, vector *collision_point, vector *collis
   if (!IsOKToApplyForce(obj))
     return;
 
-  vector r1 = *collision_point - obj->pos;
-  vector w1;
-  vector n1;
+  simd::float3 r1 = *collision_point - obj->pos;
+  simd::float3 w1;
+  simd::float3 n1;
   float temp1;
 
   float j;
 
-  matrix o_t1 = obj->orient;
+  vec::matrix o_t1 = obj->orient;
   vm_TransposeMatrix(&o_t1);
 
-  vector cmp1 = obj->mtype.phys_info.rotvel * o_t1;
+  simd::float3 cmp1 = obj->mtype.phys_info.rotvel * o_t1;
 
   ConvertEulerToAxisAmount(&cmp1, &n1, &temp1);
 
   n1 *= temp1;
 
   if (temp1 != 0.0f) {
-    vm_CrossProduct(&w1, &n1, &r1);
+    vec::vm_CrossProduct(&w1, &n1, &r1);
   } else {
-    w1 = Zero_vector;
+    w1 = vec::Zero_vector;
   }
 
-  vector p1 = obj->mtype.phys_info.velocity + w1;
+  simd::float3 p1 = obj->mtype.phys_info.velocity + w1;
   float v_rel;
 
   float m1 = obj->mtype.phys_info.mass;
@@ -1655,12 +1655,12 @@ void bump_obj_against_fixed(object *obj, vector *collision_point, vector *collis
   if (m1 <= 0.0f)
     m1 = 0.00000001f;
 
-  v_rel = *collision_normal * (p1);
+  v_rel = simd::dot(*collision_normal, (p1));
 
   float e = obj->mtype.phys_info.coeff_restitution;
 
-  vector c1;
-  vector cc1;
+  simd::float3 c1;
+  simd::float3 cc1;
   float cv1;
 
   //	matrix i1;
@@ -1670,28 +1670,28 @@ void bump_obj_against_fixed(object *obj, vector *collision_point, vector *collis
   if (i1 < .0000001)
     i1 = .0000001f;
 
-  vm_CrossProduct(&c1, &r1, collision_normal);
+  vec::vm_CrossProduct(&c1, &r1, collision_normal);
 
   c1 = c1 / i1;
 
-  vm_CrossProduct(&cc1, &c1, &r1);
+  vec::vm_CrossProduct(&cc1, &c1, &r1);
 
-  cv1 = (*collision_normal) * c1;
+  cv1 = simd::dot((*collision_normal), c1);
 
   j = (-(1.0f + e)) * v_rel;
   j /= (1 / m1 + cv1);
 
   obj->mtype.phys_info.velocity += ((j * (*collision_normal)) / m1);
 
-  vector jcn = j * (*collision_normal);
+  simd::float3 jcn = j * (*collision_normal);
 
-  vm_CrossProduct(&c1, &r1, &jcn);
+  vec::vm_CrossProduct(&c1, &r1, &jcn);
 
   n1 = (c1) / i1;
 
-  temp1 = vm_NormalizeVector(&n1);
+  temp1 = vec::vm_NormalizeVector(&n1);
 
-  vector txx1;
+  simd::float3 txx1;
 
   ConvertAxisAmountToEuler(&n1, &temp1, &txx1);
 
@@ -1705,21 +1705,21 @@ void bump_obj_against_fixed(object *obj, vector *collision_point, vector *collis
   ASSERT(std::isfinite(obj->mtype.phys_info.velocity.z));
 }
 
-void bump_two_objects(object *object0, object *object1, vector *collision_point, vector *collision_normal,
+void bump_two_objects(object *object0, object *object1, simd::float3 *collision_point, simd::float3 *collision_normal,
                       int damage_flag) {
   object *t = nullptr;
   object *other = nullptr;
 
   // Determine if a moving object hits a non-moving object
   if ((object0->movement_type != MT_PHYSICS && object0->movement_type != MT_WALKING) ||
-      (object0->movement_type == MT_PHYSICS && object0->mtype.phys_info.velocity == Zero_vector &&
+      (object0->movement_type == MT_PHYSICS && simd::all(object0->mtype.phys_info.velocity == vec::Zero_vector) &&
        (object0->mtype.phys_info.flags & PF_LOCK_MASK) && (object0->mtype.phys_info.flags & PF_POINT_COLLIDE_WALLS))) {
     t = object1;
     other = object0;
     *collision_normal *= -1.0f;
   }
   if ((object1->movement_type != MT_PHYSICS && object1->movement_type != MT_WALKING) ||
-      (object1->movement_type == MT_PHYSICS && object1->mtype.phys_info.velocity == Zero_vector &&
+      (object1->movement_type == MT_PHYSICS && simd::all(object1->mtype.phys_info.velocity == vec::Zero_vector) &&
        (object1->mtype.phys_info.flags & PF_LOCK_MASK) && (object1->mtype.phys_info.flags & PF_POINT_COLLIDE_WALLS))) {
     t = object0;
     other = object1;
@@ -1729,26 +1729,26 @@ void bump_two_objects(object *object0, object *object1, vector *collision_point,
   if (t) {
     // chrishack -- walker hack
     if (t->movement_type != MT_PHYSICS && t->movement_type != MT_WALKING) {
-      t->mtype.phys_info.velocity = Zero_vector;
+      t->mtype.phys_info.velocity = vec::Zero_vector;
       return;
     }
 
     if (t->mtype.phys_info.flags & PF_PERSISTENT)
       return;
 
-    vector moved_v;
+    simd::float3 moved_v;
     float wall_part;
 
     float luke_test;
 
     if (t->type == OBJ_PLAYER) {
-      luke_test = vm_GetMagnitude(&t->mtype.phys_info.velocity);
+      luke_test = vec::vm_GetMagnitude(&t->mtype.phys_info.velocity);
     }
 
     if (!(t->flags & OF_DEAD)) {
       // Find hit speed
       moved_v = t->pos - t->last_pos;
-      wall_part = *collision_normal * t->mtype.phys_info.velocity;
+      wall_part = simd::dot(*collision_normal, t->mtype.phys_info.velocity);
 
       if (t->mtype.phys_info.flags & PF_BOUNCE) {
         wall_part *= 2.0; // Subtract out wall part twice to achieve bounce
@@ -1773,7 +1773,7 @@ void bump_two_objects(object *object0, object *object1, vector *collision_point,
       } else {
         float wall_force;
 
-        wall_force = t->mtype.phys_info.thrust * *collision_normal;
+        wall_force = simd::dot(t->mtype.phys_info.thrust, *collision_normal);
         t->mtype.phys_info.thrust +=
             *collision_normal * (wall_force * -1.001); // 1.001 so that we are not quite tangential
 
@@ -1783,7 +1783,7 @@ void bump_two_objects(object *object0, object *object1, vector *collision_point,
         if (t->type == OBJ_PLAYER) {
           float real_vel;
 
-          real_vel = vm_NormalizeVector(&t->mtype.phys_info.velocity);
+          real_vel = vec::vm_NormalizeVector(&t->mtype.phys_info.velocity);
           t->mtype.phys_info.velocity *= ((real_vel + luke_test) / 2.0f);
           // obj->mtype.phys_info.velocity *= (luke_test);
         }
@@ -1791,7 +1791,7 @@ void bump_two_objects(object *object0, object *object1, vector *collision_point,
 
       // Weapons should face their new heading.  This is so missiles are pointing in the correct direct.
       if (t->type == OBJ_WEAPON && (t->mtype.phys_info.flags & (PF_BOUNCE | PF_GRAVITY | PF_WIND)))
-        vm_VectorToMatrix(&t->orient, &t->mtype.phys_info.velocity, &t->orient.uvec, nullptr);
+        vec::vm_VectorToMatrix(&t->orient, &t->mtype.phys_info.velocity, &t->orient.uvec, nullptr);
     }
 
     // Return it to the original direction
@@ -1822,25 +1822,25 @@ void bump_two_objects(object *object0, object *object1, vector *collision_point,
   ASSERT(std::isfinite(object0->mtype.phys_info.velocity.y));
   ASSERT(std::isfinite(object0->mtype.phys_info.velocity.z));
 
-  vector r1 = *collision_point - object0->pos;
-  vector r2 = *collision_point - object1->pos;
-  vector w1;
-  vector w2;
-  vector n1;
-  vector n2;
+  simd::float3 r1 = *collision_point - object0->pos;
+  simd::float3 r2 = *collision_point - object1->pos;
+  simd::float3 w1;
+  simd::float3 w2;
+  simd::float3 n1;
+  simd::float3 n2;
   float temp1;
   float temp2;
 
   float j;
 
-  matrix o_t1 = object0->orient;
-  matrix o_t2 = object1->orient;
+  vec::matrix o_t1 = object0->orient;
+  vec::matrix o_t2 = object1->orient;
 
-  vm_TransposeMatrix(&o_t1);
-  vm_TransposeMatrix(&o_t2);
+  vec::vm_TransposeMatrix(&o_t1);
+  vec::vm_TransposeMatrix(&o_t2);
 
-  vector cmp1 = object0->mtype.phys_info.rotvel * o_t1;
-  vector cmp2 = object1->mtype.phys_info.rotvel * o_t2;
+  simd::float3 cmp1 = object0->mtype.phys_info.rotvel * o_t1;
+  simd::float3 cmp2 = object1->mtype.phys_info.rotvel * o_t2;
 
   ConvertEulerToAxisAmount(&cmp1, &n1, &temp1);
   ConvertEulerToAxisAmount(&cmp2, &n2, &temp2);
@@ -1849,19 +1849,19 @@ void bump_two_objects(object *object0, object *object1, vector *collision_point,
   n2 *= temp2;
 
   if (temp1 != 0.0f) {
-    vm_CrossProduct(&w1, &n1, &r1);
+    vec::vm_CrossProduct(&w1, &n1, &r1);
   } else {
-    w1 = Zero_vector;
+    w1 = vec::Zero_vector;
   }
 
   if (temp2 != 0.0f) {
-    vm_CrossProduct(&w2, &n2, &r2);
+    vec::vm_CrossProduct(&w2, &n2, &r2);
   } else {
-    w2 = Zero_vector;
+    w2 = vec::Zero_vector;
   }
 
-  vector p1 = object0->mtype.phys_info.velocity + w1;
-  vector p2 = object1->mtype.phys_info.velocity + w2;
+  simd::float3 p1 = object0->mtype.phys_info.velocity + w1;
+  simd::float3 p2 = object1->mtype.phys_info.velocity + w2;
   float v_rel;
 
   float m1 = object0->mtype.phys_info.mass;
@@ -1876,7 +1876,7 @@ void bump_two_objects(object *object0, object *object1, vector *collision_point,
   if (m2 <= 0.0f)
     m2 = 0.00000001f;
 
-  v_rel = *collision_normal * (p1 - p2);
+  v_rel = simd::dot(*collision_normal, (p1 - p2));
 
   float e;
 
@@ -1891,10 +1891,10 @@ void bump_two_objects(object *object0, object *object1, vector *collision_point,
   else
     e = 0.1f;
 
-  vector c1;
-  vector c2;
-  vector cc1;
-  vector cc2;
+  simd::float3 c1;
+  simd::float3 c2;
+  simd::float3 cc1;
+  simd::float3 cc2;
   float cv1;
   float cv2;
 
@@ -1908,17 +1908,17 @@ void bump_two_objects(object *object0, object *object1, vector *collision_point,
   if (i2 < .0000001)
     i2 = .0000001f;
 
-  vm_CrossProduct(&c1, &r1, collision_normal);
-  vm_CrossProduct(&c2, &r2, collision_normal);
+  vec::vm_CrossProduct(&c1, &r1, collision_normal);
+  vec::vm_CrossProduct(&c2, &r2, collision_normal);
 
   c1 = c1 / i1;
   c2 = c2 / i2;
 
-  vm_CrossProduct(&cc1, &c1, &r1);
-  vm_CrossProduct(&cc2, &c2, &r2);
+  vec::vm_CrossProduct(&cc1, &c1, &r1);
+  vec::vm_CrossProduct(&cc2, &c2, &r2);
 
-  cv1 = (*collision_normal) * c1;
-  cv2 = (*collision_normal) * c2;
+  cv1 = simd::dot((*collision_normal), c1);
+  cv2 = simd::dot((*collision_normal), c2);
 
   j = (-(1.0f + e)) * v_rel;
   j /= (1 / m1 + 1 / m2 + cv1 + cv2);
@@ -1929,19 +1929,19 @@ void bump_two_objects(object *object0, object *object1, vector *collision_point,
   if (f_force_2)
     object1->mtype.phys_info.velocity -= ((j * (*collision_normal)) / m2);
 
-  vector jcn = j * (*collision_normal);
+  simd::float3 jcn = j * (*collision_normal);
 
-  vm_CrossProduct(&c1, &r1, &jcn);
-  vm_CrossProduct(&c2, &r2, &jcn);
+  vec::vm_CrossProduct(&c1, &r1, &jcn);
+  vec::vm_CrossProduct(&c2, &r2, &jcn);
 
   n1 = (c1) / i1;
   n2 = (c2) / i2;
 
-  temp1 = vm_NormalizeVector(&n1);
-  temp2 = vm_NormalizeVector(&n2);
+  temp1 = vec::vm_NormalizeVector(&n1);
+  temp2 = vec::vm_NormalizeVector(&n2);
 
-  vector txx1;
-  vector txx2;
+  simd::float3 txx1;
+  simd::float3 txx2;
 
   ConvertAxisAmountToEuler(&n1, &temp1, &txx1);
   ConvertAxisAmountToEuler(&n2, &temp2, &txx2);
@@ -1983,7 +1983,7 @@ void bump_two_objects(object *object0, object *object1, vector *collision_point,
 
     if (object0->type == OBJ_PLAYER && object0->id == Player_num) {
       // v is the force vector
-      vector v;
+      simd::float3 v;
       v = -1.0f * v_rel * (*collision_normal);
 
       // Was it weapon->player collide
@@ -2035,13 +2035,13 @@ void bump_two_objects(object *object0, object *object1, vector *collision_point,
   }
 }
 
-void collide_player_and_player(object *p1, object *p2, vector *collision_point, vector *collision_normal,
+void collide_player_and_player(object *p1, object *p2, simd::float3 *collision_point, simd::float3 *collision_normal,
                                bool f_reverse_normal, fvi_info *hit_info) {
   if (f_reverse_normal)
     *collision_normal *= -1.0f;
 
-  vector rvel = p1->mtype.phys_info.velocity - p2->mtype.phys_info.velocity;
-  float speed = vm_NormalizeVector(&rvel);
+  simd::float3 rvel = p1->mtype.phys_info.velocity - p2->mtype.phys_info.velocity;
+  float speed = vec::vm_NormalizeVector(&rvel);
   float scalar;
 
   if (speed <= MIN_WALL_HIT_SOUND_VEL) {
@@ -2064,19 +2064,19 @@ void collide_player_and_player(object *p1, object *p2, vector *collision_point, 
   bump_two_objects(p1, p2, collision_point, collision_normal, 1);
 }
 
-void collide_generic_and_player(object *robotobj, object *playerobj, vector *collision_point, vector *collision_normal,
+void collide_generic_and_player(object *robotobj, object *playerobj, simd::float3 *collision_point, simd::float3 *collision_normal,
                                 bool f_reverse_normal, fvi_info *hit_info) {
   if (f_reverse_normal)
     *collision_normal *= -1.0f;
 
-  vector rvel;
+  simd::float3 rvel;
   if (robotobj->movement_type == MT_PHYSICS || robotobj->movement_type == MT_WALKING) {
     rvel = robotobj->mtype.phys_info.velocity;
   } else {
-    rvel = Zero_vector;
+    rvel = vec::Zero_vector;
   }
   rvel -= playerobj->mtype.phys_info.velocity;
-  float speed = vm_NormalizeVector(&rvel);
+  float speed = vec::vm_NormalizeVector(&rvel);
   float scalar;
 
   if (speed <= MIN_WALL_HIT_SOUND_VEL) {
@@ -2153,8 +2153,8 @@ void MakeWeaponStick(object *weapon, object *parent, fvi_info *hit_info) {
   weapon->movement_type = MT_OBJ_LINKED;
 }
 
-void collide_generic_and_weapon(object *robotobj, object *weapon, vector *collision_point, vector *collision_normal,
-                                bool f_reverse_normal, fvi_info *hit_info) {
+void collide_generic_and_weapon(object *robotobj, object *weapon, simd::float3 *collision_point,
+                                simd::float3 *collision_normal, bool f_reverse_normal, fvi_info *hit_info) {
   object *parent_obj;
   float damage_to_apply;
   uint8_t electrical = (Weapons[weapon->id].flags & WF_ELECTRICAL) ? 1 : 0;
@@ -2166,7 +2166,7 @@ void collide_generic_and_weapon(object *robotobj, object *weapon, vector *collis
   if ((robotobj->type == OBJ_BUILDING) && hit_info) {
     poly_model *pm = GetPolymodelPointer(robotobj->rtype.pobj_info.model_num);
     int tmap = pm->textures[pm->submodel[hit_info->hit_subobject[0]].faces[hit_info->hit_face[0]].texnum];
-    vector *normal = &hit_info->hit_wallnorm[0];
+    simd::float3 *normal = &hit_info->hit_wallnorm[0];
 
     DoWallEffects(weapon, tmap);
 
@@ -2279,8 +2279,8 @@ void collide_generic_and_weapon(object *robotobj, object *weapon, vector *collis
   }
 }
 
-void collide_player_and_weapon(object *playerobj, object *weapon, vector *collision_point, vector *collision_normal,
-                               bool f_reverse_normal, fvi_info *hit_info) {
+void collide_player_and_weapon(object *playerobj, object *weapon, simd::float3 *collision_point,
+                               simd::float3 *collision_normal, bool f_reverse_normal, fvi_info *hit_info) {
   object *parent_obj;
   float damage_to_apply;
   uint8_t electrical = Weapons[weapon->id].flags & WF_ELECTRICAL ? 1 : 0;
@@ -2392,7 +2392,8 @@ void check_lg_inform(object *A, object *B) {
   }
 }
 
-void collide_two_objects(object *A, object *B, vector *collision_point, vector *collision_normal, fvi_info *hit_info) {
+void collide_two_objects(object *A, object *B, simd::float3 *collision_point, simd::float3 *collision_normal,
+                         fvi_info *hit_info) {
   int collision_type;
   int a_num = A - Objects;
   int b_num = B - Objects;
@@ -2649,7 +2650,7 @@ void CollideInit() {
 
 // Process a collision between an object and a wall
 // Returns true if the object hits the wall, and false if should keep going though the wall (for breakable glass)
-bool collide_object_with_wall(object *A, float hitspeed, int hitseg, int hitwall, vector *hitpt, vector *wall_normal,
+bool collide_object_with_wall(object *A, float hitspeed, int hitseg, int hitwall, simd::float3 *hitpt, simd::float3 *wall_normal,
                               float hit_dot) {
   uint8_t do_event = 0;
   bool ret = true;

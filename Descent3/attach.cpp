@@ -57,7 +57,7 @@
                 }
                 else
                 {
-                        vector random_vector;
+                        simd::float3 random_vector;
                         float dot;
 
                         do
@@ -83,7 +83,7 @@
         // Determines the offset of the start object's ap position (now that it is correctly aligned
         // with the fvec)
         f_use_uvec = true;
-        vector temp;
+        simd::float3 temp;
         AttachPointPos(start_obj, start_ap, true, &start_pos, true, &temp, &f_use_uvec, &start_uvec);
 
         start_obj->pos += (goal_pos - start_pos);
@@ -114,7 +114,7 @@ PI); rot_angle = acos(dot);
                         }
                         else
                         {
-                                vector random_vector;
+                                simd::float3 random_vector;
                                 float dot;
 
                                 do
@@ -141,13 +141,13 @@ PI); rot_angle = acos(dot);
 
 // Finds the position of a attach point on an object
 // The uvec is optional as most attaching objects don't need at complete orientation set (only an fvec)
-static bool AttachPointPos(object *obj, char ap, bool f_compute_pos, vector *attach_pos, bool f_compute_fvec,
-                           vector *attach_fvec, bool *f_computed_uvec = NULL, vector *attach_uvec = NULL) {
+static bool AttachPointPos(object *obj, char ap, bool f_compute_pos, simd::float3 *attach_pos, bool f_compute_fvec,
+                           simd::float3 *attach_fvec, bool *f_computed_uvec = NULL, simd::float3 *attach_uvec = NULL) {
   poly_model *pm;
-  vector pnt;
-  vector normal;
-  vector uvec;
-  matrix m;
+  simd::float3 pnt;
+  simd::float3 normal;
+  simd::float3 uvec;
+  vec::matrix m;
   int mn; // submodel number
   float normalized_time[MAX_SUBOBJECTS];
 
@@ -179,10 +179,10 @@ static bool AttachPointPos(object *obj, char ap, bool f_compute_pos, vector *att
 
   // Instance up the tree for this gun
   while (mn != -1) {
-    vector tpnt;
+    simd::float3 tpnt;
 
-    vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
-    vm_TransposeMatrix(&m);
+    vec::vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
+    vec::vm_TransposeMatrix(&m);
 
     if (f_compute_pos)
       tpnt = pnt * m;
@@ -202,7 +202,7 @@ static bool AttachPointPos(object *obj, char ap, bool f_compute_pos, vector *att
 
   // now instance for the entire object
   m = obj->orient;
-  vm_TransposeMatrix(&m);
+  vec::vm_TransposeMatrix(&m);
 
   if (f_compute_pos)
     *attach_pos = pnt * m;
@@ -221,17 +221,17 @@ static bool AttachPointPos(object *obj, char ap, bool f_compute_pos, vector *att
   return true;
 }
 
-static void ConvertAxisAmountMatrix(vector *n, float w, matrix *rotmat) {
+static void ConvertAxisAmountMatrix(simd::float3 *n, float w, vec::matrix *rotmat) {
   float s;
   float c;
   float t;
 
   //	float scale = *w/.0001f;
   // float w_n = .0001f;
-  // vector s_result;
+  // simd::float3 s_result;
 
   if (w == 0.0f) {
-    matrix temp = IDENTITY_MATRIX;
+    vec::matrix temp = IDENTITY_MATRIX;
 
     *rotmat = temp;
     return;
@@ -262,12 +262,12 @@ static void ConvertAxisAmountMatrix(vector *n, float w, matrix *rotmat) {
   rotmat->fvec.z = tzz + c;
 }
 
-bool AttachDoPosOrientRad(object *parent, char p_ap, object *child, float rad_percent, vector *pos) {
-  vector attach_pos;
-  vector attach_fvec;
+bool AttachDoPosOrientRad(object *parent, char p_ap, object *child, float rad_percent, simd::float3 *pos) {
+  simd::float3 attach_pos;
+  simd::float3 attach_fvec;
 
   if (AttachPointPos(parent, p_ap, true, &attach_pos, true, &attach_fvec)) {
-    vector child_ap_pos = child->pos - attach_fvec * (rad_percent * child->size);
+    simd::float3 child_ap_pos = child->pos - attach_fvec * (rad_percent * child->size);
 
     *pos = (child_ap_pos - attach_pos) + parent->pos;
     return true;
@@ -277,21 +277,21 @@ bool AttachDoPosOrientRad(object *parent, char p_ap, object *child, float rad_pe
 }
 
 bool AttachDoPosOrient(object *parent, char parent_ap, object *child, char child_ap, bool f_parent, bool f_move_obj,
-                       vector *pos, matrix *orient, bool f_dropping_off) {
-  vector goal_fvec;
-  vector goal_uvec;
-  vector goal_pos;
+                       simd::float3 *pos, vec::matrix *orient, bool f_dropping_off) {
+  simd::float3 goal_fvec;
+  simd::float3 goal_uvec;
+  simd::float3 goal_pos;
 
   bool f_use_uvec = true;
 
-  vector start_fvec;
-  vector start_uvec;
-  vector start_pos;
+  simd::float3 start_fvec;
+  simd::float3 start_uvec;
+  simd::float3 start_pos;
 
   object *goal_obj;
   object *start_obj;
 
-  matrix rot_mat;
+  vec::matrix rot_mat;
 
   char goal_ap;
   char start_ap;
@@ -310,8 +310,8 @@ bool AttachDoPosOrient(object *parent, char parent_ap, object *child, char child
     start_ap = child_ap;
   }
 
-  vector saved_pos = start_obj->pos;
-  matrix saved_orient = start_obj->orient;
+  simd::float3 saved_pos = start_obj->pos;
+  vec::matrix saved_orient = start_obj->orient;
 
   f_use_uvec = true;
   AttachPointPos(goal_obj, goal_ap, true, &goal_pos, true, &goal_fvec, &f_use_uvec, &goal_uvec);
@@ -326,30 +326,30 @@ bool AttachDoPosOrient(object *parent, char parent_ap, object *child, char child
     AttachPointPos(start_obj, start_ap, true, &start_pos, true, &start_fvec, &f_use_uvec, &start_uvec);
   }
 
-  vm_NormalizeVector(&start_fvec);
-  vm_NormalizeVector(&start_uvec);
-  vm_NormalizeVector(&goal_fvec);
-  vm_NormalizeVector(&goal_uvec);
+  vec::vm_NormalizeVector(&start_fvec);
+  vec::vm_NormalizeVector(&start_uvec);
+  vec::vm_NormalizeVector(&goal_fvec);
+  vec::vm_NormalizeVector(&goal_uvec);
 
-  matrix start_m;
-  matrix goal_m;
+  vec::matrix start_m;
+  vec::matrix goal_m;
 
-  vm_VectorToMatrix(&start_m, &start_fvec, &start_uvec, NULL);
-  vm_VectorToMatrix(&goal_m, &goal_fvec, &goal_uvec, NULL);
+  vec::vm_VectorToMatrix(&start_m, &start_fvec, &start_uvec, NULL);
+  vec::vm_VectorToMatrix(&goal_m, &goal_fvec, &goal_uvec, NULL);
 
-  matrix sot;
-  matrix srt;
+  vec::matrix sot;
+  vec::matrix srt;
 
   sot = start_obj->orient;
-  vm_TransposeMatrix(&sot);
+  vec::vm_TransposeMatrix(&sot);
 
   srt = sot * start_m;
-  vm_TransposeMatrix(&srt);
+  vec::vm_TransposeMatrix(&srt);
 
   rot_mat = sot * goal_m * srt;
 
   start_obj->orient *= rot_mat;
-  vm_Orthogonalize(&start_obj->orient);
+  vec::vm_Orthogonalize(&start_obj->orient);
 
   if (f_dropping_off) {
     object *attached_obj = ObjGet(start_obj->attach_children[0]);
@@ -533,8 +533,8 @@ bool AttachObject(object *parent, char parent_ap, object *child, float percent_r
   }
 
   if (percent_rad >= 0.0f) {
-    vector attach_pos;
-    vector attach_fvec;
+    simd::float3 attach_pos;
+    simd::float3 attach_fvec;
 
     if (AttachPointPos(parent, parent_ap, true, &attach_pos, true, &attach_fvec)) {
       child->flags |= OF_ATTACHED;
@@ -548,7 +548,7 @@ bool AttachObject(object *parent, char parent_ap, object *child, float percent_r
 
       AttachPropagateMass(child);
 
-      vector new_child_pos = attach_pos + attach_fvec * child->attach_dist;
+      simd::float3 new_child_pos = attach_pos + attach_fvec * child->attach_dist;
 
       int room = parent->roomnum;
       if (ROOMNUM_OUTSIDE(room))
@@ -605,11 +605,11 @@ void AttachUpdateSubObjects(object *parent) {
         AttachDoPosOrient(parent, i, child, child->attach_index, false);
         break;
       case AT_RAD: {
-        vector attach_pos;
-        vector attach_fvec;
+        simd::float3 attach_pos;
+        simd::float3 attach_fvec;
 
         if (AttachPointPos(parent, i, true, &attach_pos, true, &attach_fvec)) {
-          vector new_child_pos = attach_pos + attach_fvec * child->attach_dist;
+          simd::float3 new_child_pos = attach_pos + attach_fvec * child->attach_dist;
 
           int room = parent->roomnum;
           if (ROOMNUM_OUTSIDE(room))

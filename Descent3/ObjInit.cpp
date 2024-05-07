@@ -1166,7 +1166,7 @@ int ObjInitTypeSpecific(object *objp, bool reinitializing) {
 }
 // Initializes a new object.  All fields not passed in set to defaults.
 // Returns 1 if ok, 0 if error
-int ObjInit(object *objp, int type, int id, int handle, vector *pos, float creation_time, int parent_handle) {
+int ObjInit(object *objp, int type, int id, int handle, simd::float3 *pos, float creation_time, int parent_handle) {
   // Zero out object structure to keep weird bugs from happening in uninitialized fields.
   // I hate doing this because it seems sloppy, but it's probably better to do it
   memset(objp, 0, sizeof(object));
@@ -1180,7 +1180,7 @@ int ObjInit(object *objp, int type, int id, int handle, vector *pos, float creat
   objp->osiris_script = NULL;
   // Initialize some general stuff
   objp->roomnum = -1;
-  objp->orient = Identity_matrix;
+  objp->orient = vec::Identity_matrix;
   objp->next = objp->prev = -1;
   objp->dummy_type = OBJ_NONE;
   objp->flags = 0;

@@ -565,7 +565,7 @@ int VisEffectInitType(vis_effect *vis) {
 
 // initialize a new viseffect.  adds to the list for the given room
 // returns the vis number
-int VisEffectCreate(uint8_t type, uint8_t id, int roomnum, vector *pos) {
+int VisEffectCreate(uint8_t type, uint8_t id, int roomnum, simd::float3 *pos) {
   int visnum;
   vis_effect *vis;
 
@@ -630,8 +630,8 @@ int VisEffectCreate(uint8_t type, uint8_t id, int roomnum, vector *pos) {
 // Creates vis effects but has the caller set their parameters
 // initialize a new viseffect.  adds to the list for the given room
 // returns the vis number
-int VisEffectCreateControlled(uint8_t type, object *parent, uint8_t id, int roomnum, vector *pos, float lifetime,
-                              vector *velocity, int phys_flags, float size, float drag, float mass, bool isreal) {
+int VisEffectCreateControlled(uint8_t type, object *parent, uint8_t id, int roomnum, simd::float3 *pos, float lifetime,
+                              simd::float3 *velocity, int phys_flags, float size, float drag, float mass, bool isreal) {
   int visnum;
   vis_effect *vis;
   static int napalm_id = -1;
@@ -811,7 +811,7 @@ void FreeAllVisEffects() {
 }
 
 // Creates a some sparks that go in random directions
-void CreateRandomLineSparks(int num_sparks, vector *pos, int roomnum, uint16_t color, float force_scalar) {
+void CreateRandomLineSparks(int num_sparks, simd::float3 *pos, int roomnum, uint16_t color, float force_scalar) {
   // Make more sparks if Katmai
   if (Katmai)
     num_sparks *= 2;
@@ -831,7 +831,7 @@ void CreateRandomLineSparks(int num_sparks, vector *pos, int roomnum, uint16_t c
       vis->velocity.y = (ps_rand() % 100);
       vis->velocity.z = (ps_rand() % 100) - 50;
 
-      vm_NormalizeVectorFast(&vis->velocity);
+      vec::vm_NormalizeVectorFast(&vis->velocity);
 
       vis->velocity *= 20 + (ps_rand() % 10);
       vis->velocity *= force_scalar;
@@ -850,7 +850,7 @@ void CreateRandomLineSparks(int num_sparks, vector *pos, int roomnum, uint16_t c
 }
 
 // Creates a some sparks that go in random directions
-void CreateRandomSparks(int num_sparks, vector *pos, int roomnum, int which_index, float force_scalar) {
+void CreateRandomSparks(int num_sparks, simd::float3 *pos, int roomnum, int which_index, float force_scalar) {
   // Make more sparks if Katmai
   if (Katmai)
     num_sparks *= 2;
@@ -883,7 +883,7 @@ void CreateRandomSparks(int num_sparks, vector *pos, int roomnum, int which_inde
       vis->velocity.y = (ps_rand() % 100);
       vis->velocity.z = (ps_rand() % 100) - 50;
 
-      vm_NormalizeVectorFast(&vis->velocity);
+      vec::vm_NormalizeVectorFast(&vis->velocity);
       vis->velocity *= 10 + (ps_rand() % 10);
       vis->velocity *= force_scalar;
       vis->size = .2 + ((ps_rand() % 10) * .01);
@@ -896,7 +896,7 @@ void CreateRandomSparks(int num_sparks, vector *pos, int roomnum, int which_inde
 }
 
 // Creates a some particles that go in random directions
-void CreateRandomParticles(int num_sparks, vector *pos, int roomnum, int bm_handle, float size, float life) {
+void CreateRandomParticles(int num_sparks, simd::float3 *pos, int roomnum, int bm_handle, float size, float life) {
   // Create some sparks
   float tenth_life = life / 10.0;
   float tenth_size = size / 10.0;
@@ -919,7 +919,7 @@ void CreateRandomParticles(int num_sparks, vector *pos, int roomnum, int bm_hand
       vis->velocity.y = (ps_rand() % 100);
       vis->velocity.z = (ps_rand() % 100) - 50;
 
-      vm_NormalizeVectorFast(&vis->velocity);
+      vec::vm_NormalizeVectorFast(&vis->velocity);
       vis->velocity *= 10 + (ps_rand() % 10);
       vis->size = size + (((ps_rand() % 11) - 5) * tenth_size);
       vis->flags |= VF_USES_LIFELEFT;
@@ -949,7 +949,7 @@ void DrawVisFadingLine(vis_effect *vis) {
   rend_SetColorModel(CM_RGB);
   rend_SetOverlayType(OT_NONE);
 
-  vector vecs[2];
+  simd::float3 vecs[2];
   g3Point pnts[2];
   int i;
 
@@ -958,8 +958,8 @@ void DrawVisFadingLine(vis_effect *vis) {
 
   if (!(vis->flags & VF_WINDSHIELD_EFFECT)) // bash end position
   {
-    vector vel = -vis->velocity;
-    vm_NormalizeVectorFast(&vel);
+    simd::float3 vel = -vis->velocity;
+    vec::vm_NormalizeVectorFast(&vel);
     vecs[1] = vis->pos + (vel * vis->size);
   }
 
@@ -990,14 +990,14 @@ void DrawVisFadingLine(vis_effect *vis) {
 
 // Draws a blast ring vis effect
 void DrawVisBlastRing(vis_effect *vis) {
-  vector inner_vecs[30], outer_vecs[30];
+  simd::float3 inner_vecs[30], outer_vecs[30];
   g3Point inner_points[30], outer_points[30];
   float lifenorm = (vis->lifetime - vis->lifeleft) / vis->lifetime;
   float cur_size = lifenorm * vis->size;
   int i;
   g3Point *pntlist[4];
-  matrix orient;
-  vector fvec;
+  vec::matrix orient;
+  simd::float3 fvec;
 
   if (vis->flags & VF_REVERSE) {
     lifenorm = 1 - lifenorm;
@@ -1008,10 +1008,10 @@ void DrawVisBlastRing(vis_effect *vis) {
     fvec = vis->end_pos;
   else {
     fvec = Viewer_object->pos - vis->pos;
-    vm_NormalizeVectorFast(&fvec);
+    vec::vm_NormalizeVectorFast(&fvec);
   }
 
-  if (vm_GetMagnitudeFast(&fvec) < .5)
+  if (vec::vm_GetMagnitudeFast(&fvec) < .5)
     return;
   vm_VectorToMatrix(&orient, &fvec, NULL, NULL);
 
@@ -1113,7 +1113,7 @@ void DrawVisRainDrop(vis_effect *vis) {
   rend_SetLighting(LS_NONE);
 
   // Set position
-  vector pos;
+  simd::float3 pos;
 
   if (vis->id == RAINDROP_INDEX) {
     rend_SetZBufferState(0);
@@ -1181,7 +1181,7 @@ void DrawVisSnowflake(vis_effect *vis) {
 // Velocity.x is how much randomness goes into drawing
 // Velocity.y is the scalar that effects how many segments to draw
 void DrawVisLightningBolt(vis_effect *vis) {
-  vector line_norm;
+  simd::float3 line_norm;
   float line_mag;
   int num_segs;
   float lightning_mag;
@@ -1189,7 +1189,7 @@ void DrawVisLightningBolt(vis_effect *vis) {
   g3Point pnt1, pnt2;
 
   line_norm = vis->pos - vis->end_pos;
-  line_mag = vm_GetMagnitudeFast(&line_norm);
+  line_mag = vec::vm_GetMagnitudeFast(&line_norm);
 
   line_norm /= line_mag;
 
@@ -1239,7 +1239,7 @@ void DrawVisLightningBolt(vis_effect *vis) {
   pnt1.p3_a = alpha_norm;
   pnt2.p3_a = alpha_norm;
 
-  vector vecs[50];
+  simd::float3 vecs[50];
 
   num_segs = std::min(num_segs, 50);
 
@@ -1262,16 +1262,16 @@ void DrawVisLightningBolt(vis_effect *vis) {
 // Velocity.x represents how many increments to take (a scalar)
 // Velocity.y represents how "wide" the arcs are from the center of the line
 void DrawVisSineWave(vis_effect *vis) {
-  vector line_norm;
+  simd::float3 line_norm;
   float line_mag;
-  matrix mat;
+  vec::matrix mat;
   int num_segs;
 
-  vector from, to, base_from, rvec, uvec;
+  simd::float3 from, to, base_from, rvec, uvec;
   g3Point pnt1, pnt2;
 
   line_norm = vis->pos - vis->end_pos;
-  line_mag = vm_GetMagnitudeFast(&line_norm);
+  line_mag = vec::vm_GetMagnitudeFast(&line_norm);
   if (line_mag < .1)
     return;
 
@@ -1332,32 +1332,32 @@ void DrawVisSineWave(vis_effect *vis) {
 // Returns 0 if off screen, or 1 if we should draw
 int GetBillboardCorners(g3Point *pnts, g3Point *top_point, g3Point *bot_point, float width) {
   // get the camera's world position
-  vector viewerPos;
+  simd::float3 viewerPos;
   g3_GetViewPosition(&viewerPos);
 
   // calculate the vector from the top point to the bottom point
   ASSERT(bot_point->p3_flags & PF_ORIGPOINT);
   ASSERT(top_point->p3_flags & PF_ORIGPOINT);
-  vector deltaVec = bot_point->p3_vecPreRot - top_point->p3_vecPreRot;
-  vm_NormalizeVector(&deltaVec);
+  simd::float3 deltaVec = bot_point->p3_vecPreRot - top_point->p3_vecPreRot;
+  vec::vm_NormalizeVector(&deltaVec);
 
   // get the vector from the camera to the top point
-  vector top = top_point->p3_vecPreRot - viewerPos;
-  vm_NormalizeVector(&top);
+  simd::float3 top = top_point->p3_vecPreRot - viewerPos;
+  vec::vm_NormalizeVector(&top);
 
   // calculate the vector out from the 'rod' that is facing the camera
-  vector rodNorm;
-  vm_CrossProduct(&rodNorm, &deltaVec, &top);
-  vm_NormalizeVector(&rodNorm);
+  simd::float3 rodNorm;
+  vec::vm_CrossProduct(&rodNorm, &deltaVec, &top);
+  vec::vm_NormalizeVector(&rodNorm);
 
   // get the offset vector
-  vector tempv = rodNorm * width;
+  simd::float3 tempv = rodNorm * width;
 
   // setup the points
   int i, codesAND = 0xFF;
   for (i = 0; i < 4; ++i) {
     float scale = (i == 0 || i == 3) ? -1.0f : 1.0f;
-    vector bbPt = ((i < 2) ? top_point->p3_vecPreRot : bot_point->p3_vecPreRot) + (tempv * scale);
+    simd::float3 bbPt = ((i < 2) ? top_point->p3_vecPreRot : bot_point->p3_vecPreRot) + (tempv * scale);
 
     // initialize the point
     codesAND &= g3_RotatePoint(&pnts[i], &bbPt);
@@ -1385,8 +1385,8 @@ void DrawVisThickLightning(vis_effect *vis) {
   if (!GetBillboardCorners(pnts, &top_point, &bot_point, vis->billboard_info.width))
     return;
 
-  vector line_norm = vis->end_pos - vis->pos;
-  float line_mag = vm_GetMagnitudeFast(&line_norm);
+  simd::float3 line_norm = vis->end_pos - vis->pos;
+  float line_mag = vec::vm_GetMagnitudeFast(&line_norm);
 
   line_norm /= line_mag;
 
@@ -1659,17 +1659,17 @@ void DrawVisMassDriverEffect(vis_effect *vis, bool f_boss) {
     masstrail = FindTextureName("MassTrail");
   ASSERT(masstrail != -1); // DAJ -1FIX
 
-  vector center_vecs[2];
+  simd::float3 center_vecs[2];
   g3Point arc_points[32], *pntlist[32];
 
   center_vecs[0] = vis->pos;
   center_vecs[1] = vis->end_pos;
 
-  vector normvec = center_vecs[1] - center_vecs[0];
-  matrix orient;
+  simd::float3 normvec = center_vecs[1] - center_vecs[0];
+  vec::matrix orient;
 
-  vm_NormalizeVector(&normvec);
-  vm_VectorToMatrix(&orient, &normvec, NULL, NULL);
+  vec::vm_NormalizeVector(&normvec);
+  vec::vm_VectorToMatrix(&orient, &normvec, NULL, NULL);
 
   float size = ((float)vis->billboard_info.width) * .25;
   int circle_pieces = 16;
@@ -1678,8 +1678,8 @@ void DrawVisMassDriverEffect(vis_effect *vis, bool f_boss) {
     size *= 3.0f;
   }
 
-  float mag = vm_VectorDistanceQuick(&vis->pos, &vis->end_pos);
-  vector dir_norm = (vis->end_pos - vis->pos) / mag;
+  float mag = vec::vm_VectorDistanceQuick(&vis->pos, &vis->end_pos);
+  simd::float3 dir_norm = (vis->end_pos - vis->pos) / mag;
   float alpha_norm = (vis->lifeleft / vis->lifetime) * .5;
   int bm_handle = GetTextureBitmap(vis->custom_handle, 0);
 
@@ -1698,7 +1698,7 @@ void DrawVisMassDriverEffect(vis_effect *vis, bool f_boss) {
   for (i = 0; i < 2; i++) {
     for (t = 0; t < circle_pieces; t++) {
       float norm = (float)t / (float)circle_pieces;
-      vector arc_vec = center_vecs[i];
+      simd::float3 arc_vec = center_vecs[i];
 
       arc_vec += (orient.uvec * (size / 4) * FixSin(norm * 65536));
       arc_vec -= (orient.rvec * (size / 4) * FixCos(norm * 65536));
@@ -1733,7 +1733,7 @@ void DrawVisMassDriverEffect(vis_effect *vis, bool f_boss) {
   for (i = 0; i < 2; i++) {
     for (t = 0; t < circle_pieces; t++) {
       float norm = (float)t / (float)circle_pieces;
-      vector arc_vec = center_vecs[i];
+      simd::float3 arc_vec = center_vecs[i];
 
       arc_vec += (orient.uvec * (size)*FixSin(norm * 65536));
       arc_vec -= (orient.rvec * (size)*FixCos(norm * 65536));
@@ -1790,7 +1790,7 @@ void DrawVisMassDriverEffect(vis_effect *vis, bool f_boss) {
   if (!f_boss) {
     for (i = 1; i < rings; i++) {
       int rot_angle = (i * 2000) % 65536;
-      vector pos = vis->pos + (dir_norm * (i * fsize));
+      simd::float3 pos = vis->pos + (dir_norm * (i * fsize));
       float new_size = 1.0;
       new_size += FixSin((i * 9000) + frameroll) * .3;
 
@@ -2193,7 +2193,7 @@ void VisEffectMoveAll() {
 void AttachRandomVisEffectsToObject (int num,int handle,object *obj)
 {
         int i;
-        vector zero_pos={0,0,0};
+        simd::float3 zero_pos={0,0,0};
         poly_model *pm = &Poly_models[obj->rtype.pobj_info.model_num];
 
 
@@ -2226,9 +2226,9 @@ void AttachRandomNapalmEffectsToObject(object *obj) {
   if (obj->flags & OF_DEAD)
     return;
 
-  vector velocity_norm = obj->mtype.phys_info.velocity;
-  vm_NormalizeVector(&velocity_norm);
-  vector pos = obj->pos - (velocity_norm * (obj->size / 2));
+  simd::float3 velocity_norm = obj->mtype.phys_info.velocity;
+  vec::vm_NormalizeVector(&velocity_norm);
+  simd::float3 pos = obj->pos - (velocity_norm * (obj->size / 2));
 
   if (obj->movement_type == MT_PHYSICS && (OBJECT_OUTSIDE(obj) && (ps_rand() % 3) == 0) || (ps_rand() % 3) == 0)
     CreateFireball(&pos, BLACK_SMOKE_INDEX, obj->roomnum, VISUAL_FIREBALL);
@@ -2247,7 +2247,7 @@ void AttachRandomNapalmEffectsToObject(object *obj) {
     num += (obj->size / 15);
 
     for (int i = 0; i < num; i++) {
-      vector dest;
+      simd::float3 dest;
       poly_model *pm = &Poly_models[obj->rtype.pobj_info.model_num];
 
       if (pm->n_models == 0)

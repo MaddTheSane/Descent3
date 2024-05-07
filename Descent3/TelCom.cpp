@@ -1836,7 +1836,7 @@ void TelcomDisplayCorners(void) {
 
 const char *hilites[] = {"hilite0", "hilite1", "hilite2", "hilite3", "hilite4", "hilite5", NULL};
 const char *smhilites[] = {"smhilite01", "smhilite11", "smhilite21", "smhilite31", "smhilite41",
-                     "smhilite51", "smhilite61", "smhilite71", NULL};
+                           "smhilite51", "smhilite61", "smhilite71", NULL};
 
 /*
 $$TABLE_TEXTURE "hilite0"
@@ -3277,7 +3277,7 @@ struct TCSound {
 TCSound TelcomSounds[TCSND_SOUNDCOUNT];
 
 const char *TCSoundFiles[] = {"Briefstartup1", "BriefStatic",  "Briefmonitoroff1", "Briefingrunning",
-                        "Briefbulb1",    "Briefingtype", "Menu Slider Click"};
+                              "Briefbulb1",    "Briefingtype", "Menu Slider Click"};
 
 /*
 $$TABLE_SOUND "Briefstartup1"
@@ -3422,7 +3422,7 @@ int TCSSGetSelectedShipIndex(void);
 struct {
   int ShipCount;
   int CurrentSelectID;
-  matrix orient;
+  vec::matrix orient;
   int ship_model;
   float cam_dist;
 } TCShipSelect;
@@ -3746,8 +3746,8 @@ void TCSSSCallback(void) {
     return;
   }
 
-  vector viewer_eye = {0, 0, 0};
-  matrix viewer_orient = IDENTITY_MATRIX;
+  simd::float3 viewer_eye = {0, 0, 0};
+  vec::matrix viewer_orient = IDENTITY_MATRIX;
   viewer_eye.z = -TCShipSelect.cam_dist;
 
   grtext_Flush();
@@ -3764,11 +3764,11 @@ void TCSSSCallback(void) {
   float light_scalar, size;
   PageInPolymodel(TCShipSelect.ship_model, OBJ_PLAYER, &size);
   poly_model *pm = GetPolymodelPointer(TCShipSelect.ship_model);
-  vector view_pos;
-  vector light_vec;
-  matrix view_orient = IDENTITY_MATRIX;
-  matrix final_mat = IDENTITY_MATRIX;
-  matrix rot_mat;
+  simd::float3 view_pos;
+  simd::float3 light_vec;
+  vec::matrix view_orient = IDENTITY_MATRIX;
+  vec::matrix final_mat = IDENTITY_MATRIX;
+  vec::matrix rot_mat;
 
   //	draw model.
   SetNormalizedTimeAnim(0, normalized_time, pm);
@@ -3776,17 +3776,17 @@ void TCSSSCallback(void) {
   view_pos = pm->anim_size_offset;
 
   // move 30 degrees a sec
-  vm_AnglesToMatrix(&rot_mat, 0, (last_frametime) * (65535 / 360) * 30, 0);
+  vec::vm_AnglesToMatrix(&rot_mat, 0, (last_frametime) * (65535 / 360) * 30, 0);
 
-  vm_MatrixMul(&view_orient, &rot_mat, &TCShipSelect.orient);
-  vm_Orthogonalize(&view_orient);
+  vec::vm_MatrixMul(&view_orient, &rot_mat, &TCShipSelect.orient);
+  vec::vm_Orthogonalize(&view_orient);
   TCShipSelect.orient = view_orient;
 
   light_vec.x = 0.0f;
   light_vec.y = -1.0f;
   light_vec.z = -1.0f;
   light_scalar = 0.8f;
-  vm_NormalizeVector(&light_vec);
+  vec::vm_NormalizeVector(&light_vec);
 
   rend_SetZBufferState(1);
   rend_SetAlphaType(AT_CONSTANT_TEXTURE);

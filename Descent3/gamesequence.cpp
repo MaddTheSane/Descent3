@@ -1133,8 +1133,8 @@ uint8_t Textures_to_free[MAX_TEXTURES];
 uint8_t Sounds_to_free[MAX_TEXTURES];
 
 #ifdef EDITOR
-extern vector editor_player_pos;
-extern matrix editor_player_orient;
+extern simd::float3 editor_player_pos;
+extern vec::matrix editor_player_orient;
 extern int editor_player_roomnum;
 #endif
 
@@ -1623,7 +1623,6 @@ void StartLevel() {
   InitFrameTime();
 
   LoadLevelProgress(LOAD_PROGRESS_DONE, 0);
-
 }
 
 // Loads a level and starts everything up
@@ -1687,7 +1686,7 @@ void StartGameFromEditor() {
 }
 #endif
 
-void ComputeCenterPointOnFace(vector *vp, room *rp, int facenum);
+void ComputeCenterPointOnFace(simd::float3 *vp, room *rp, int facenum);
 
 // Start object ambient sounds
 void StartObjectSounds() {
@@ -1716,7 +1715,7 @@ void StartObjectSounds() {
         pos_state ps;
         ps.position = &objp->pos;
         ps.roomnum = objp->roomnum;
-        ps.orient = (matrix *)&Identity_matrix;
+        ps.orient = (vec::matrix *)&vec::Identity_matrix;
         Sound_system.Play3dSound(objp->ctype.soundsource_info.sound_index, SND_PRIORITY_NORMAL, &ps,
                                  objp->ctype.soundsource_info.volume);
         ObjDelete(i);
@@ -1737,12 +1736,12 @@ void StartTextureSounds() {
       for (f = 0, fp = rp->faces; f < rp->num_faces; f++, fp++) {
         int sound = GameTextures[fp->tmap].sound;
         if ((sound != -1) && (sound != SOUND_NONE_INDEX)) {
-          vector pos;
+          simd::float3 pos;
           pos_state ps;
           ComputeCenterPointOnFace(&pos, rp, f);
           ps.position = &pos;
           ps.roomnum = r;
-          ps.orient = (matrix *)&Identity_matrix;
+          ps.orient = (vec::matrix *)&vec::Identity_matrix;
           Sound_system.Play3dSound(sound, SND_PRIORITY_LOWEST, &ps);
         }
       }
@@ -1856,8 +1855,7 @@ void FlushDataCache() {
   }
 
   for (i = 0; i < MAX_SOUNDS; i++) {
-    if (Sounds_to_free[i] != 0)
-    {
+    if (Sounds_to_free[i] != 0) {
       soundsfreed++;
       int index = Sounds[i].sample_index;
       if (SoundFiles[index].sample_16bit) {

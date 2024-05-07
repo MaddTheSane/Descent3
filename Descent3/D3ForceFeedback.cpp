@@ -384,7 +384,7 @@ void ForceEffectsPlay(int id, float *scale, int *direction) {
 
   ddio_ffb_effectPlay(low_id);
 }
-void ForceEffectsPlay(int id, float *scale, vector *direction) {
+void ForceEffectsPlay(int id, float *scale, simd::float3 *direction) {
   if (!D3Force_init || !D3Use_force_feedback)
     return;
 
@@ -398,11 +398,11 @@ void ForceEffectsPlay(int id, float *scale, vector *direction) {
   int new_dir = -1;
 
   if (direction) {
-    matrix mat = Identity_matrix;
-    angvec ag;
+    vec::matrix mat = vec::Identity_matrix;
+    vec::angvec ag;
 
-    vm_VectorToMatrix(&mat, direction);
-    vm_ExtractAnglesFromMatrix(&ag, &mat);
+    vec::vm_VectorToMatrix(&mat, direction);
+    vec::vm_ExtractAnglesFromMatrix(&ag, &mat);
 
     new_dir = ((((float)ag.h) / 65535.0f) * 360.0f);
 
@@ -428,20 +428,20 @@ void ForceEffectsPlay(int id, float *scale, vector *direction) {
   ddio_ffb_effectPlay(low_id);
 }
 
-void DoForceForWeapon(object *me_obj, object *it_obj, vector *force_vec) {
+void DoForceForWeapon(object *me_obj, object *it_obj, simd::float3 *force_vec) {
   if (it_obj->id < 0 || it_obj->id >= MAX_WEAPONS)
     return;
 
   weapon *weap = &Weapons[it_obj->id];
 
   if (weap->flags & WF_MICROWAVE) {
-    vector local_norm, v;
+    simd::float3 local_norm, v;
     float scale = 1.00f;
     v.x = ps_rand() % 10;
     v.y = 0;
     v.z = ps_rand() % 10;
-    vm_NormalizeVector(&v);
-    vm_MatrixMulVector(&local_norm, &v, &me_obj->orient);
+    vec::vm_NormalizeVector(&v);
+    vec::vm_MatrixMulVector(&local_norm, &v, &me_obj->orient);
 
     local_norm *= -1.0f;
 
@@ -450,8 +450,8 @@ void DoForceForWeapon(object *me_obj, object *it_obj, vector *force_vec) {
   }
 }
 
-void DoForceForWall(object *playerobj, float hitspeed, int hitseg, int hitwall, vector *wall_normal) {
-  vector local_norm;
+void DoForceForWall(object *playerobj, float hitspeed, int hitseg, int hitwall, simd::float3 *wall_normal) {
+  simd::float3 local_norm;
   float scale = 1.00f;
 
   if (hitspeed < 20)
@@ -472,7 +472,7 @@ void DoForceForWall(object *playerobj, float hitspeed, int hitseg, int hitwall, 
 void DoForceForRecoil(object *playerobj, object *weap) {
   weapon *w_ptr = &Weapons[weap->id];
 
-  vector local_norm;
+  simd::float3 local_norm;
   float scale;
 #define MIN_RECOIL 1000.0f
 #define MAX_RECOIL 5000.0f
@@ -481,7 +481,7 @@ void DoForceForRecoil(object *playerobj, object *weap) {
   if (w_ptr->recoil_force < RECOIL_THRESHOLD)
     return;
 
-  vector offset = weap->pos - playerobj->pos;
+  simd::float3 offset = weap->pos - playerobj->pos;
   vm_MatrixMulVector(&local_norm, &offset, &playerobj->orient);
 
   if (weap->movement_type != MT_PHYSICS)
@@ -504,7 +504,7 @@ void DoForceForShake(float magnitude) {
 
   Force_time_since_last_shake = Gametime;
 
-  vector local_norm;
+  simd::float3 local_norm;
 
   if (magnitude < 0.0f)
     magnitude = 0.0f;
@@ -514,7 +514,7 @@ void DoForceForShake(float magnitude) {
   local_norm.x = (ps_rand() % 5);
   local_norm.y = (ps_rand() % 5);
   local_norm.z = (ps_rand() % 5);
-  vm_NormalizeVector(&local_norm);
+  vec::vm_NormalizeVector(&local_norm);
 
   ForceEffectsPlay(FORCE_SHIPSHAKE, &magnitude, &local_norm);
 }

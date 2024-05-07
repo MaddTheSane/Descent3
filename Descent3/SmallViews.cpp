@@ -267,9 +267,9 @@ void ResetSmallViews() {
 #define STATIC_TIME 0.25f
 
 // Render into one of the small windows
-void RenderSmallWindow(int left, int top, int right, int bot, object *viewer, vector *viewer_eye, int viewer_roomnum,
-                       matrix *viewer_orient, int flags, float zoom, ddgr_color outline_color, char *label,
-                       float timer) {
+void RenderSmallWindow(int left, int top, int right, int bot, object *viewer, simd::float3 *viewer_eye,
+                       int viewer_roomnum, vec::matrix *viewer_orient, int flags, float zoom, ddgr_color outline_color,
+                       char *label, float timer) {
   int width = right - left, height = bot - top;
 
   // Set up for rendering
@@ -368,7 +368,7 @@ void RenderSmallWindow(int left, int top, int right, int bot, object *viewer, ve
 }
 
 // Find the room number of a gun point
-int GetGunRoom(vector *p0, int roomnum, int objnum, vector *p1) {
+int GetGunRoom(simd::float3 *p0, int roomnum, int objnum, simd::float3 *p1) {
   fvi_query fq;
   fvi_info hit_data;
   int fate;
@@ -400,10 +400,10 @@ void DrawSmallViews() {
   small_view *svp;
   int left, top, right, bot;
   ddgr_color outline_color;
-  vector *viewer_eye, gun_pos;
-  matrix *viewer_orient, gun_orient;
-  matrix save_orient;
-  vector save_eye;
+  simd::float3 *viewer_eye, gun_pos;
+  vec::matrix *viewer_orient, gun_orient;
+  vec::matrix save_orient;
+  simd::float3 save_eye;
   int viewer_roomnum;
 
   // if letterbox, don't draw the small views
@@ -489,9 +489,9 @@ void DrawSmallViews() {
     // Get view info from the gun or from the object itself
     if (svp->gun_num != -1) {
       // using a gun
-      vector gun_vector;
+      simd::float3 gun_vector;
       WeaponCalcGun(&gun_pos, &gun_vector, viewer, svp->gun_num);
-      vm_VectorToMatrix(&gun_orient, &gun_vector, NULL, NULL);
+      vec::vm_VectorToMatrix(&gun_orient, &gun_vector, NULL, NULL);
       viewer_eye = &gun_pos;
       viewer_orient = &gun_orient;
       viewer_roomnum = GetGunRoom(&viewer->pos, viewer->roomnum, OBJNUM(viewer), &gun_pos);

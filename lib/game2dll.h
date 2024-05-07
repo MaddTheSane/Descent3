@@ -19,6 +19,7 @@
 #ifndef GAME2DLL_H
 #define GAME2DLL_H
 
+#include <simd/simd.h>
 #include "pstypes.h"
 #include "multi.h"
 
@@ -31,7 +32,7 @@ struct tPreJoinData {
 };
 
 struct game_collide_info {
-  vector point, normal;
+  simd::float3 point, normal;
   float hitspeed, hit_dot;
   int hitseg, hitwall;
 };

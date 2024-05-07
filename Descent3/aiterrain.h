@@ -48,7 +48,8 @@ struct ground_information {
   float lowest_y;
 };
 
-bool ait_GetGroundInfo(ground_information *ground_info, vector *p0, vector *p1, float rad = 0.0f, angle fov = 0);
+bool ait_GetGroundInfo(ground_information *ground_info, simd::float3 *p0, simd::float3 *p1, float rad = 0.0f,
+                       angle fov = 0);
 void ait_Init(void);
 
 #endif

@@ -207,10 +207,10 @@ struct tBitmapInfo {
 };
 
 struct tPolyInfo {
-  vector m_Rot;     // current rotation
-  vector m_Pos;     // current position
-  vector m_Ori;     // current orientation
-  matrix m_mOrient; // orientation
+  simd::float3 m_Rot;     // current rotation
+  simd::float3 m_Pos;     // current position
+  simd::float3 m_Ori;     // current orientation
+  vec::matrix m_mOrient; // orientation
   int handle;       // handle to polymodel
 };
 

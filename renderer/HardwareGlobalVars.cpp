@@ -29,8 +29,8 @@ uint8_t Clip_custom = 0;
 float Clip_plane_distance = 0;
 vec::vector Clip_plane;
 
-matrix Unscaled_matrix; // before scaling
-matrix View_matrix;
+vec::matrix Unscaled_matrix; // before scaling
+vec::matrix View_matrix;
 
 vec::vector Matrix_scale; // how the matrix is scaled, window_scale * zoom
 

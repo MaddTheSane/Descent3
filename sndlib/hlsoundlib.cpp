@@ -474,8 +474,7 @@ struct tEnvAudioPresets {
   float volume;
   float decay;
   float damping;
-}
-EnvAudio_Presets[N_ENVAUDIO_PRESETS] = {
+} EnvAudio_Presets[N_ENVAUDIO_PRESETS] = {
     {0.0F, 0.0F, 0.0F}, // Use for reverb off.
     {0.25F, 0.1F, 0.0F},      {0.417F, 0.4F, 0.666F},  {0.653F, 1.499F, 0.166F}, {0.208F, 0.478F, 0.0F},
     {0.5F, 2.309F, 0.888F},   {0.403F, 4.279F, 0.5F},  {0.5F, 3.961F, 0.5F},     {0.5F, 2.886F, 1.304F},
@@ -754,8 +753,8 @@ void hlsSystem::BeginSoundFrame(bool f_in_game) {
         }
         if ((m_sound_objects[i].m_obj_type_flags & (SIF_PLAYING_3D | SIF_OBJ_UPDATE))) {
           bool f_audible;
-          vector virtual_pos;
-          vector virtual_vel;
+          simd::float3 virtual_pos;
+          simd::float3 virtual_vel;
           float adjusted_volume;
           f_audible = ComputePlayInfo(i, &virtual_pos, &virtual_vel, &adjusted_volume);
           if (!f_audible) {
@@ -763,7 +762,7 @@ void hlsSystem::BeginSoundFrame(bool f_in_game) {
             m_sound_objects[i].m_sound_uid = 0;
             m_sound_objects[i].m_obj_type_flags |= SIF_TOO_FAR;
           } else {
-            matrix orient = Identity_matrix;
+            vec::matrix orient = vec::Identity_matrix;
             pos_state cur_pos;
             cur_pos.velocity = &virtual_vel;
             cur_pos.position = &virtual_pos;
@@ -847,14 +846,15 @@ int hlsSystem::Update2dSound(int hlsound_uid, float volume, float pan) {
   m_ll_sound_ptr->AdjustSound(m_sound_objects[sound_obj_index].m_sound_uid, volume, pan, 22050);
   return hlsound_uid;
 }
-bool hlsSystem::ComputePlayInfo(int sound_obj_index, vector *virtual_pos, vector *virtual_vel, float *adjusted_volume) {
+bool hlsSystem::ComputePlayInfo(int sound_obj_index, simd::float3 *virtual_pos, simd::float3 *virtual_vel,
+                                float *adjusted_volume) {
   int sound_index;
 
   int sound_seg;
   int ear_seg;
-  vector sound_pos;
+  simd::float3 sound_pos;
   m_sound_objects[sound_obj_index].play_info.sample_skip_interval = 0;
-  vector dir_to_sound;
+  simd::float3 dir_to_sound;
   float dist = 0;
   if (m_master_volume <= 0.0)
     return false;
@@ -879,12 +879,12 @@ bool hlsSystem::ComputePlayInfo(int sound_obj_index, vector *virtual_pos, vector
     if (objp->movement_type == MT_PHYSICS || objp->movement_type == MT_WALKING)
       *virtual_vel = objp->mtype.phys_info.velocity;
     else
-      *virtual_vel = Zero_vector;
+      *virtual_vel = vec::Zero_vector;
 
     sound_pos = objp->pos;
     sound_seg = objp->roomnum;
   } else {
-    *virtual_vel = Zero_vector;
+    *virtual_vel = vec::Zero_vector;
     sound_pos = m_sound_objects[sound_obj_index].m_link_info.pos_info.pos;
     sound_seg = m_sound_objects[sound_obj_index].m_link_info.pos_info.segnum;
   }
@@ -936,18 +936,18 @@ bool hlsSystem::ComputePlayInfo(int sound_obj_index, vector *virtual_pos, vector
       if (last_room == sound_seg) {
         if (cur_room == ear_seg) {
           dir_to_sound = sound_pos - Viewer_object->pos;
-          dist = vm_NormalizeVector(&dir_to_sound);
+          dist = vec::vm_NormalizeVector(&dir_to_sound);
         } else if ((cur_room != last_room) && (cur_room != BOA_NO_PATH)) {
           int this_portal = BOA_DetermineStartRoomPortal(cur_room, NULL, last_room, NULL);
           dist = this_portal >= 0 ? BOA_cost_array[cur_room][this_portal] : 0;
 
           if (last_room > Highest_room_index) {
             if (this_portal >= 0) {
-              vector pnt = Rooms[cur_room].portals[this_portal].path_pnt;
-              dist += vm_VectorDistance(&sound_pos, &pnt);
+              simd::float3 pnt = Rooms[cur_room].portals[this_portal].path_pnt;
+              dist += simd::distance(sound_pos, pnt);
             }
           } else {
-            dist += vm_VectorDistance(&sound_pos, &Rooms[last_room].portals[last_portal].path_pnt);
+            dist += simd::distance(sound_pos, Rooms[last_room].portals[last_portal].path_pnt);
           }
         }
       } else if (cur_room == ear_seg) {
@@ -955,10 +955,10 @@ bool hlsSystem::ComputePlayInfo(int sound_obj_index, vector *virtual_pos, vector
 
         if (last_room > Highest_room_index) {
           int this_portal = BOA_DetermineStartRoomPortal(cur_room, NULL, last_room, NULL);
-          vector pnt = Rooms[cur_room].portals[this_portal].path_pnt;
-          dist += vm_VectorDistance(&Viewer_object->pos, &pnt);
+          simd::float3 pnt = Rooms[cur_room].portals[this_portal].path_pnt;
+          dist += vec::vm_VectorDistance(&Viewer_object->pos, &pnt);
         } else {
-          dist += vm_VectorDistance(&Viewer_object->pos, &Rooms[last_room].portals[last_portal].path_pnt);
+          dist += vec::vm_VectorDistance(&Viewer_object->pos, &Rooms[last_room].portals[last_portal].path_pnt);
         }
       } else if ((cur_room != last_room) && (cur_room != BOA_NO_PATH)) {
         int this_portal = BOA_DetermineStartRoomPortal(cur_room, NULL, last_room, NULL);
@@ -969,12 +969,11 @@ bool hlsSystem::ComputePlayInfo(int sound_obj_index, vector *virtual_pos, vector
       *adjusted_volume = 0.0;
     } else if ((last_room != ear_seg) && (last_room != sound_seg)) {
       dir_to_sound = Rooms[last_room].path_pnt - Viewer_object->pos;
-      vm_NormalizeVector(&dir_to_sound);
+      vec::vm_NormalizeVector(&dir_to_sound);
     }
-  } else
-  {
+  } else {
     dir_to_sound = sound_pos - Viewer_object->pos;
-    dist = vm_NormalizeVector(&dir_to_sound);
+    dist = vec::vm_NormalizeVector(&dir_to_sound);
   }
   if (dist >= Sounds[sound_index].max_distance)
     return false;
@@ -987,21 +986,21 @@ bool hlsSystem::ComputePlayInfo(int sound_obj_index, vector *virtual_pos, vector
     dir_to_sound = Viewer_object->orient.fvec;
   }
   if ((m_sound_objects[sound_obj_index].play_info.sample_skip_interval == 0) && (*adjusted_volume > 0.0f) &&
-      (dir_to_sound * Viewer_object->orient.fvec < -.5))
+      (simd::dot(dir_to_sound, Viewer_object->orient.fvec) < -.5))
     m_sound_objects[sound_obj_index].play_info.sample_skip_interval = 1;
   *virtual_pos = Viewer_object->pos + (dir_to_sound * dist);
   return true;
 }
 bool hlsSystem::Emulate3dSound(int sound_obj_index) {
   bool f_audible;
-  vector virtual_pos;
-  vector virtual_vel;
+  simd::float3 virtual_pos;
+  simd::float3 virtual_vel;
   float adjusted_volume;
   f_audible = ComputePlayInfo(sound_obj_index, &virtual_pos, &virtual_vel, &adjusted_volume);
 
   if (f_audible) {
     pos_state cur_pos;
-    matrix orient = Identity_matrix;
+    vec::matrix orient = vec::Identity_matrix;
     cur_pos.velocity = &virtual_vel;
     cur_pos.position = &virtual_pos;
     cur_pos.orient = &orient;

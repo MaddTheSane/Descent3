@@ -28,7 +28,7 @@ void MultiStartClient(char *scriptname);
 
 struct saved_move {
   float timestamp;
-  vector thrust, rotthrust;
+  simd::float3 thrust, rotthrust;
 
 };
 

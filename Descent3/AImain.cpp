@@ -1629,11 +1629,11 @@ int Buddy_handle[MAX_PLAYERS];
 static int AI_FriendNumNear = 0; // Number of friends found
 static object *AI_FriendObj[2];  // Friend objects
 static float AI_FriendDist[2];   // Distances to the friends
-static vector AI_FriendDir[2];   // Direction to the friends
+static simd::float3 AI_FriendDir[2];   // Direction to the friends
 static int AI_EnemyNumNear = 0;  // Number of enemies found
 static object *AI_EnemyObj[2];   // Enemy objects
 static float AI_EnemyDist[2];    // Distances to the enemies
-static vector AI_EnemyDir[2];    // Direction to the enemies
+static simd::float3 AI_EnemyDir[2];    // Direction to the enemies
 
 #define AIVIS_NONE 0.0f
 #define AIVIS_BARELY 1.0f
@@ -1655,10 +1655,10 @@ float AIDetermineObjVisLevel(object *obj, object *target) {
     }
 
     if (target->type == OBJ_PLAYER && (Players[target->id].flags & PLAYER_FLAGS_HEADLIGHT)) {
-      vector from_target = obj->pos - target->pos;
-      vm_NormalizeVector(&from_target);
+      simd::float3 from_target = obj->pos - target->pos;
+      vec::vm_NormalizeVector(&from_target);
 
-      if ((target->orient.fvec) * (from_target) > 0.965f) {
+      if (simd::dot(target->orient.fvec, from_target) > 0.965f) {
         vis_level += 1.0f;
       }
     }
@@ -1703,10 +1703,10 @@ bool AISetTarget(object *obj, int handle) {
 }
 
 // Note ASSUMES that dir is normalized
-void AIMoveTowardsDir(object *obj, vector *dir, float scale) {
+void AIMoveTowardsDir(object *obj, simd::float3 *dir, float scale) {
   physics_info *phys_info = &obj->mtype.phys_info;
-  vector goal_velocity;
-  vector vel_diff;
+  simd::float3 goal_velocity;
+  simd::float3 vel_diff;
   float delta_vel;
   float max_delta_vel;
   ai_frame *ai_info = obj->ai_info;
@@ -1720,7 +1720,7 @@ void AIMoveTowardsDir(object *obj, vector *dir, float scale) {
   goal_velocity = *dir * ai_info->max_velocity * scale;
 
   vel_diff = goal_velocity - phys_info->velocity;
-  delta_vel = vm_NormalizeVector(&vel_diff);
+  delta_vel = vec::vm_NormalizeVector(&vel_diff);
 
   max_delta_vel = Frametime * ai_info->max_delta_velocity * acc_scale;
 
@@ -1731,9 +1731,9 @@ void AIMoveTowardsDir(object *obj, vector *dir, float scale) {
   }
 }
 
-bool AIMoveTowardsPosition(object *obj, /*velocity *new_vel,*/ vector *pos, float scale, bool stop_at_end_point,
-                           vector *mdir, bool *f_moved) {
-  vector dir;
+bool AIMoveTowardsPosition(object *obj, /*velocity *new_vel,*/ simd::float3 *pos, float scale, bool stop_at_end_point,
+                           simd::float3 *mdir, bool *f_moved) {
+  simd::float3 dir;
   float distance;
   ai_frame *ai_info = obj->ai_info;
   float acc_scale;
@@ -1744,8 +1744,8 @@ bool AIMoveTowardsPosition(object *obj, /*velocity *new_vel,*/ vector *pos, floa
     acc_scale = scale;
 
   if (stop_at_end_point) {
-    if (vm_VectorDistance(pos, &obj->pos) <= .2f) {
-      obj->mtype.phys_info.velocity = Zero_vector;
+    if (simd::distance(*pos, obj->pos) <= .2f) {
+      obj->mtype.phys_info.velocity = vec::Zero_vector;
       *f_moved = true;
       return true;
     }
@@ -1754,7 +1754,7 @@ bool AIMoveTowardsPosition(object *obj, /*velocity *new_vel,*/ vector *pos, floa
     float d_to_stop = ai_info->max_velocity * scale * s_to_stop;
 
     dir = *pos - obj->pos;
-    float d_to_target = vm_NormalizeVector(&dir);
+    float d_to_target = vec::vm_NormalizeVector(&dir);
     if (d_to_target < d_to_stop) {
       float speed = ai_info->max_velocity * scale * (d_to_target / d_to_stop);
 
@@ -1769,18 +1769,18 @@ bool AIMoveTowardsPosition(object *obj, /*velocity *new_vel,*/ vector *pos, floa
     }
   }
 
-  if (*pos == obj->pos) {
+  if (simd::all(*pos == obj->pos)) {
     physics_info *phys_info = &obj->mtype.phys_info;
 
-    if (phys_info->velocity != Zero_vector) {
-      vector vel_diff = -phys_info->velocity;
-      float delta_vel = vm_NormalizeVector(&vel_diff);
+    if (simd::any(phys_info->velocity != vec::Zero_vector)) {
+      simd::float3 vel_diff = -phys_info->velocity;
+      float delta_vel = vec::vm_NormalizeVector(&vel_diff);
       float max_delta_vel = Frametime * ai_info->max_delta_velocity * acc_scale;
 
       if (delta_vel > max_delta_vel) {
         phys_info->velocity += (vel_diff * max_delta_vel);
       } else {
-        vm_MakeZero(&phys_info->velocity);
+        vec::vm_MakeZero(&phys_info->velocity);
       }
     }
 
@@ -1788,7 +1788,7 @@ bool AIMoveTowardsPosition(object *obj, /*velocity *new_vel,*/ vector *pos, floa
     return false;
   } else {
     dir = *pos - obj->pos;
-    distance = vm_NormalizeVector(&dir);
+    distance = vec::vm_NormalizeVector(&dir);
   }
 
   *mdir = dir;
@@ -1798,12 +1798,12 @@ bool AIMoveTowardsPosition(object *obj, /*velocity *new_vel,*/ vector *pos, floa
   return false;
 }
 
-bool move_relative_object_vec(object *obj, vector *vec, object *target, float circle_dist, float scalar, bool f_toward,
-                              vector *mdir, bool *f_moved) {
+bool move_relative_object_vec(object *obj, simd::float3 *vec, object *target, float circle_dist, float scalar,
+                              bool f_toward, simd::float3 *mdir, bool *f_moved) {
   // Getting behind an object is a 2 step process:  Get to the side and then get behind.
-  vector from_target;
-  vector opposite_fvec;
-  vector goal_pos;
+  simd::float3 from_target;
+  simd::float3 opposite_fvec;
+  simd::float3 goal_pos;
   ai_frame *ai_info = obj->ai_info;
   bool f_done = false;
 
@@ -1815,29 +1815,29 @@ bool move_relative_object_vec(object *obj, vector *vec, object *target, float ci
     opposite_fvec = *vec;
   }
 
-  if (from_target * opposite_fvec > 0.0f) {
+  if (simd::dot(from_target, opposite_fvec) > 0.0f) {
     // I am currently on the side of the object that I do not want to be on
-    vector goal_dir;
-    vector vec_to_plane;
-    vector normal_component;
-    vector plane_component;
+    simd::float3 goal_dir;
+    simd::float3 vec_to_plane;
+    simd::float3 normal_component;
+    simd::float3 plane_component;
 
     vec_to_plane = obj->pos - target->pos;
     normal_component = opposite_fvec * (opposite_fvec * vec_to_plane);
     plane_component = vec_to_plane - normal_component;
 
-    if (plane_component == Zero_vector) {
+    if (simd::all(plane_component == vec::Zero_vector)) {
       goal_dir = target->orient.rvec;
     } else {
       goal_dir = plane_component;
-      vm_NormalizeVector(&goal_dir);
+      vec::vm_NormalizeVector(&goal_dir);
     }
 
     goal_pos = target->pos + goal_dir * (obj->size + target->size + circle_dist);
   } else {
     // else, I am going to get behind/in-front the object
     goal_pos = target->pos - (opposite_fvec * (obj->size + target->size + circle_dist));
-    if (vm_VectorDistance(&goal_pos, &obj->pos) < obj->size) {
+    if (simd::distance(goal_pos, obj->pos) < obj->size) {
       f_done = true;
     }
   }
@@ -1846,14 +1846,14 @@ bool move_relative_object_vec(object *obj, vector *vec, object *target, float ci
   return f_done;
 }
 
-void move_away_from_position(object *obj, vector *pos /*, bool random_evade*/, float scale, vector *mdir,
+void move_away_from_position(object *obj, simd::float3 *pos /*, bool random_evade*/, float scale, simd::float3 *mdir,
                              bool *f_moved) {
-  vector dir;
+  simd::float3 dir;
   float distance;
 
   // Reverse of move towards
   dir = obj->pos - *pos;
-  distance = vm_NormalizeVector(&dir);
+  distance = vec::vm_NormalizeVector(&dir);
 
   //	AIMoveTowardsDir(obj, &dir, scale);
   *mdir = dir;
@@ -1867,11 +1867,11 @@ void move_away_from_position(object *obj, vector *pos /*, bool random_evade*/, f
 #define MIN_DODGE_INFLUENCE 2.5f // Just less than max avoiding fiends
 
 // returns false if no dodge is necessary
-bool compute_dodge_dir(vector *movement_dir, object *obj, object *dodge_obj) {
-  vector vec_to_obj = obj->pos - dodge_obj->pos;
-  vector dodge_vec;
-  vector dobj_motion = dodge_obj->mtype.phys_info.velocity;
-  vm_NormalizeVector(&dobj_motion);
+bool compute_dodge_dir(simd::float3 *movement_dir, object *obj, object *dodge_obj) {
+  simd::float3 vec_to_obj = obj->pos - dodge_obj->pos;
+  simd::float3 dodge_vec;
+  simd::float3 dobj_motion = dodge_obj->mtype.phys_info.velocity;
+  vec::vm_NormalizeVector(&dobj_motion);
 
   float closest_dist;
 
@@ -1886,9 +1886,9 @@ bool compute_dodge_dir(vector *movement_dir, object *obj, object *dodge_obj) {
     max_dodge_dist += 10.0f;
   }
 
-  vector dpoint;
+  simd::float3 dpoint;
 
-  p = dobj_motion * vec_to_obj;
+  p = simd::dot(dobj_motion, vec_to_obj);
 
   if (p <= 0.0)
     return false;
@@ -1896,7 +1896,7 @@ bool compute_dodge_dir(vector *movement_dir, object *obj, object *dodge_obj) {
   dpoint = dodge_obj->pos + (p * dobj_motion);
 
   dodge_vec = obj->pos - dpoint;
-  closest_dist = vm_NormalizeVector(&dodge_vec);
+  closest_dist = vec::vm_NormalizeVector(&dodge_vec);
 
   if (closest_dist > max_dodge_dist)
     return false;
@@ -1915,8 +1915,9 @@ bool compute_dodge_dir(vector *movement_dir, object *obj, object *dodge_obj) {
 
   dodge_vec *= scale;
 
-  if (dodge_vec != Zero_vector && (obj->ai_info->dodge_till_time < Gametime ||
-                                   vm_GetMagnitude(&dodge_vec) > vm_GetMagnitude(&obj->ai_info->last_dodge_dir))) {
+  if (simd::all(dodge_vec != vec::Zero_vector) &&
+      (obj->ai_info->dodge_till_time < Gametime ||
+       vec::vm_GetMagnitude(&dodge_vec) > vec::vm_GetMagnitude(&obj->ai_info->last_dodge_dir))) {
     obj->ai_info->last_dodge_dir = dodge_vec;
   }
 
@@ -1949,14 +1950,14 @@ bool goal_do_dodge(object *obj, int goal_index) {
 #define MAX_TERRAIN_AVOID_INFLUENCE 0.9f
 #define GB_WALL_PULSE_INTERVAL 7
 
-bool goal_do_avoid_walls(object *obj, vector *mdir) {
+bool goal_do_avoid_walls(object *obj, simd::float3 *mdir) {
   fvi_face_room_list facelist[200];
   int num_faces;
   float rad;
   int i;
-  vector awall_dir = Zero_vector;
+  simd::float3 awall_dir = 0;
   float closest_dist;
-  vector pos;
+  simd::float3 pos;
   bool f_danger = false;
 
   float wall_size = Poly_models[obj->rtype.pobj_info.model_num].wall_size;
@@ -1974,7 +1975,7 @@ bool goal_do_avoid_walls(object *obj, vector *mdir) {
 
   closest_dist = rad + 1.0f;
 
-  if (obj->mtype.phys_info.velocity == Zero_vector) {
+  if (simd::all(obj->mtype.phys_info.velocity == vec::Zero_vector)) {
     return false;
   }
 
@@ -1989,15 +1990,15 @@ bool goal_do_avoid_walls(object *obj, vector *mdir) {
       if (!(face_info & FPF_SOLID))
         continue;
 
-      vector fpnt = rp->verts[fp->face_verts[0]];
+      simd::float3 fpnt = rp->verts[fp->face_verts[0]];
 
       // Ignore backfaces
-      if ((pos - fpnt) * fp->normal > 0.0f) {
-        float dist = vm_DistToPlane(&pos, &fp->normal, &fpnt);
+      if (simd::dot(pos - fpnt, fp->normal) > 0.0f) {
+        float dist = vec::vm_DistToPlane(&pos, &fp->normal, &fpnt);
 
         if (dist < rad) {
-          vector pnt_on_face = pos - (dist * fp->normal);
-          vector *vertex_ptr_list[MAX_VERTS_PER_FACE];
+          simd::float3 pnt_on_face = pos - (dist * fp->normal);
+          simd::float3 *vertex_ptr_list[MAX_VERTS_PER_FACE];
           int j;
 
           for (j = 0; j < fp->num_verts; j++) {
@@ -2041,20 +2042,20 @@ bool goal_do_avoid_walls(object *obj, vector *mdir) {
       const int cur_node = cell_list[i];
       terrain_segment *tseg = &Terrain_seg[cur_node];
 
-      vector fpnt;
+      simd::float3 fpnt;
       ComputeTerrainSegmentCenter(&fpnt, cur_node);
 
-      vector normal =
+      simd::float3 normal =
           TerrainNormals[MAX_TERRAIN_LOD - 1][cur_node].normal1 + TerrainNormals[MAX_TERRAIN_LOD - 1][cur_node].normal2;
-      vm_NormalizeVector(&normal);
+      vec::vm_NormalizeVector(&normal);
 
-      if (obj->mtype.phys_info.velocity * normal <= 0.0f) {
-        vector no_y_vec = pos - fpnt;
+      if (simd::dot(obj->mtype.phys_info.velocity, normal) <= 0.0f) {
+        simd::float3 no_y_vec = pos - fpnt;
         no_y_vec.y = 0.0f;
 
         float dist;
 
-        dist = vm_NormalizeVector(&no_y_vec);
+        dist = vec::vm_NormalizeVector(&no_y_vec);
 
         if (dist <= rad) {
           awall_dir += ((1.0f - (dist / rad)) * normal);
@@ -2075,7 +2076,7 @@ bool goal_do_avoid_walls(object *obj, vector *mdir) {
   }
 
   if (closest_dist <= rad) {
-    vm_NormalizeVector(&awall_dir);
+    vec::vm_NormalizeVector(&awall_dir);
 
     float max_influence = (ROOMNUM_OUTSIDE(obj->roomnum)) ? MAX_TERRAIN_AVOID_INFLUENCE : MAX_WALL_AVOID_INFLUENCE;
     if (f_danger) {
@@ -2107,19 +2108,20 @@ bool goal_do_avoid_walls(object *obj, vector *mdir) {
 #define FIVE_DEGREE_ARC_COS 0.9962f
 
 // NOTE: Assumes that the vector is normalized
-void AITurnTowardsDir(object *obj, /*velocity *new_vel,*/ vector *goal_dir /*, bool remain_level*/, float turn_rate) {
-  vector u_axis;
-  matrix rot_matrix;
+void AITurnTowardsDir(object *obj, /*velocity *new_vel,*/ simd::float3 *goal_dir /*, bool remain_level*/,
+                      float turn_rate) {
+  simd::float3 u_axis;
+  vec::matrix rot_matrix;
   angle goal_angle;
   float max_angle;
 
-  matrix saved_orient = obj->orient;
-  vector saved_uvec = obj->orient.uvec;
+  vec::matrix saved_orient = obj->orient;
+  simd::float3 saved_uvec = obj->orient.uvec;
 
-  if (*goal_dir == Zero_vector || (obj->orient.fvec * (*goal_dir)) >= ONE_DEGREE_ARC_COS)
+  if (simd::all(*goal_dir == vec::Zero_vector) || simd::dot(obj->orient.fvec, *goal_dir) >= ONE_DEGREE_ARC_COS)
     return; // No goal_dir or less than 1 degree off goal
 
-  if (obj->size > 32.0f && (obj->orient.fvec * (*goal_dir)) >= FIVE_DEGREE_ARC_COS)
+  if (obj->size > 32.0f && simd::dot(obj->orient.fvec, *goal_dir) >= FIVE_DEGREE_ARC_COS)
     return; // Big objects have more play
 
   if (obj->type != OBJ_WEAPON) {
@@ -2128,7 +2130,7 @@ void AITurnTowardsDir(object *obj, /*velocity *new_vel,*/ vector *goal_dir /*, b
       obj->ai_info->saved_orient = obj->orient;
   }
 
-  goal_angle = vm_DeltaAngVecNorm(&obj->orient.fvec, goal_dir, &u_axis);
+  goal_angle = vec::vm_DeltaAngVecNorm(&obj->orient.fvec, goal_dir, &u_axis);
 
   if (goal_angle == 0)
     return;
@@ -2136,19 +2138,19 @@ void AITurnTowardsDir(object *obj, /*velocity *new_vel,*/ vector *goal_dir /*, b
   max_angle = turn_rate * Frametime;
 
   if ((float)goal_angle > max_angle) {
-    matrix turn_matrix;
+    vec::matrix turn_matrix;
 
     if (max_angle != 32767 && max_angle != 32768) {
       // Get the up axis
-      vm_CrossProduct(&u_axis, &obj->orient.fvec, goal_dir);
+      u_axis = simd::cross(obj->orient.fvec, *goal_dir);
 
       // Using the forward(original orient's forward) and the up (computed), get the orientation matrix
-      vm_VectorToMatrix(&rot_matrix, &obj->orient.fvec, &u_axis, NULL);
+      vec::vm_VectorToMatrix(&rot_matrix, &obj->orient.fvec, &u_axis, NULL);
     } else {
       rot_matrix = obj->orient;
     }
 
-    vm_AnglesToMatrix(&turn_matrix, 0.0, max_angle, 0.0);
+    vec::vm_AnglesToMatrix(&turn_matrix, 0.0, max_angle, 0.0);
 
     rot_matrix = rot_matrix * turn_matrix;
 
@@ -2160,8 +2162,8 @@ void AITurnTowardsDir(object *obj, /*velocity *new_vel,*/ vector *goal_dir /*, b
   if (obj->movement_type == MT_WALKING) {
     obj->orient.uvec = saved_uvec;
 
-    float f_proj = obj->orient.uvec * obj->orient.fvec;
-    float r_proj = obj->orient.uvec * obj->orient.rvec;
+    float f_proj = simd::dot(obj->orient.uvec, obj->orient.fvec);
+    float r_proj = simd::dot(obj->orient.uvec, obj->orient.rvec);
 
     if (f_proj <= -1.0f || f_proj >= 1.0f || r_proj >= 1.0f || r_proj <= -1.0f) {
       obj->orient = saved_orient;
@@ -2169,28 +2171,28 @@ void AITurnTowardsDir(object *obj, /*velocity *new_vel,*/ vector *goal_dir /*, b
       obj->orient.fvec -= (obj->orient.uvec * f_proj);
       obj->orient.rvec -= (obj->orient.uvec * r_proj);
 
-      vm_NormalizeVector(&obj->orient.fvec);
-      vm_NormalizeVector(&obj->orient.rvec);
+      vec::vm_NormalizeVector(&obj->orient.fvec);
+      vec::vm_NormalizeVector(&obj->orient.rvec);
     }
   }
 
-  vm_Orthogonalize(&obj->orient);
+  vec::vm_Orthogonalize(&obj->orient);
   ObjSetOrient(obj, &obj->orient);
 }
 
-bool AITurnTowardsMatrix(object *obj, float turn_rate, matrix *g_orient) {
+bool AITurnTowardsMatrix(object *obj, float turn_rate, vec::matrix *g_orient) {
   float max_angles = turn_rate * Frametime;
 
-  matrix t_s_matrix = obj->orient;
-  vm_TransposeMatrix(&t_s_matrix);
+  vec::matrix t_s_matrix = obj->orient;
+  vec::vm_TransposeMatrix(&t_s_matrix);
 
-  matrix rot_matrix;
+  vec::matrix rot_matrix;
 
   rot_matrix = t_s_matrix * *g_orient;
 
-  angvec a;
-  vm_ExtractAnglesFromMatrix(&a, &rot_matrix);
-  vector dist;
+  vec::angvec a;
+  vec::vm_ExtractAnglesFromMatrix(&a, &rot_matrix);
+  simd::float3 dist;
 
   if (a.b > 32768)
     dist.x = 65536 - a.b;
@@ -2207,11 +2209,11 @@ bool AITurnTowardsMatrix(object *obj, float turn_rate, matrix *g_orient) {
   else
     dist.z = a.p;
 
-  float angles = vm_GetMagnitude(&dist);
+  float angles = vec::vm_GetMagnitude(&dist);
 
   if (angles <= max_angles) {
     obj->orient = *g_orient;
-    vm_Orthogonalize(&obj->orient);
+    vec::vm_Orthogonalize(&obj->orient);
     ObjSetOrient(obj, &obj->orient);
     return true;
   }
@@ -2234,21 +2236,21 @@ bool AITurnTowardsMatrix(object *obj, float turn_rate, matrix *g_orient) {
   else
     a.p = dist.z;
 
-  vm_AnglesToMatrix(&rot_matrix, a.p, a.h, a.b);
+  vec::vm_AnglesToMatrix(&rot_matrix, a.p, a.h, a.b);
   obj->orient *= rot_matrix;
-  vm_Orthogonalize(&obj->orient);
+  vec::vm_Orthogonalize(&obj->orient);
   ObjSetOrient(obj, &obj->orient);
 
   return false;
 }
 
 // MTS: Unused?
-void AITurnTowardsPosition(object *obj, /*velocity *new_vel,*/ vector *pos /*, bool remain_level*/) {
-  vector goal_dir = *pos - obj->pos;
+void AITurnTowardsPosition(object *obj, /*velocity *new_vel,*/ simd::float3 *pos /*, bool remain_level*/) {
+  simd::float3 goal_dir = *pos - obj->pos;
   ai_frame *ai_info = obj->ai_info;
 
   // If we want to face ourselves, we are done.  :)
-  float dist = vm_NormalizeVector(&goal_dir);
+  float dist = vec::vm_NormalizeVector(&goal_dir);
   if (dist < .1f)
     return;
 
@@ -2259,7 +2261,7 @@ void AITurnTowardsPosition(object *obj, /*velocity *new_vel,*/ vector *pos /*, b
 
 bool MeleeHitOk(object *obj) {
   ai_frame *ai_info = obj->ai_info;
-  vector intp;
+  simd::float3 intp;
   float col_dist;
   int num_attacks = 0;
   float delay = 0.0f;
@@ -2275,8 +2277,8 @@ bool MeleeHitOk(object *obj) {
     time_left = 0.0f;
   }
 
-  vector relative_vel;
-  vector g_end_pos;
+  simd::float3 relative_vel;
+  simd::float3 g_end_pos;
 
   object *target = ObjGet(ai_info->target_handle);
 
@@ -2284,7 +2286,7 @@ bool MeleeHitOk(object *obj) {
     return false;
   }
 
-  float dist = vm_VectorDistance(&obj->pos, &target->pos);
+  float dist = vec::vm_VectorDistance(&obj->pos, &target->pos);
 
   if (dist <= AI_MAX_MELEE_RANGE) {
     return true;
@@ -2319,12 +2321,12 @@ bool MeleeHitOk(object *obj) {
     if (target->movement_type == MT_PHYSICS || target->movement_type == MT_PHYSICS) {
       relative_vel = -target->mtype.phys_info.velocity;
     } else {
-      relative_vel = Zero_vector;
+      relative_vel = vec::Zero_vector;
     }
   }
 
   if (obj->movement_type == MT_PHYSICS || obj->movement_type == MT_PHYSICS) {
-    if ((relative_vel * ai_info->vec_to_target_perceived) < 0.0f) {
+    if (simd::dot(relative_vel, ai_info->vec_to_target_perceived) < 0.0f) {
       return false;
     }
   }
@@ -2341,7 +2343,7 @@ bool MeleeHitOk(object *obj) {
 
 bool AiMelee(object *obj) {
   ai_frame *ai_info = obj->ai_info;
-  vector f_vec;
+  simd::float3 f_vec;
   float dot;
 
   object *target = ObjGet(ai_info->target_handle);
@@ -2381,9 +2383,9 @@ bool AiMelee(object *obj) {
   }
 
   f_vec = obj->orient.fvec;
-  vm_NormalizeVector(&f_vec);
+  vec::vm_NormalizeVector(&f_vec);
 
-  dot = f_vec * ai_info->vec_to_target_perceived;
+  dot = simd::dot(f_vec, ai_info->vec_to_target_perceived);
 
   if (dot >= 0.8f) {
     gi_fire attack_info;
@@ -2753,8 +2755,8 @@ new_anim_label:
   }
 }
 
-static inline void ApplyConstantForce(object *objp, vector *new_pos, vector *force, float delta_time) {
-  const vector velocity = objp->mtype.phys_info.velocity;
+static inline void ApplyConstantForce(object *objp, simd::float3 *new_pos, simd::float3 *force, float delta_time) {
+  const simd::float3 velocity = objp->mtype.phys_info.velocity;
   const float drag = objp->mtype.phys_info.drag;
   const float mass = objp->mtype.phys_info.mass;
 
@@ -2763,7 +2765,7 @@ static inline void ApplyConstantForce(object *objp, vector *new_pos, vector *for
              (mass / drag) * (velocity - (*force / drag)) * (1 - exp(-(drag / mass) * delta_time));
 }
 
-bool AIDetermineAimPoint(object *robot, object *target, vector *aim_pt, float weapon_speed) {
+bool AIDetermineAimPoint(object *robot, object *target, simd::float3 *aim_pt, float weapon_speed) {
   if (DIFF_LEVEL == DIFFICULTY_TRAINEE && ((robot->ai_info->flags & AIF_TEAM_MASK) != AIF_TEAM_REBEL)) {
     *aim_pt = target->pos;
     return true;
@@ -2772,8 +2774,8 @@ bool AIDetermineAimPoint(object *robot, object *target, vector *aim_pt, float we
   float vl = AIDetermineObjVisLevel(robot, target);
 
   ai_frame *ai_info = robot->ai_info;
-  vector to_target = target->pos - robot->pos;
-  float dist_to_target = vm_NormalizeVector(&to_target);
+  simd::float3 to_target = target->pos - robot->pos;
+  float dist_to_target = vec::vm_NormalizeVector(&to_target);
 
   if (weapon_speed == 0.0f && ai_info)
     weapon_speed = ai_info->weapon_speed;
@@ -2783,7 +2785,7 @@ bool AIDetermineAimPoint(object *robot, object *target, vector *aim_pt, float we
     return false;
   }
 
-  float wsp = weapon_speed - (to_target * target->mtype.phys_info.velocity);
+  float wsp = weapon_speed - simd::dot(to_target, target->mtype.phys_info.velocity);
 
   if (wsp <= 0.0f || vl < AIVIS_BARELY) {
     *aim_pt = target->pos;
@@ -2811,7 +2813,7 @@ bool AIDetermineAimPoint(object *robot, object *target, vector *aim_pt, float we
   return true;
 }
 
-vector *AIDetermineFovVec(object *obj, vector *fov) {
+simd::float3 *AIDetermineFovVec(object *obj, simd::float3 *fov) {
   ai_frame *ai_info = obj->ai_info;
   poly_model *pm = &Poly_models[obj->rtype.pobj_info.model_num];
 
@@ -3047,9 +3049,10 @@ bool AINotify(object *obj, uint8_t notify_type, void *info) {
               if (ai_info->flags & AIF_DODGE) {
                 if (ai_info->awareness > AWARE_BARELY) {
                   if (ps_rand() < ai_info->dodge_percent * D3_RAND_MAX) {
-                    vector fov_vec;
+                    simd::float3 fov_vec;
 
-                    if (ai_info->vec_to_target_actual * (*AIDetermineFovVec(&Objects[AI_RenderedList[i]], &fov_vec)) >=
+                    if (simd::dot(ai_info->vec_to_target_actual,
+                                  (*AIDetermineFovVec(&Objects[AI_RenderedList[i]], &fov_vec))) >=
                         Objects[AI_RenderedList[i]].ai_info->fov) {
                       // mprintf(0, "I am fired upon says robot %d\n", AI_RenderedList[i]));
                       if (ai_info->notify_flags & (0x00000001 << notify_type)) {
@@ -3084,13 +3087,13 @@ bool AINotify(object *obj, uint8_t notify_type, void *info) {
             if (!(ai_info->flags & AIF_DISABLED)) {
               if (ai_info->flags & AIF_DODGE) {
                 if (ps_rand() < ai_info->dodge_percent * D3_RAND_MAX) {
-                  vector to_weapon = other_obj->pos - Objects[i].pos;
-                  vm_NormalizeVector(&to_weapon);
+                  simd::float3 to_weapon = other_obj->pos - Objects[i].pos;
+                  vec::vm_NormalizeVector(&to_weapon);
 
-                  vector fov_vec;
+                  simd::float3 fov_vec;
                   AIDetermineFovVec(&Objects[i], &fov_vec);
 
-                  if (to_weapon * fov_vec >= Objects[i].ai_info->fov) {
+                  if (simd::dot(to_weapon, fov_vec) >= Objects[i].ai_info->fov) {
                     // mprintf(0, "I am fired upon says robot %d\n", AI_RenderedList[i]);
                     if (ai_info->notify_flags & (0x00000001 << notify_type)) {
                       ai_info->memory[0].num_enemy_shots_dodged++;
@@ -3135,7 +3138,7 @@ bool AINotify(object *obj, uint8_t notify_type, void *info) {
 
       for (i = 0; i < num_objs; i++) {
         if (Objects[heard_noise_obj[i]].control_type == CT_AI) {
-          if (vm_VectorDistance(&obj->pos, &Objects[heard_noise_obj[i]].pos) <
+          if (vec::vm_VectorDistance(&obj->pos, &Objects[heard_noise_obj[i]].pos) <
               hptr->max_dist * Objects[heard_noise_obj[i]].ai_info->hearing) {
             AISeeTarget(&Objects[heard_noise_obj[i]], false);
           }
@@ -3381,12 +3384,12 @@ start_loop:
     if (obj->ai_info->animation_type == AS_ALERT || obj->ai_info->animation_type == AS_IDLE) {
       float scaler;
 
-      float speed = vm_GetMagnitude(&obj->mtype.phys_info.velocity);
+      float speed = simd::length(obj->mtype.phys_info.velocity);
       scaler = speed / obj->ai_info->max_velocity;
 
       // If slow, use some rotational vel
       if (scaler < .7f) {
-        float speed = vm_GetMagnitude(&obj->mtype.phys_info.rotvel);
+        float speed = simd::length(obj->mtype.phys_info.rotvel);
         scaler += speed / 40000.0f;
 
         if (scaler > 1.0f)
@@ -3687,7 +3690,7 @@ bool AIInit(object *obj, uint8_t ai_class, uint8_t ai_type, uint8_t ai_movement)
 
   ai_info->vec_to_target_perceived = obj->orient.fvec;
 
-  ai_info->last_dodge_dir = Zero_vector;
+  ai_info->last_dodge_dir = vec::Zero_vector;
   ai_info->dodge_till_time = Gametime - 1.0f;
 
   if (ObjGet(obj->parent_handle)) {
@@ -3793,7 +3796,7 @@ bool AIInit(object *obj, uint8_t ai_class, uint8_t ai_type, uint8_t ai_movement)
   ai_info->vec_to_target_actual = obj->orient.fvec;
   ai_info->vec_to_target_perceived = obj->orient.fvec;
 
-  ai_info->dist_to_target_actual = vm_NormalizeVector(&ai_info->vec_to_target_actual);
+  ai_info->dist_to_target_actual = vec::vm_NormalizeVector(&ai_info->vec_to_target_actual);
   ai_info->dist_to_target_perceived = 10000.0f;
 
   // Clear out the goals
@@ -3895,18 +3898,18 @@ void AICheckTargetVis(object *obj) {
 
   LOG_DEBUG_IF(AI_debug_robot_do && (OBJNUM(obj) == AI_debug_robot_index)) << "AI Note: Vis 3";
 
-  vector pos;
+  simd::float3 pos;
   AIDetermineAimPoint(obj, target, &pos);
   ai_info->vec_to_target_actual = pos - obj->pos;
-  ai_info->dist_to_target_actual = vm_NormalizeVector(&ai_info->vec_to_target_actual);
+  ai_info->dist_to_target_actual = vec::vm_NormalizeVector(&ai_info->vec_to_target_actual);
   ai_info->dist_to_target_actual -= (obj->size + target->size);
   if (ai_info->dist_to_target_actual < 0.0f)
     ai_info->dist_to_target_actual = 0.0f;
 
-  vector fov_vec;
+  simd::float3 fov_vec;
   AIDetermineFovVec(obj, &fov_vec);
 
-  if (ai_info->vec_to_target_actual * fov_vec < ai_info->fov) {
+  if (simd::dot(ai_info->vec_to_target_actual, fov_vec) < ai_info->fov) {
     ai_info->status_reg &= ~AISR_SEES_GOAL;
     return;
   }
@@ -4015,7 +4018,7 @@ void AICheckTargetVis(object *obj) {
     // Assumes the the AI and the target are on the same XZ plane
     /*		if(ai_info->flags & AIF_XZ_DIST)
                     {
-                            vector xz;
+                            simd::float3 xz;
 
                             xz = ai_info->vec_to_target_perceived * ai_info->dist_to_target_perceived;
                             xz.y = 0.0f; // chrishack - E3 - it this a good way to do this?
@@ -4052,7 +4055,7 @@ bool AIStatusCircleFrame(object *obj, object *g_obj, float dist, float c_dist, i
 bool ai_target_need_path(object *obj) { return true; }
 
 // MTS: Unused?
-bool ai_move_need_path(object *obj, vector *pos, int roomnum) {
+bool ai_move_need_path(object *obj, simd::float3 *pos, int roomnum) {
   if (obj->roomnum == roomnum) {
     return false;
   }
@@ -4073,9 +4076,9 @@ void ai_update_registers(object *obj) {
   ai_info->status_reg &= ~AISR_MELEE;
 }
 
-bool AiGoalAvoid(vector *adir, object *obj, object *a_obj, float dist) {
+bool AiGoalAvoid(simd::float3 *adir, object *obj, object *a_obj, float dist) {
   float full_dist = dist;
-  vector a_vel;
+  simd::float3 a_vel;
 
   if (obj->movement_type != MT_PHYSICS && obj->movement_type != MT_WALKING)
     return false;
@@ -4083,39 +4086,39 @@ bool AiGoalAvoid(vector *adir, object *obj, object *a_obj, float dist) {
   if (a_obj->movement_type == MT_PHYSICS || a_obj->movement_type == MT_WALKING)
     a_vel = a_obj->mtype.phys_info.velocity;
   else
-    a_vel = Zero_vector;
+    a_vel = vec::Zero_vector;
 
-  vector to_avoid = a_obj->pos - obj->pos;
-  vector mdir;
+  simd::float3 to_avoid = a_obj->pos - obj->pos;
+  simd::float3 mdir;
   mdir = obj->mtype.phys_info.velocity - a_vel;
 
   if (fabsf(mdir.x) < 0.1f && fabsf(mdir.y) < 0.1f && fabsf(mdir.z) < 0.1f) {
     *adir = -to_avoid;
-    vm_NormalizeVector(adir);
+    vec::vm_NormalizeVector(adir);
 
     return true;
   }
 
-  vm_NormalizeVector(&mdir);
-  float temp = mdir * to_avoid;
+  vec::vm_NormalizeVector(&mdir);
+  float temp = simd::dot(mdir, to_avoid);
 
   if (temp <= 0.0f) {
     *adir = -to_avoid;
-    vm_NormalizeVector(adir);
+    vec::vm_NormalizeVector(adir);
 
     return true;
   }
 
-  vector vtemp = -(to_avoid - temp * mdir);
+  simd::float3 vtemp = -(to_avoid - temp * mdir);
 
   //	float cdist = vm_NormalizeVector(&vtemp);
   //	if(cdist >= full_dist)
   //		return false;
 
-  vector apnt = a_obj->pos + full_dist * vtemp;
+  simd::float3 apnt = a_obj->pos + full_dist * vtemp;
 
   *adir = apnt - obj->pos;
-  vm_NormalizeVector(adir);
+  vec::vm_NormalizeVector(adir);
 
   return true;
 }
@@ -4160,7 +4163,7 @@ float AIGoalIsEnabledForDist(goal *goal, float dist) {
   return true; // chrishack -- test code -- temp
 }
 
-void AIGoalDoRepulse(object *obj, float dist, vector *dir, goal *goal, vector *mdir) {
+void AIGoalDoRepulse(object *obj, float dist, simd::float3 *dir, goal *goal, simd::float3 *mdir) {
   float influence = 2.0f; // chrishack - temp - test code
 
   if (/*scale = AIGoalIsEnabledForDist(goal, dist)*/ 1) // chrishack - temp - test code - works like an enabler  What
@@ -4180,14 +4183,14 @@ void AIGoalDoRepulse(object *obj, float dist, vector *dir, goal *goal, vector *m
   }
 }
 
-void AIGoalDoCohesion(object *obj, object *g_obj, float dist, goal *goal, vector *mdir) {
+void AIGoalDoCohesion(object *obj, object *g_obj, float dist, goal *goal, simd::float3 *mdir) {
   float influence = 2.0f; // chrishack - temp - test code
 
   if (/*scale = AIGoalIsEnabledForDist(goal, dist)*/ 1) // chrishack - temp - test code - works like an enabler  What
                                                         // about AIDetermineScale????
   {
     if (dist >= COHESION_OPTI1_DIST - COHESION_FALL_OFF && dist <= COHESION_OPTI2_DIST + COHESION_FALL_OFF) {
-      vector cohesion_pnt;
+      simd::float3 cohesion_pnt;
       float scale;
 
       if (dist < COHESION_OPTI1_DIST)
@@ -4199,14 +4202,14 @@ void AIGoalDoCohesion(object *obj, object *g_obj, float dist, goal *goal, vector
 
       AIDetermineAimPoint(obj, g_obj, &cohesion_pnt, obj->ai_info->max_velocity);
 
-      vector cur_cohesion_dir = cohesion_pnt - obj->pos;
-      vm_NormalizeVector(&cur_cohesion_dir);
+      simd::float3 cur_cohesion_dir = cohesion_pnt - obj->pos;
+      vec::vm_NormalizeVector(&cur_cohesion_dir);
       *mdir += (cur_cohesion_dir * scale) * influence;
     }
   }
 }
 
-void AIGoalDoAlignment(object *obj, float dist, vector *fvec, goal *goal, vector *mdir) {
+void AIGoalDoAlignment(object *obj, float dist, simd::float3 *fvec, goal *goal, simd::float3 *mdir) {
   float influence = 3.0f; // chrishack - temp - test code
 
   if (/*scale = AIGoalIsEnabledForDist(goal, dist)*/ 1) // chrishack - temp - test code - works like an enabler  What
@@ -4240,7 +4243,7 @@ void AIDoTrackFrame(object *obj) {
       int num_near = fvi_QuickDistObjectList(&obj->pos, obj->roomnum, ai_info->avoid_friends_distance + track_distance,
                                              near_objs, 10, false, true, false, true);
       float dist;
-      vector to;
+      simd::float3 to;
 
       AI_EnemyDist[0] = AI_EnemyDist[1] = 9999999.0f;
       AI_FriendDist[0] = AI_FriendDist[1] = 9999999.0f;
@@ -4254,7 +4257,7 @@ void AIDoTrackFrame(object *obj) {
         int *cur_num_near;
         object **cur_obj;
         float *cur_dist;
-        vector *cur_dir;
+        simd::float3 *cur_dir;
 
         if ((ai_info->flags & AIF_TRACK_CLOSEST_2_ENEMIES) && AIObjEnemy(obj, g_obj)) {
           cur_num_near = &AI_EnemyNumNear;
@@ -4270,16 +4273,16 @@ void AIDoTrackFrame(object *obj) {
           continue;
 
         to = g_obj->pos - obj->pos;
-        dist = vm_NormalizeVector(&to);
+        dist = vec::vm_NormalizeVector(&to);
 
         dist -= (obj->size + g_obj->size);
         if (dist < 0.0f)
           dist = 0.0f;
 
-        vector fov_vec;
+        simd::float3 fov_vec;
         AIDetermineFovVec(obj, &fov_vec);
 
-        if (to * fov_vec < ai_info->fov)
+        if (simd::dot(to, fov_vec) < ai_info->fov)
           continue;
 
         if (cur_dist[0] > dist) {
@@ -4352,8 +4355,8 @@ float AIDetermineGoalInfluence(object *obj, goal *goal) {
 void AIDoOrientVelocity(object *obj) {
   ai_frame *ai_info = obj->ai_info;
 
-  vector dir = obj->mtype.phys_info.velocity;
-  float mag = vm_NormalizeVector(&dir);
+  simd::float3 dir = obj->mtype.phys_info.velocity;
+  float mag = vec::vm_NormalizeVector(&dir);
 
   if (mag > 0.1f) {
     AITurnTowardsDir(obj, &dir, ai_info->max_turn_rate);
@@ -4373,8 +4376,8 @@ void AIDoOrientDefault(object *obj) {
       !ObjGet(ai_info->target_handle)) {
     AIDoOrientVelocity(obj);
   } else {
-    vector to = ai_info->last_see_target_pos - obj->pos;
-    float dist = vm_NormalizeVector(&to);
+    simd::float3 to = ai_info->last_see_target_pos - obj->pos;
+    float dist = vec::vm_NormalizeVector(&to);
 
     if (dist > .1f)
       AITurnTowardsDir(obj, &to, ai_info->max_turn_rate);
@@ -4401,8 +4404,8 @@ void AIDoOrient(object *obj, int g_index) {
 
       g_obj = ObjGet(ai_info->target_handle);
       if (g_obj) {
-        vector to = ai_info->last_see_target_pos - obj->pos;
-        float dist = vm_NormalizeVector(&to);
+        simd::float3 to = ai_info->last_see_target_pos - obj->pos;
+        float dist = vec::vm_NormalizeVector(&to);
 
         if (dist > .1f)
           AITurnTowardsDir(obj, &to, ai_info->max_turn_rate);
@@ -4417,8 +4420,8 @@ void AIDoOrient(object *obj, int g_index) {
         goto target_goal;
 
       if (g_obj) {
-        vector to = g_obj->pos - obj->pos;
-        float dist = vm_NormalizeVector(&to);
+        simd::float3 to = g_obj->pos - obj->pos;
+        float dist = vec::vm_NormalizeVector(&to);
 
         if (dist > .1f)
           AITurnTowardsDir(obj, &to, ai_info->max_turn_rate);
@@ -4430,8 +4433,8 @@ void AIDoOrient(object *obj, int g_index) {
     } else if (goal_ptr->flags & GF_ORIENT_SCRIPTED) {
       AINotify(obj, AIN_SCRIPTED_ORIENT, &g_index);
     } else if (goal_ptr->flags & GF_ORIENT_PATH_NODE) {
-      vector uvec = obj->orient.uvec;
-      vector fvec = obj->orient.fvec;
+      simd::float3 uvec = obj->orient.uvec;
+      simd::float3 fvec = obj->orient.fvec;
 
       ai_path_info *aip = &obj->ai_info->path;
 
@@ -4444,17 +4447,17 @@ void AIDoOrient(object *obj, int g_index) {
 
       if (aip->path_type[p] == AIP_STATIC) {
         game_path *gp = &GamePaths[p_id];
-        vector cur_pos;
+        simd::float3 cur_pos;
         AIPathGetCurrentNodePos(aip, &cur_pos);
 
         if ((f_reverse) && (!AIPathAtEnd(aip))) {
-          vector next_pos;
+          simd::float3 next_pos;
           AIPathGetNextNodePos(aip, &next_pos, NULL);
 
-          vector proj = obj->pos - next_pos;
-          vector line = cur_pos - next_pos;
-          float line_len = vm_NormalizeVector(&line);
-          float proj_len = proj * line;
+          simd::float3 proj = obj->pos - next_pos;
+          simd::float3 line = cur_pos - next_pos;
+          float line_len = vec::vm_NormalizeVector(&line);
+          float proj_len = simd::dot(proj, line);
 
           if (proj_len > 0.0) {
             if (proj_len > line_len)
@@ -4467,13 +4470,13 @@ void AIDoOrient(object *obj, int g_index) {
             uvec = (scale1 * gp->pathnodes[n].uvec + scale2 * gp->pathnodes[n + 1].uvec);
           }
         } else if ((!f_reverse) && (!AIPathAtStart(aip))) {
-          vector prev_pos;
+          simd::float3 prev_pos;
           AIPathGetPrevNodePos(aip, &prev_pos, NULL);
 
-          vector proj = obj->pos - prev_pos;
-          vector line = cur_pos - prev_pos;
-          float line_len = vm_NormalizeVector(&line);
-          float proj_len = proj * line;
+          simd::float3 proj = obj->pos - prev_pos;
+          simd::float3 line = cur_pos - prev_pos;
+          float line_len = vec::vm_NormalizeVector(&line);
+          float proj_len = simd::dot(proj, line);
 
           if (proj_len > 0.0) {
             if (proj_len > line_len)
@@ -4487,14 +4490,14 @@ void AIDoOrient(object *obj, int g_index) {
           }
         }
 
-        matrix orient;
-        vm_VectorToMatrix(&orient, &fvec, &uvec, NULL);
+        vec::matrix orient;
+        vec::vm_VectorToMatrix(&orient, &fvec, &uvec, NULL);
 
         AITurnTowardsMatrix(obj, ai_info->max_turn_rate, &orient);
       }
     } else if (goal_ptr->flags & GF_ORIENT_SET_FVEC_UVEC) {
-      matrix orient;
-      vm_VectorToMatrix(&orient, &goal_ptr->set_fvec, &goal_ptr->set_uvec, NULL);
+      vec::matrix orient;
+      vec::vm_VectorToMatrix(&orient, &goal_ptr->set_fvec, &goal_ptr->set_uvec, NULL);
 
       AITurnTowardsMatrix(obj, ai_info->max_turn_rate, &orient);
     } else if (goal_ptr->flags & GF_ORIENT_SET_FVEC) {
@@ -4549,11 +4552,11 @@ void ai_move(object *obj) {
   // object *g_objs[5]; // 1 target + 2 enemies + 2 friends
 
   object *targetptr = ObjGet(ai_info->target_handle); // The target of this AI
-  ai_info->movement_dir = Zero_vector;
+  ai_info->movement_dir = vec::Zero_vector;
 
   // Hacked flocking code
   if (ai_info->ai_type == AIT_BIRD_FLOCK1) {
-    vector composite_dir = Zero_vector;
+    simd::float3 composite_dir = vec::Zero_vector;
 
     for (int temp = 0; temp < AI_FriendNumNear; temp++) {
       object *g_obj = AI_FriendObj[temp];
@@ -4568,7 +4571,7 @@ void ai_move(object *obj) {
     }
 
     // Facing code
-    if (composite_dir == Zero_vector)
+    if (simd::all(composite_dir == vec::Zero_vector))
       composite_dir = obj->orient.fvec;
 
     // FLOCK HEIGHT CODE
@@ -4594,7 +4597,7 @@ void ai_move(object *obj) {
       }
     }
 
-    vm_NormalizeVector(&composite_dir);
+    vec::vm_NormalizeVector(&composite_dir);
 
     AIMoveTowardsDir(obj, &composite_dir, 1.0f);
     AITurnTowardsDir(obj, &composite_dir, ai_info->max_turn_rate);
@@ -4604,8 +4607,8 @@ void ai_move(object *obj) {
   // Stop objects that have not been active lately
   if (!(ai_info->flags & AIF_PERSISTANT) && Gametime - ai_info->last_see_target_time > CHECK_VIS_INFREQUENTLY_TIME &&
       Gametime - ai_info->last_hear_target_time > CHECK_VIS_INFREQUENTLY_TIME && ai_info->awareness == AWARE_NONE) {
-    obj->mtype.phys_info.velocity = Zero_vector;
-    obj->mtype.phys_info.rotvel = Zero_vector;
+    obj->mtype.phys_info.velocity = vec::Zero_vector;
+    obj->mtype.phys_info.rotvel = vec::Zero_vector;
   } else {
     // Determine movement stuff
     if (obj->movement_type == MT_PHYSICS || obj->movement_type == MT_WALKING) {
@@ -4635,12 +4638,12 @@ void ai_move(object *obj) {
                 object *g_obj = ObjGet(cur_goal->g_info.handle);
                 float dist = cur_goal->circle_distance;
 
-                vector adir;
+                simd::float3 adir;
 
                 if (!g_obj || (g_obj == obj) || ObjectsAreRelated(OBJNUM(obj), OBJNUM(g_obj)))
                   continue;
 
-                float cur_dist = vm_VectorDistance(&obj->pos, &g_obj->pos) - obj->size - g_obj->size;
+                float cur_dist = simd::distance(obj->pos, g_obj->pos) - obj->size - g_obj->size;
                 if (cur_dist < 0.0)
                   cur_dist = 0.0f;
 
@@ -4665,7 +4668,7 @@ void ai_move(object *obj) {
 
         if (ai_info->flags & AIF_AUTO_AVOID_FRIENDS) {
           object *g_obj;
-          vector adir;
+          simd::float3 adir;
 
           f_goal_found = true;
 
@@ -4691,7 +4694,7 @@ void ai_move(object *obj) {
             if (!AIObjFriend(obj, g_obj))
               continue;
 
-            float cur_dist = vm_VectorDistance(&obj->pos, &g_obj->pos) - obj->size - g_obj->size;
+            float cur_dist = simd::distance(obj->pos, g_obj->pos) - obj->size - g_obj->size;
             if (cur_dist < 0.0)
               cur_dist = 0.0f;
 
@@ -4722,7 +4725,7 @@ void ai_move(object *obj) {
         }
 
         goal *cur_goal = GoalGetCurrentGoal(obj);
-        vector goal_mdir;
+        simd::float3 goal_mdir;
         bool goal_f_moved = false;
         bool goal_mset = false;
 
@@ -4737,7 +4740,7 @@ void ai_move(object *obj) {
             int g_index = cur_goal - ai_info->goals;
             AINotify(obj, AIN_SCRIPTED_GOAL, &g_index); // Assume that it modifies the movement vec
 
-            int goal_mscale = vm_NormalizeVector(&ai_info->movement_dir);
+            int goal_mscale = vec::vm_NormalizeVector(&ai_info->movement_dir);
             goal_mdir = ai_info->movement_dir;
 
             if (goal_mscale > highest_speed) {
@@ -4781,8 +4784,8 @@ void ai_move(object *obj) {
                 }
               }
 
-              vector pos;
-              matrix orient;
+              simd::float3 pos;
+              vec::matrix orient;
               char p_ap = cur_goal->g_info.attach_info.parent_ap;
               char c_ap = cur_goal->g_info.attach_info.child_ap;
               float rad = cur_goal->g_info.attach_info.rad;
@@ -4907,7 +4910,7 @@ void ai_move(object *obj) {
               int subtype = cur_goal->subtype;
               int vec_id = (subtype & 0xFFFFFFFE);
               bool f_toward = (subtype & 0x00000001);
-              vector *vec;
+              simd::float3 *vec;
 
               // mprintf(0, "Moving relative a type %d\n", obj->type);
 
@@ -4974,7 +4977,7 @@ void ai_move(object *obj) {
                 }
               }
             } else if (g_status & AISR_CIRCLE_DIST) {
-              vector movement_vec;
+              simd::float3 movement_vec;
               int gtime = Gametime + OBJNUM(obj);
               gtime = gtime % 8;
 
@@ -5011,19 +5014,19 @@ void ai_move(object *obj) {
                 int16_t robots[6];
                 int num_robots =
                     fvi_QuickDistObjectList(&obj->pos, obj->roomnum, 30.0f, robots, 6, false, true, false, true);
-                vector d = Zero_vector;
+                simd::float3 d = vec::Zero_vector;
                 int i;
                 float closest = 100000.0f;
 
                 if (num_robots > 0) {
                   for (i = 0; i < num_robots; i++) {
                     if (Objects[robots[i]].type == obj->type && Objects[robots[i]].id == obj->id) {
-                      vector dir;
+                      simd::float3 dir;
                       float distance;
 
                       // Reverse of move towards
                       dir = obj->pos - Objects[robots[i]].pos;
-                      distance = vm_NormalizeVector(&dir);
+                      distance = vec::vm_NormalizeVector(&dir);
 
                       if (distance > 0.0) {
                         if (distance < closest) {
@@ -5038,13 +5041,13 @@ void ai_move(object *obj) {
                   }
                 }
 
-                if (d != Zero_vector) {
+                if (simd::any(d != vec::Zero_vector)) {
                   if (closest < 30.0f) {
                     float scale = 1.0f - closest / 30.0f;
-                    vm_NormalizeVector(&d);
+                    vec::vm_NormalizeVector(&d);
 
                     movement_vec = (scale * d) + (1.0f - scale) * movement_vec;
-                    vm_NormalizeVector(&movement_vec);
+                    vec::vm_NormalizeVector(&movement_vec);
                   }
                 }
 
@@ -5072,16 +5075,18 @@ void ai_move(object *obj) {
           }
         } else {
           if (!(f_dodge || f_avoid ||
-                (ai_info->dodge_till_time >= Gametime && ai_info->last_dodge_dir != Zero_vector))) {
+                (ai_info->dodge_till_time >= Gametime && simd::any(ai_info->last_dodge_dir != vec::Zero_vector)))) {
             AIMoveTowardsPosition(obj, &obj->pos, 1.0f, false, &goal_mdir, &goal_f_moved);
             goal_mset = true;
           }
         }
 
         // BLEND THIS!
-        if ((f_dodge || f_avoid || (ai_info->dodge_till_time >= Gametime && ai_info->last_dodge_dir != Zero_vector)) ||
+        if ((f_dodge || f_avoid ||
+             (ai_info->dodge_till_time >= Gametime && simd::any(ai_info->last_dodge_dir != vec::Zero_vector))) ||
             (!goal_f_moved && goal_mset)) {
-          if (!f_dodge && (ai_info->dodge_till_time >= Gametime && ai_info->last_dodge_dir != Zero_vector)) {
+          if (!f_dodge &&
+              (ai_info->dodge_till_time >= Gametime && simd::any(ai_info->last_dodge_dir != vec::Zero_vector))) {
             f_dodge = true;
             ai_info->movement_dir += ai_info->last_dodge_dir;
 
@@ -5094,10 +5099,10 @@ void ai_move(object *obj) {
             ai_info->movement_dir += goal_mdir * cur_goal->influence;
           }
 
-          float move_len = vm_NormalizeVector(&ai_info->movement_dir);
+          float move_len = vec::vm_NormalizeVector(&ai_info->movement_dir);
           if (move_len == 0.0f) {
-            vm_MakeRandomVector(&ai_info->movement_dir);
-            vm_NormalizeVector(&ai_info->movement_dir);
+            vec::vm_MakeRandomVector(&ai_info->movement_dir);
+            vec::vm_NormalizeVector(&ai_info->movement_dir);
           }
 
           AIMoveTowardsDir(obj, &ai_info->movement_dir, highest_speed);
@@ -5171,10 +5176,10 @@ void ai_fire(object *obj) {
   }
 
   for (i = 0; i < pm->num_wbs; i++) {
-    vector target_dir[3];
+    simd::float3 target_dir[3];
     float dot[3];
-    vector gun_point[3];
-    vector gun_normal[3];
+    simd::float3 gun_point[3];
+    simd::float3 gun_normal[3];
     float ta[3];
     int best_dot = WB_MOVE_STILL;
 
@@ -5212,8 +5217,8 @@ void ai_fire(object *obj) {
         }
 
         target_dir[WB_MOVE_STILL] = ai_info->last_see_target_pos - gun_point[WB_MOVE_STILL];
-        vm_NormalizeVector(&target_dir[WB_MOVE_STILL]);
-        dot[WB_MOVE_STILL] = gun_normal[WB_MOVE_STILL] * target_dir[WB_MOVE_STILL];
+        vec::vm_NormalizeVector(&target_dir[WB_MOVE_STILL]);
+        dot[WB_MOVE_STILL] = simd::dot(gun_normal[WB_MOVE_STILL], target_dir[WB_MOVE_STILL]);
 
         best_dot = WB_MOVE_STILL;
       }
@@ -5272,13 +5277,13 @@ void ai_fire(object *obj) {
         target_dir[WB_MOVE_RIGHT] = ai_info->last_see_target_pos - gun_point[WB_MOVE_RIGHT];
         target_dir[WB_MOVE_LEFT] = ai_info->last_see_target_pos - gun_point[WB_MOVE_LEFT];
 
-        vm_NormalizeVector(&target_dir[WB_MOVE_STILL]);
-        vm_NormalizeVector(&target_dir[WB_MOVE_RIGHT]);
-        vm_NormalizeVector(&target_dir[WB_MOVE_LEFT]);
+        vec::vm_NormalizeVector(&target_dir[WB_MOVE_STILL]);
+        vec::vm_NormalizeVector(&target_dir[WB_MOVE_RIGHT]);
+        vec::vm_NormalizeVector(&target_dir[WB_MOVE_LEFT]);
 
-        dot[WB_MOVE_STILL] = gun_normal[WB_MOVE_STILL] * target_dir[WB_MOVE_STILL];
-        dot[WB_MOVE_RIGHT] = gun_normal[WB_MOVE_RIGHT] * target_dir[WB_MOVE_RIGHT];
-        dot[WB_MOVE_LEFT] = gun_normal[WB_MOVE_LEFT] * target_dir[WB_MOVE_LEFT];
+        dot[WB_MOVE_STILL] = simd::dot(gun_normal[WB_MOVE_STILL], target_dir[WB_MOVE_STILL]);
+        dot[WB_MOVE_RIGHT] = simd::dot(gun_normal[WB_MOVE_RIGHT], target_dir[WB_MOVE_RIGHT]);
+        dot[WB_MOVE_LEFT] = simd::dot(gun_normal[WB_MOVE_LEFT], target_dir[WB_MOVE_LEFT]);
 
         if (dot[WB_MOVE_RIGHT] > dot[WB_MOVE_STILL])
           best_dot = WB_MOVE_RIGHT;
@@ -5364,8 +5369,8 @@ void ai_fire(object *obj) {
           WeaponCalcGun(&gun_point[best_dot], &gun_normal[best_dot], obj, pm->poly_wb[i].gp_index[aiming_gp_index]);
 
           target_dir[best_dot] = ai_info->last_see_target_pos - gun_point[best_dot];
-          vm_NormalizeVector(&target_dir[best_dot]);
-          dot[best_dot] = gun_normal[best_dot] * target_dir[best_dot];
+          vec::vm_NormalizeVector(&target_dir[best_dot]);
+          dot[best_dot] = simd::dot(gun_normal[best_dot], target_dir[best_dot]);
         }
       }
 
@@ -5544,8 +5549,7 @@ static inline void ai_walker_stuff(object *obj) {
   if (ai_info->movement_type == MC_STANDING) {
     int next_anim;
 
-    if (vm_GetMagnitude(&obj->mtype.phys_info.velocity) > 0.01f ||
-        vm_GetMagnitude(&obj->mtype.phys_info.rotvel) > 0.01) {
+    if (simd::length(obj->mtype.phys_info.velocity) > 0.01f || simd::length(obj->mtype.phys_info.rotvel) > 0.01) {
       if (ai_info->next_animation_type == AI_INVALID_INDEX) {
         if (ai_info->animation_type == AS_ALERT) {
           next_anim = AS_GOTO_ALERT_WALKING;
@@ -5557,13 +5561,12 @@ static inline void ai_walker_stuff(object *obj) {
         }
       }
 
-      obj->mtype.phys_info.velocity = Zero_vector;
+      obj->mtype.phys_info.velocity = vec::Zero_vector;
     }
   } else if (ai_info->movement_type == MC_WALKING) {
     int next_anim;
 
-    if (vm_GetMagnitude(&obj->mtype.phys_info.velocity) <= 0.01f &&
-        vm_GetMagnitude(&obj->mtype.phys_info.rotvel) <= 0.01) {
+    if (simd::length(obj->mtype.phys_info.velocity) <= 0.01f && simd::length(obj->mtype.phys_info.rotvel) <= 0.01) {
       if (ai_info->animation_type == AS_ALERT) {
         next_anim = AS_GOTO_ALERT_STANDING;
         GoalAddGoal(obj, AIG_SET_ANIM, (void *)&next_anim, ACTIVATION_BLEND_LEVEL);
@@ -5760,7 +5763,7 @@ void AITargetCheck(object *obj, object *target, object **best_obj, float *best_d
   if (AIObjEnemy(obj, target)) {
     float dot;
     float dist;
-    vector to_obj;
+    simd::float3 to_obj;
     fvi_query fq;
     fvi_info hit_info;
     int fate;
@@ -5779,15 +5782,15 @@ void AITargetCheck(object *obj, object *target, object **best_obj, float *best_d
 
     to_obj = target->pos - obj->pos;
 
-    dist = vm_NormalizeVector(&to_obj);
+    dist = vec::vm_NormalizeVector(&to_obj);
 
     if (dist > MAX_SEE_TARGET_DIST)
       return;
 
-    vector look_dir;
+    simd::float3 look_dir;
     AIDetermineFovVec(obj, &look_dir);
 
-    dot = to_obj * look_dir;
+    dot = simd::dot(to_obj, look_dir);
 
     if (f_use_dot && dot <= *best_dot) {
       return;
@@ -6035,8 +6038,8 @@ void AIDoFrame(object *obj) {
 
   // AI objects don't use thrust (in general)
   obj->mtype.phys_info.flags &= ~PF_USES_THRUST;
-  obj->mtype.phys_info.rotthrust = Zero_vector;
-  obj->mtype.phys_info.thrust = Zero_vector;
+  obj->mtype.phys_info.rotthrust = vec::Zero_vector;
+  obj->mtype.phys_info.thrust = vec::Zero_vector;
 
   if (obj->type == OBJ_DUMMY)
     return;
@@ -6146,13 +6149,13 @@ void AIDoFrame(object *obj) {
 
         ai_move(obj);
 
-        speed = vm_GetMagnitude(&obj->mtype.phys_info.velocity);
+        speed = simd::length(obj->mtype.phys_info.velocity);
 
         // Removes the framerate independence from objects moving within 2x of there normal max speed
         if (speed > 0.1f && speed <= ai_info->max_velocity * 2.0) {
           if (obj->mtype.phys_info.drag > 0.0f && obj->mtype.phys_info.mass > 0.0f) {
             obj->mtype.phys_info.flags |= PF_USES_THRUST;
-            obj->mtype.phys_info.rotthrust = Zero_vector;
+            obj->mtype.phys_info.rotthrust = vec::Zero_vector;
             obj->mtype.phys_info.thrust = obj->mtype.phys_info.velocity * obj->mtype.phys_info.drag;
           }
         }
@@ -6171,7 +6174,7 @@ void AIDoFrame(object *obj) {
         ai_fire(obj);
     } else {
       if (obj->movement_type == MT_WALKING && ai_info->animation_type == AS_DEATH) {
-        vector mdir;
+        simd::float3 mdir;
         bool f_moved;
 
         AIMoveTowardsPosition(obj, &obj->pos, 1.5f, false, &mdir, &f_moved);
@@ -6285,7 +6288,9 @@ int AIFindRoomWithFlag(object *obj, int flag) {
   return best_room;
 }
 
-bool AIFindHidePos(object *hide_obj, object *view_obj, vector *hpos, int *hroom, float max_hide_time) { return false; }
+bool AIFindHidePos(object *hide_obj, object *view_obj, simd::float3 *hpos, int *hroom, float max_hide_time) {
+  return false;
+}
 
 object *AIFindObjOfType(object *obj, int type, int id, bool f_ignore_init_room, int parent_handle) {
   int cur_room = obj->roomnum;

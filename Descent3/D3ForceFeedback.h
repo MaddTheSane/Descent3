@@ -189,10 +189,10 @@ void ForceEffectsClose(void);
 //		Plays an effect
 // -----------------------------------------------------------------
 void ForceEffectsPlay(int id, float *scale, int *direction);
-void ForceEffectsPlay(int id, float *scale, vector *direction);
+void ForceEffectsPlay(int id, float *scale, simd::float3 *direction);
 
-void DoForceForWeapon(object *me_obj, object *it_obj, vector *force);
-void DoForceForWall(object *playerobj, float hitspeed, int hitseg, int hitwall, vector *wall_normal);
+void DoForceForWeapon(object *me_obj, object *it_obj, simd::float3 *force);
+void DoForceForWall(object *playerobj, float hitspeed, int hitseg, int hitwall, simd::float3 *wall_normal);
 void DoForceForRecoil(object *playerobj, object *weap);
 void DoForceForShake(float magnitude);
 

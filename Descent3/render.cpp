@@ -489,12 +489,12 @@ void MakePointsFromMinMax(vector *corners, vector *minp, vector *maxp) {
 }
 
 // Rotates all the points in a room
-void RotateRoomPoints(room *rp, vector *world_vecs) {
+void RotateRoomPoints(room *rp, simd::float3 *world_vecs) {
   int i;
   // Jig the vertices a bit if being deformed
   if (Viewer_object->effect_info && (Viewer_object->effect_info->type_flags & EF_DEFORM)) {
     for (i = 0; i < rp->num_verts; i++) {
-      vector vec = world_vecs[i];
+      simd::float3 vec = world_vecs[i];
       float val = ((ps_rand() % 1000) - 500.0) / 500.0;
       val *= Viewer_object->effect_info->deform_time;
       vec += Global_alter_vec * (Viewer_object->effect_info->deform_range * val);
@@ -512,10 +512,10 @@ void RotateRoomPoints(room *rp, vector *world_vecs) {
 
 // Given a vector, reflects that vector off of a mirror vector
 // Useful for specular and other reflective surfaces
-void ReflectRay(vector *dest, vector *src, vector *mirror_norm) {
+void ReflectRay(simd::float3 *dest, simd::float3 *src, simd::float3 *mirror_norm) {
   *dest = *src;
-  float d = *dest * *mirror_norm;
-  vector upvec = d * *mirror_norm;
+  float d = simd::dot(*dest, *mirror_norm);
+  simd::float3 upvec = d * *mirror_norm;
   *dest -= (2.0f * upvec);
 }
 
@@ -524,10 +524,10 @@ void ReflectRay(vector *dest, vector *src, vector *mirror_norm) {
 void ResetFacings() { memset(Facing_visited, 0, sizeof(int) * (Highest_room_index + 1)); }
 
 // Marks all the faces facing us as drawable
-void MarkFacingFaces(int roomnum, vector *world_verts) {
+void MarkFacingFaces(int roomnum, simd::float3 *world_verts) {
   room *rp = &Rooms[roomnum];
   face *fp;
-  vector tvec;
+  simd::float3 tvec;
   if (Facing_visited[roomnum] == FrameCount)
     return;
   Facing_visited[roomnum] = FrameCount;

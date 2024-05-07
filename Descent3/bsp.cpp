@@ -94,7 +94,7 @@ int BSPGetMineChecksum() {
 
   for (t = 0; t <= Highest_object_index; t++) {
     object *obj = &Objects[t];
-    vector vert;
+    simd::float3 vert;
 
     if (obj->type == OBJ_NONE)
       continue;
@@ -162,7 +162,7 @@ bspnode *NewBSPNode(void) {
 // Returns pointer to polygon
 bsppolygon *NewPolygon(int roomnum, int facenum, int numverts) {
   bsppolygon *newpoly;
-  vector *verts;
+  simd::float3 *verts;
 
   newpoly = (bsppolygon *)mem_malloc(sizeof(bsppolygon));
 
@@ -171,7 +171,7 @@ bsppolygon *NewPolygon(int roomnum, int facenum, int numverts) {
     return NULL;
   }
 
-  verts = (vector *)mem_malloc(sizeof(vector) * numverts);
+  verts = (simd::float3 *)mem_malloc(sizeof(simd::float3) * numverts);
   ASSERT(verts != NULL);
 
   newpoly->nv = numverts;
@@ -256,13 +256,13 @@ void FreePolygon(bsppolygon *poly) {
 void CalculatePolygonPlane(bsppolygon *poly) {
   ASSERT(poly->nv >= 3);
 
-  vector *vec = &poly->verts[0];
+  simd::float3 *vec = &poly->verts[0];
 
   poly->plane.d = -(vec->x * poly->plane.a + vec->y * poly->plane.b + vec->z * poly->plane.c);
 }
 
 // Classifies whether or not a point is in front,behind, or on a plane
-int ClassifyVector(bspplane *plane, vector *vec) {
+int ClassifyVector(bspplane *plane, simd::float3 *vec) {
   float dist;
 
   dist = vec->x * plane->a + vec->y * plane->b + vec->z * plane->c + plane->d;
@@ -287,7 +287,7 @@ int ClassifyPolygon(bspplane *plane, bsppolygon *poly) {
 
   for (i = 0; i < nv; i++) {
     int fate;
-    vector *vec = &poly->verts[i];
+    simd::float3 *vec = &poly->verts[i];
 
     fate = ClassifyVector(plane, vec);
 
@@ -322,9 +322,9 @@ int ClassifyPolygon(bspplane *plane, bsppolygon *poly) {
 int SplitPolygon(bspplane *plane, bsppolygon *testpoly, bsppolygon **frontpoly, bsppolygon **backpoly) {
   float dists[256], t;
   int numvert, numfront, numback, i, codes[256] = {};
-  vector *frontvert[256], *backvert[256], *polyvert[256];
-  vector *vertptr1, *vertptr2;
-  vector delta, *newvert[256];
+  simd::float3 *frontvert[256], *backvert[256], *polyvert[256];
+  simd::float3 *vertptr1, *vertptr2;
+  simd::float3 delta, *newvert[256];
   int num_new_verts = 0;
 
   /* Set up the function. Set all counters, variables, lists etc to
@@ -396,7 +396,7 @@ int SplitPolygon(bspplane *plane, bsppolygon *testpoly, bsppolygon **frontpoly, 
 
     vertptr2 = polyvert[(i + 1) % numvert];
     t = dists[i] / (dists[i] - dists[i + 1]);
-    newvert[num_new_verts] = (vector *)mem_malloc(sizeof(vector));
+    newvert[num_new_verts] = (simd::float3 *)mem_malloc(sizeof(simd::float3));
 
     /* Now we must generate the split point. This is simply
      * an equation in the form Origin + t*Direction
@@ -405,7 +405,7 @@ int SplitPolygon(bspplane *plane, bsppolygon *testpoly, bsppolygon **frontpoly, 
     delta = *vertptr2 - *vertptr1;
     *newvert[num_new_verts] = *vertptr1 + (t * delta);
 
-    /*		vector tempvec=*newvert[num_new_verts]-*vertptr1;
+    /*		simd::float3 tempvec=*newvert[num_new_verts]-*vertptr1;
                     float mag=vm_GetMagnitude(&tempvec);
                     if (mag<=BSP_EPSILON)
                             Int3();		*/
@@ -542,7 +542,7 @@ int BuildBSPNode(bspnode *tree, listnode **polylist, int numpolys) {
   if (partition_poly == NULL) {
     // We hit a leaf!  Fill in the appropriate leaf stuff
 
-    /*vector center;
+    /*simd::float3 center;
     int total=0;
 
     vm_MakeZero (&center);
@@ -553,7 +553,7 @@ int BuildBSPNode(bspnode *tree, listnode **polylist, int numpolys) {
             ASSERT (poly!=NULL);
             AddListItem (&tree->polylist,poly);
             tree->num_polys++;
-            vector polycenter;
+            simd::float3 polycenter;
 
             ConvexPolys++;
             vm_MakeZero (&polycenter);
@@ -769,7 +769,7 @@ void DestroyDefaultBSPTree() { DestroyBSPTree(&MineBSP); }
 
 // Given an object, a submodel, and a vertex number, calculates the world position
 // of that point
-void GetObjectPointInWorld(vector *dest, object *obj, int subnum, int vertnum);
+void GetObjectPointInWorld(simd::float3 *dest, object *obj, int subnum, int vertnum);
 
 // Builds a bsp tree for the indoor rooms
 void BuildBSPTree() {
@@ -832,7 +832,7 @@ void BuildBSPTree() {
             continue;
 
           for (j = 0; j < sm->num_faces; j++) {
-            vector world_verts[64];
+            simd::float3 world_verts[64];
 
             newpoly = NewPolygon(i, t, sm->faces[j].nverts);
             if (!newpoly) {
@@ -845,9 +845,9 @@ void BuildBSPTree() {
             for (x = 0; x < sm->faces[j].nverts; x++)
               GetObjectPointInWorld(&world_verts[x], obj, k, sm->faces[j].vertnums[x]);
 
-            vector norm;
+            simd::float3 norm;
 
-            vm_GetNormal(&norm, &world_verts[0], &world_verts[1], &world_verts[2]);
+            vec::vm_GetNormal(&norm, &world_verts[0], &world_verts[1], &world_verts[2]);
 
             // Add the vertices to this poly
             for (x = 0; x < sm->faces[j].nverts; x++)
@@ -975,7 +975,7 @@ void BuildSingleBSPTree(int roomnum) {
           continue;
 
         for (j = 0; j < sm->num_faces; j++) {
-          vector world_verts[64];
+          simd::float3 world_verts[64];
           newpoly = NewPolygon(i, t, sm->faces[j].nverts);
           if (!newpoly) {
             LOG_FATAL << "Couldn't get a new polygon!";
@@ -986,9 +986,9 @@ void BuildSingleBSPTree(int roomnum) {
           for (x = 0; x < sm->faces[j].nverts; x++)
             GetObjectPointInWorld(&world_verts[x], obj, k, sm->faces[j].vertnums[x]);
 
-          vector norm;
+          simd::float3 norm;
 
-          vm_GetNormal(&norm, &world_verts[0], &world_verts[1], &world_verts[2]);
+          vec::vm_GetNormal(&norm, &world_verts[0], &world_verts[1], &world_verts[2]);
 
           // Add the vertices to this poly
           for (x = 0; x < sm->faces[j].nverts; x++)
@@ -1057,7 +1057,7 @@ void BuildSingleBSPTree(int roomnum) {
 }
 
 // Returns true if the point is inside the min,max
-static inline int BSPInMinMax(vector *pos, vector *min_xyz, vector *max_xyz) {
+static inline int BSPInMinMax(simd::float3 *pos, simd::float3 *min_xyz, simd::float3 *max_xyz) {
   if (pos->x < min_xyz->x || pos->y < min_xyz->y || pos->z < min_xyz->z || pos->x > max_xyz->x || pos->y > max_xyz->y ||
       pos->z > max_xyz->z)
     return 0;
@@ -1065,10 +1065,10 @@ static inline int BSPInMinMax(vector *pos, vector *min_xyz, vector *max_xyz) {
   return 1;
 }
 // see if a point in inside a face by projecting into 2d
-extern uint32_t check_point_to_face(vector *colp, vector *face_normal, int nv, vector **vertex_ptr_list);
+extern uint32_t check_point_to_face(simd::float3 *colp, simd::float3 *face_normal, int nv, simd::float3 **vertex_ptr_list);
 
 // Returns true if passed in point collides with a nodes polygon
-static inline int BSPPointInPolygon(vector *pos, bspnode *node) {
+static inline int BSPPointInPolygon(simd::float3 *pos, bspnode *node) {
   if (node->node_subnum < 0) // Room face
   {
     room *rp = &Rooms[node->node_roomnum];
@@ -1077,7 +1077,7 @@ static inline int BSPPointInPolygon(vector *pos, bspnode *node) {
       return 0;
 
     // Test to see if this point in inside the polygon
-    vector verts[MAX_VERTS_PER_FACE], *vertp[MAX_VERTS_PER_FACE];
+    simd::float3 verts[MAX_VERTS_PER_FACE], *vertp[MAX_VERTS_PER_FACE];
     for (int i = 0; i < fp->num_verts; i++) {
       verts[i] = rp->verts[fp->face_verts[i]];
       vertp[i] = &verts[i];
@@ -1095,8 +1095,8 @@ static inline int BSPPointInPolygon(vector *pos, bspnode *node) {
       return 0;
 
     // Test to see if this point in inside the polygon
-    vector verts[MAX_VERTS_PER_FACE], *vertp[MAX_VERTS_PER_FACE];
-    vector norm;
+    simd::float3 verts[MAX_VERTS_PER_FACE], *vertp[MAX_VERTS_PER_FACE];
+    simd::float3 norm;
     poly_model *po = &Poly_models[obj->rtype.pobj_info.model_num];
     bsp_info *sm = &po->submodel[node->node_subnum];
 
@@ -1137,13 +1137,13 @@ static inline int BSPPointInPolygon(vector *pos, bspnode *node) {
     node = stack_node[si];                                                                                             \
   }
 
-vector stack_start[MAX_RAY_STACK], stack_end[MAX_RAY_STACK];
+simd::float3 stack_start[MAX_RAY_STACK], stack_end[MAX_RAY_STACK];
 bspnode *stack_node[MAX_RAY_STACK];
 static int si;
 
-int BSPRayOccluded(vector *line_start, vector *line_end, bspnode *start_node) {
+int BSPRayOccluded(simd::float3 *line_start, simd::float3 *line_end, bspnode *start_node) {
   si = 0;
-  vector start, end;
+  simd::float3 start, end;
   bspnode *node;
 
   PUSH_BSP_RAY(*line_start, *line_end, start_node);
@@ -1159,7 +1159,7 @@ int BSPRayOccluded(vector *line_start, vector *line_end, bspnode *start_node) {
       } else if (dist1 < 0 && dist2 < 0) {
         node = (bspnode *)node->back;
       } else {
-        vector mid, delta;
+        simd::float3 mid, delta;
         float t;
 
         // Generate split point
@@ -1171,8 +1171,8 @@ int BSPRayOccluded(vector *line_start, vector *line_end, bspnode *start_node) {
 
         // vm_NormalizeVectorFast (&delta);
 
-        vector mid1 = mid; //-(delta*BSP_EPSILON);
-        vector mid2 = mid; //+(delta*BSP_EPSILON);
+        simd::float3 mid1 = mid; //-(delta*BSP_EPSILON);
+        simd::float3 mid2 = mid; //+(delta*BSP_EPSILON);
 
         if (dist1 >= 0.0) {
           PUSH_BSP_RAY(mid1, end, (bspnode *)node->back);

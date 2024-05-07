@@ -425,7 +425,6 @@
 #define OSIRISDEBUG
 #endif
 
-
 bool Show_osiris_debug = false;
 
 #define MAX_LOADED_MODULES 96 // maximum number of dlls that can be loaded at a time
@@ -641,8 +640,8 @@ uint32_t Osiris_CreateGameChecksum(void) {
   value += sizeof(tOSIRISMEMCHUNK) * 13;
   value += sizeof(msafe_struct) * 17;
   value += sizeof(ray_info) * 19;
-  value += sizeof(vector) * 23;
-  value += sizeof(matrix) * 29;
+  value += sizeof(simd::float3) * 23;
+  value += sizeof(vec::matrix) * 29;
   value += sizeof(tGameCinematic) * 31;
   value += sizeof(tCannedCinematicInfo) * 37;
 

@@ -27,14 +27,14 @@
 #include "multi.h"
 #endif
 
-extern matrix View_matrix;
-extern vector View_position;
+extern vec::matrix View_matrix;
+extern simd::float3 View_position;
 
-static vector Original_pos;
-static matrix Original_orient;
+static simd::float3 Original_pos;
+static vec::matrix Original_orient;
 
-static vector fvi_move_fvec;
-static vector fvi_move_uvec;
+static simd::float3 fvi_move_fvec;
+static simd::float3 fvi_move_uvec;
 static bool fvi_do_orient;
 
 static bool Fvi_f_normal;
@@ -42,35 +42,35 @@ static bool Fvi_f_normal;
 #define MAX_INSTANCE_DEPTH 30
 
 struct instance_context {
-  matrix m;
-  vector p;
-  vector p0;
-  vector p1;
-  vector fvec;
-  vector uvec;
+  vec::matrix m;
+  simd::float3 p;
+  simd::float3 p0;
+  simd::float3 p1;
+  simd::float3 fvec;
+  simd::float3 uvec;
 };
 static struct instance_context instance_stack[MAX_INSTANCE_DEPTH];
 
 static int instance_depth = 0;
 
 static inline void ns_compute_movement_AABB();
-static inline bool ns_movement_manual_AABB(vector *min_xyz, vector *max_xyz);
+static inline bool ns_movement_manual_AABB(simd::float3 *min_xyz, simd::float3 *max_xyz);
 static void CollideSubmodelFacesUnsorted(poly_model *pm, bsp_info *sm);
 
 /// instance at specified point with specified orientation.
 /// if matrix==NULL, don't modify matrix.  This will be like doing an offset.
-static void newstyle_StartInstanceMatrix(vector *pos, matrix *orient);
+static void newstyle_StartInstanceMatrix(simd::float3 *pos, vec::matrix *orient);
 /// instance at specified point with specified orientation.
 /// if angles==NULL, don't modify matrix.  This will be like doing an offset.
-static void newstyle_StartInstanceAngles(vector *pos, angvec *angles);
+static void newstyle_StartInstanceAngles(simd::float3 *pos, vec::angvec *angles);
 
 /// pops the old context
 static void newstyle_DoneInstance();
 static void CollideSubmodel(poly_model *pm, bsp_info *sm, uint32_t f_render_sub);
-static void CollidePolygonModel(vector *pos, matrix *orient, int model_num, float *normalized_time,
+static void CollidePolygonModel(simd::float3 *pos, simd::float3 *orient, int model_num, float *normalized_time,
                                 uint32_t f_render_sub);
 
-static void BuildModelAngleMatrix(matrix *mat, angle ang, vector *axis) {
+static void BuildModelAngleMatrix(vec::matrix *mat, angle ang, simd::float3 *axis) {
   float x, y, z;
   float s, c, t;
 
@@ -98,12 +98,12 @@ static void BuildModelAngleMatrix(matrix *mat, angle ang, vector *axis) {
 float fvi_hit_param;
 bool fvi_check_param;
 
-static vector ns_min_xyz;
-static vector ns_max_xyz;
+static simd::float3 ns_min_xyz;
+static simd::float3 ns_max_xyz;
 
 inline void ns_compute_movement_AABB() {
-  vector delta_movement = *fvi_query_ptr->p1 - *fvi_query_ptr->p0;
-  vector offset_vec;
+  simd::float3 delta_movement = *fvi_query_ptr->p1 - *fvi_query_ptr->p0;
+  simd::float3 offset_vec;
 
   offset_vec.x = fvi_query_ptr->rad;
   offset_vec.y = fvi_query_ptr->rad;
@@ -130,7 +130,7 @@ inline void ns_compute_movement_AABB() {
     ns_min_xyz.z += delta_movement.z;
 }
 
-inline bool ns_movement_manual_AABB(vector *min_xyz, vector *max_xyz) {
+inline bool ns_movement_manual_AABB(simd::float3 *min_xyz, simd::float3 *max_xyz) {
   bool overlap = true;
 
   if (max_xyz->y < ns_min_xyz.y || ns_max_xyz.y < min_xyz->y || max_xyz->x < ns_min_xyz.x ||
@@ -148,11 +148,11 @@ inline bool ns_movement_manual_AABB(vector *min_xyz, vector *max_xyz) {
 static void CollideSubmodelFacesUnsorted(poly_model *pm, bsp_info *sm) {
   int i;
   int j;
-  vector colp;
-  vector newp;
+  simd::float3 colp;
+  simd::float3 newp;
   float col_dist; // distance to hit point
-  vector *vertex_list[32];
-  vector wall_norm;
+  simd::float3 *vertex_list[32];
+  simd::float3 wall_norm;
   int face_hit_type;
 
   // (For this reference frame)
@@ -174,7 +174,7 @@ static void CollideSubmodelFacesUnsorted(poly_model *pm, bsp_info *sm) {
           face_hit_type = check_line_to_face(&newp, &colp, &col_dist, &wall_norm, fvi_query_ptr->p0, fvi_query_ptr->p1,
                                              &fp->normal, vertex_list, fp->nverts, fvi_query_ptr->rad);
           if ((fvi_query_ptr->flags & FQ_OBJ_BACKFACE) && (!face_hit_type)) {
-            vector face_normal = fp->normal;
+            simd::float3 face_normal = fp->normal;
             int count;
 
             face_normal *= -1.0f;
@@ -189,13 +189,13 @@ static void CollideSubmodelFacesUnsorted(poly_model *pm, bsp_info *sm) {
 
           if (face_hit_type) {
             if (col_dist < fvi_collision_dist) {
-              vector x;
+              simd::float3 x;
 
               fvi_check_param = true;
               x = *fvi_query_ptr->p1 - *fvi_query_ptr->p0;
-              vm_NormalizeVector(&x);
+              vec::vm_NormalizeVector(&x);
 
-              fvi_hit_param = (newp - *fvi_query_ptr->p0) * x;
+              fvi_hit_param = simd::dot((newp - *fvi_query_ptr->p0), x);
 
               if (!(fvi_hit_param > -10000000.0 && fvi_hit_param < 10000000.0)) {
                 LOG_WARNING << "FVI Warning: fvi_hit_param seems yucky!";
@@ -228,9 +228,9 @@ static void CollideSubmodelFacesUnsorted(poly_model *pm, bsp_info *sm) {
 
 // instance at specified point with specified orientation
 // if matrix==NULL, don't modify matrix.  This will be like doing an offset
-void newstyle_StartInstanceMatrix(vector *pos, matrix *orient) {
-  vector tempv, temp0, temp1;
-  matrix tempm, tempm2;
+void newstyle_StartInstanceMatrix(simd::float3 *pos, vec::matrix *orient) {
+  simd::float3 tempv, temp0, temp1;
+  vec::matrix tempm, tempm2;
 
   ASSERT(instance_depth < MAX_INSTANCE_DEPTH);
 
@@ -274,15 +274,15 @@ void newstyle_StartInstanceMatrix(vector *pos, matrix *orient) {
 
 // instance at specified point with specified orientation
 // if angles==NULL, don't modify matrix.  This will be like doing an offset
-static void newstyle_StartInstanceAngles(vector *pos, angvec *angles) {
-  matrix tm;
+static void newstyle_StartInstanceAngles(simd::float3 *pos, vec::angvec *angles) {
+  vec::matrix tm;
 
   if (angles == nullptr) {
     newstyle_StartInstanceMatrix(pos, nullptr);
     return;
   }
 
-  vm_AnglesToMatrix(&tm, angles->p, angles->h, angles->b);
+  vec::vm_AnglesToMatrix(&tm, angles->p, angles->h, angles->b);
 
   newstyle_StartInstanceMatrix(pos, &tm);
 }
@@ -310,7 +310,7 @@ void CollideSubmodel(poly_model *pm, bsp_info *sm, uint32_t f_render_sub) {
     return;
 
   StartPolyModelPosInstance(&sm->mod_pos);
-  vector temp_vec = sm->mod_pos + sm->offset;
+  simd::float3 temp_vec = sm->mod_pos + sm->offset;
   newstyle_StartInstanceAngles(&temp_vec, &sm->angs);
 
   // Check my bit to see if I get collided with.  :)
@@ -325,7 +325,7 @@ void CollideSubmodel(poly_model *pm, bsp_info *sm, uint32_t f_render_sub) {
   DonePolyModelPosInstance();
 }
 
-void CollidePolygonModel(vector *pos, matrix *orient, int model_num, float *normalized_time, uint32_t f_render_sub) {
+void CollidePolygonModel(simd::float3 *pos, vec::matrix *orient, int model_num, float *normalized_time, uint32_t f_render_sub) {
   poly_model *po;
 
   ASSERT(Poly_models[model_num].used);
@@ -355,8 +355,8 @@ bool PolyCollideObject(object *obj) {
 #ifndef NED_PHYSICS
   float normalized_time[MAX_SUBOBJECTS];
 #endif
-  vector temp_pos = Original_pos = View_position;
-  matrix temp_orient = Original_orient = View_matrix;
+  simd::float3 temp_pos = Original_pos = View_position;
+  vec::matrix temp_orient = Original_orient = View_matrix;
   bool f_use_big_sphere = false;
   float addition;
 
@@ -417,13 +417,13 @@ bool PolyCollideObject(object *obj) {
 
   // Converts everything into world coordinates from submodel space
   if (fvi_check_param) {
-    vector pnt = fvi_hit_data_ptr->hit_face_pnt[0];
+    simd::float3 pnt = fvi_hit_data_ptr->hit_face_pnt[0];
     int mn = fvi_hit_data_ptr->hit_subobject[0];
-    matrix m;
+    vec::matrix m;
     poly_model *pm = &Poly_models[obj->rtype.pobj_info.model_num];
 
     while (mn != -1) {
-      vector tpnt;
+      simd::float3 tpnt;
 
       vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
       vm_TransposeMatrix(&m);
@@ -448,8 +448,8 @@ bool PolyCollideObject(object *obj) {
     fvi_hit_data_ptr->hit_face_pnt[0] += obj->pos;
 
     // Now get the hit point
-    vector x = *fvi_query_ptr->p1 - *fvi_query_ptr->p0;
-    vm_NormalizeVector(&x);
+    simd::float3 x = *fvi_query_ptr->p1 - *fvi_query_ptr->p0;
+    vec::vm_NormalizeVector(&x);
 
     fvi_hit_data_ptr->hit_pnt = *fvi_query_ptr->p0 + x * fvi_hit_param;
   }

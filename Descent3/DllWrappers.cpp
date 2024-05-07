@@ -64,7 +64,8 @@ bool InvCheckItem(int playernum, int type, int id) {
 bool InvAddTypeID(int playernum, int type, int id, int aux_type, int aux_id, int flags, const char *description) {
   ASSERT((playernum >= 0) && (playernum < MAX_PLAYERS));
 
-  return Players[playernum].inventory.Add(type, id, &Objects[Players[playernum].objnum], aux_type, aux_id, flags, description);
+  return Players[playernum].inventory.Add(type, id, &Objects[Players[playernum].objnum], aux_type, aux_id, flags,
+                                          description);
 }
 
 // Inventory Remove wrapper
@@ -156,14 +157,15 @@ bool dObjGet(int handle, object **obj) {
 }
 
 // Set a vector to {0,0,0}
-void dvm_MakeZeroVector(vector *v) { vm_MakeZero(v); }
+void dvm_MakeZeroVector(simd::float3 *v) { vec::vm_MakeZero(v); }
 
-void dvm_MakeZeroAngle(angvec *v) { vm_MakeZero(v); }
+void dvm_MakeZeroAngle(vec::angvec *v) { vec::vm_MakeZero(v); }
 
 void dStartFrame(int x, int y, int x2, int y2, bool clear) { StartFrame(x, y, x2, y2, clear); }
 
 // ObjSetPos, that automatically sets the OF_MOVED_THIS_FRAME
-void ObjSetPosAndMarkMoved(object *obj, vector *pos, int roomnum, matrix *orient, bool f_update_attached_children) {
+void ObjSetPosAndMarkMoved(object *obj, simd::float3 *pos, int roomnum, vec::matrix *orient,
+                           bool f_update_attached_children) {
   if (obj) {
     ObjSetPos(obj, pos, roomnum, orient, f_update_attached_children);
     if (Demo_flags == DF_RECORDING)

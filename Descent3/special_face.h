@@ -30,7 +30,7 @@
 #define SFT_SPECULAR 1
 
 struct specular_instance {
-  vector bright_center;
+  simd::float3 bright_center;
   uint16_t bright_color;
 };
 
@@ -45,7 +45,7 @@ struct special_face {
 
   specular_instance *spec_instance;
 
-  vector *vertnorms;
+  simd::float3 *vertnorms;
 
 };
 

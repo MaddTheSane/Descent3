@@ -1758,8 +1758,8 @@ void ProcessTestKeys(int key) {
 
   case KEY_N:
     if (Current_level && Current_level->filename) {
-      vector player_pos = Player_object->pos;
-      matrix player_orient = Player_object->orient;
+      simd::float3 player_pos = Player_object->pos;
+      vec::matrix player_orient = Player_object->orient;
       int player_roomnum = Player_object->roomnum;
 
       // Load the level
@@ -2135,7 +2135,7 @@ void ProcessTestKeys(int key) {
     break;
 
   case KEY_F6: {
-    vector test_pos;
+    simd::float3 test_pos;
     fvi_info hit_info;
     fvi_query fq;
     int fate;
@@ -2186,7 +2186,7 @@ void ProcessTestKeys(int key) {
       objnum = ObjCreate(OBJ_DEBUG_LINE, 1, Player_object->roomnum, &Player_object->pos, NULL);
       if (objnum >= 0) { // DAJ -1FIX
         Objects[objnum].rtype.line_info.end_pos = hit_info.hit_pnt;
-        Objects[objnum].size = vm_VectorDistance(&Player_object->pos, &hit_info.hit_pnt);
+        Objects[objnum].size = simd::distance(Player_object->pos, hit_info.hit_pnt);
         ObjSetAABB(&Objects[objnum]);
       }
     }
@@ -2207,7 +2207,7 @@ void ProcessTestKeys(int key) {
     break;
 
   case KEY_F9: {
-    vector vec = Player_object->pos + (Player_object->orient.fvec * 20);
+    simd::float3 vec = Player_object->pos + (Player_object->orient.fvec * 20);
     if (BSPRayOccluded(&Player_object->pos, &vec, MineBSP.root))
       LOG_DEBUG << "Occluded!";
     else
@@ -2265,7 +2265,7 @@ void ProcessTestKeys(int key) {
 
         LOG_DEBUG << "Matcen alive!";
 
-        vector centerPt = Player_object->pos + (Player_object->orient.fvec * 2.0f);
+        simd::float3 centerPt = Player_object->pos + (Player_object->orient.fvec * 2.0f);
         Matcen[m_id]->SetAttachType(MT_ROOM);
         Matcen[m_id]->SetAttach(Player_object->roomnum);
         Matcen[m_id]->SetCreateRoom(Player_object->roomnum);
@@ -2433,9 +2433,9 @@ void ProcessKeys() {
 extern void DrawRoomVisPnts(object *obj);
 #endif
 
-void GameRenderWorld(object *viewer, vector *viewer_eye, int viewer_roomnum, matrix *viewer_orient, float zoom,
-                     bool rear_view) {
-  matrix temp_orient, save_orient;
+void GameRenderWorld(object *viewer, simd::float3 *viewer_eye, int viewer_roomnum, vec::matrix *viewer_orient,
+                     float zoom, bool rear_view) {
+  vec::matrix temp_orient, save_orient;
 
   // Get the viewer orientation
   if (rear_view) {

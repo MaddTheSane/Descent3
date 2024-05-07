@@ -70,7 +70,7 @@
 
 // Initializes a new object.  All fields not passed in set to defaults.
 // Returns 1 if ok, 0 if error
-int ObjInit(object *objp, int type, int id, int handle, vector *pos, float creation_time,
+int ObjInit(object *objp, int type, int id, int handle, simd::float3 *pos, float creation_time,
             int parent_handle = OBJECT_HANDLE_NONE);
 
 // Re-copies data to each object from the appropriate page for that object type.

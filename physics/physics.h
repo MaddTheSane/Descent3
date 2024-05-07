@@ -87,7 +87,7 @@ extern int Physics_player_verbose;
 extern uint8_t Default_player_terrain_leveling;
 extern uint8_t Default_player_room_leveling;
 
-bool PhysicsDoSimRot(object *obj, float frame_time, vec::matrix *orient, simd::float3 *rotforce, vector *rotvel, angle *turn_roll);
+bool PhysicsDoSimRot(object *obj, float frame_time, vec::matrix *orient, simd::float3 *rotforce, simd::float3 *rotvel, vec::angle *turn_roll);
 void PhysicsDoSimLinear(const object &obj, const simd::float3 &pos, const simd::float3 &force, simd::float3 &velocity,
                         simd::float3 &movementVec, simd::float3 &movementPos, float simTime, int count);
 
@@ -105,14 +105,14 @@ void do_walking_sim(object *obj);
 
 // Applies an instantaneous force on an object, resulting in an instantaneous
 // change in velocity.
-void phys_apply_force(object *obj, vector *force_vec, int16_t weapon_index = -1);
+void phys_apply_force(object *obj, simd::float3 *force_vec, int16_t weapon_index = -1);
 
 // Applies an instantaneous whack on an object, resulting in an instantaneous change in orientation.
 // TODO: does nothing
-void phys_apply_rot(object *obj, vector *force_vec);
+void phys_apply_rot(object *obj, simd::float3 *force_vec);
 
 // Determines the point and normal of the ground point
-bool PhysCalcGround(vector *ground_point, vector *ground_normal, object *obj, int ground_num);
+bool PhysCalcGround(simd::float3 *ground_point, simd::float3 *ground_normal, object *obj, int ground_num);
 
 // Linked objects arbitrary linking for things like weapons (unlike attached objects)
 void DoPhysLinkedFrame(object *obj);

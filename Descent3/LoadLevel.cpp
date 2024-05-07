@@ -1652,7 +1652,7 @@ int ReadObject(CFILE *ifile, object *objp, int handle, int fileversion) {
   }
 
   // Get the position
-  vector pos;
+  simd::float3 pos;
   cf_ReadVector(ifile, &pos);
 
   // Initialize the object
@@ -1678,7 +1678,7 @@ int ReadObject(CFILE *ifile, object *objp, int handle, int fileversion) {
   }
 
   // Load and set the orientation
-  matrix orient;
+  vec::matrix orient;
   cf_ReadMatrix(ifile, &orient);
   vm_Orthogonalize(&orient);
   ObjSetOrient(objp, &orient);
@@ -1824,14 +1824,14 @@ int ReadObject(CFILE *ifile, object *objp, int handle, int fileversion) {
           if (fileversion >= 58) {
             // Read normal,uvec,rvec
             if (fileversion <= 59) {
-              vector tvec;
+              simd::float3 tvec;
               cf_ReadVector(ifile, &tvec);
             }
             cf_ReadVector(ifile, &fp->rvec);
             cf_ReadVector(ifile, &fp->uvec);
           } else {
-            vm_MakeZero(&fp->rvec);
-            vm_MakeZero(&fp->uvec);
+            vec::vm_MakeZero(&fp->rvec);
+            vec::vm_MakeZero(&fp->uvec);
             fp->rvec.x = 1;
             fp->uvec.y = 1;
           }
@@ -1858,7 +1858,7 @@ int ReadObject(CFILE *ifile, object *objp, int handle, int fileversion) {
           }
 
           if (fileversion >= 58) {
-            vector tvec;
+            simd::float3 tvec;
 
             // Read normal,uvec,rvec
             if (fileversion <= 59) {
@@ -2068,7 +2068,7 @@ int ReadFace(CFILE *ifile, face *fp, int version) {
   }
 
   if (version >= 22 && version <= 29) {
-    vector vec;
+    simd::float3 vec;
     cf_ReadVector(ifile, &vec);
   }
 
@@ -2098,12 +2098,12 @@ int ReadFace(CFILE *ifile, face *fp, int version) {
     if (special) {
       if (version < 77) // Ignore old specular data
       {
-        vector center;
+        simd::float3 center;
         cf_ReadByte(ifile);
         cf_ReadVector(ifile, &center);
         cf_ReadShort(ifile);
       } else {
-        vector center;
+        simd::float3 center;
 
         uint8_t smooth = 0;
         uint8_t num_smooth_verts = 0;
@@ -2134,7 +2134,7 @@ int ReadFace(CFILE *ifile, face *fp, int version) {
 
         if (smooth) {
           for (i = 0; i < num_smooth_verts; i++) {
-            vector vertnorm;
+            simd::float3 vertnorm;
             cf_ReadVector(ifile, &vertnorm);
             SpecialFaces[fp->special_handle].vertnorms[i] = vertnorm;
           }
@@ -2463,7 +2463,7 @@ int ReadRoom(CFILE *ifile, room *rp, int version) {
       cf_ReadByte(ifile);
       cf_ReadByte(ifile);
     } else if (version >= 68 && version < 71) {
-      vector tempv;
+      simd::float3 tempv;
       cf_ReadVector(ifile, &tempv);
       cf_ReadShort(ifile);
     }
@@ -2728,7 +2728,7 @@ void ReadNewLightmapChunk(CFILE *fp, int version) {
 
     int xspacing;
     int yspacing;
-    vector ul, norm;
+    simd::float3 ul, norm;
 
     xspacing = cf_ReadByte(fp);
     yspacing = cf_ReadByte(fp);
@@ -2805,7 +2805,7 @@ void ReadLightmapChunk(CFILE *fp, int version) {
         LightmapInfo[lmi].yspacing = y;
       }
     }
-    vector v;
+    simd::float3 v;
 
     cf_ReadVector(fp, &v);
     if (!Dedicated_server)
@@ -2813,7 +2813,7 @@ void ReadLightmapChunk(CFILE *fp, int version) {
 
     if (version < 58) // Don't read centers anymore
     {
-      vector tvec;
+      simd::float3 tvec;
       cf_ReadVector(fp, &tvec); // used to be normal
       cf_ReadVector(fp, &tvec); // used to be center
     }
@@ -3136,8 +3136,8 @@ void ReadRoomAABBChunk(CFILE *fp, int version) {
       Rooms[i].num_bbf_regions = cf_ReadShort(fp);
       Rooms[i].num_bbf = (int16_t *)mem_malloc(sizeof(int16_t) * Rooms[i].num_bbf_regions);
       Rooms[i].bbf_list = (int16_t **)mem_malloc(sizeof(int16_t *) * Rooms[i].num_bbf_regions);
-      Rooms[i].bbf_list_min_xyz = (vector *)mem_malloc(sizeof(vector) * Rooms[i].num_bbf_regions);
-      Rooms[i].bbf_list_max_xyz = (vector *)mem_malloc(sizeof(vector) * Rooms[i].num_bbf_regions);
+      Rooms[i].bbf_list_min_xyz = (simd::float3 *)mem_malloc(sizeof(simd::float3) * Rooms[i].num_bbf_regions);
+      Rooms[i].bbf_list_max_xyz = (simd::float3 *)mem_malloc(sizeof(simd::float3) * Rooms[i].num_bbf_regions);
       Rooms[i].bbf_list_sector = (uint8_t *)mem_malloc(sizeof(char) * Rooms[i].num_bbf_regions);
 
       for (j = 0; j < Rooms[i].num_bbf_regions; j++) {
@@ -3273,8 +3273,8 @@ void ReadTerrainSkyAndLightChunk(CFILE *fp, int version) {
     if (version >= 116)
       Terrain_sky.satellite_size[i] = cf_ReadFloat(fp);
     else {
-      vector subvec = Terrain_sky.satellite_vectors[i];
-      vm_NormalizeVector(&subvec);
+      simd::float3 subvec = Terrain_sky.satellite_vectors[i];
+      vec::vm_NormalizeVector(&subvec);
 
       Terrain_sky.satellite_vectors[i] = subvec * (Terrain_sky.radius * 3);
 
@@ -3509,50 +3509,50 @@ void VerifyObjectList() {
 
 // Data to deal with a bunch of renamed doors
 const char *Old_door_names[] = {"markroomdoor.OOF1",
-                          "cellblockdoor.OOF1",
-                          "towerringdoor.OOF1",
-                          "hangdoorinverse.oof1",
-                          "Big Lock Door",
-                          "Oval Door",
-                          "Layered Door",
-                          "steamdoor1",
-                          "heatsinkdoornew1",
-                          "Vault Door Large",
-                          "Ceddoor1",
-                          "trapdoor1",
-                          "Lukesecretdoor1",
-                          "ptmc11",
-                          "ptmc31",
-                          "ptmc021",
-                          "Bulkhead1",
-                          "Placeholderdoor1",
-                          "ptmcbd1",
-                          "energysecretdoor1",
-                          "PTMC Industrial 1",
-                          "PTMC Covert 1"};
+                                "cellblockdoor.OOF1",
+                                "towerringdoor.OOF1",
+                                "hangdoorinverse.oof1",
+                                "Big Lock Door",
+                                "Oval Door",
+                                "Layered Door",
+                                "steamdoor1",
+                                "heatsinkdoornew1",
+                                "Vault Door Large",
+                                "Ceddoor1",
+                                "trapdoor1",
+                                "Lukesecretdoor1",
+                                "ptmc11",
+                                "ptmc31",
+                                "ptmc021",
+                                "Bulkhead1",
+                                "Placeholderdoor1",
+                                "ptmcbd1",
+                                "energysecretdoor1",
+                                "PTMC Industrial 1",
+                                "PTMC Covert 1"};
 
 const char *New_door_names[] = {"MARK'S OLD DOOR",
-                          "SEAN'S NOVAK DOOR 1",
-                          "SEAN'S NOVAK DOOR 2",
-                          "SEAN'S NOVAK DOOR 3",
-                          "PTMC Industrial 2",
-                          "SEAN'S DUCTWORK DOOR",
-                          "PTMC Industrial 4",
-                          "SEAN'S STEAMVENT DOOR",
-                          "SEAN'S HEATSINK DOOR",
-                          "DAN'S VAULT DOOR",
-                          "CED 1",
-                          "SEAN'S TRAPDOOR",
-                          "LUKE'S SECRET DOOR",
-                          "PTMC Industrial 5",
-                          "PTMC Industrial 6",
-                          "PTMC Industrial 7",
-                          "!!!CED BROKEN!!!",
-                          "PLACEHOLDER DOOR",
-                          "PTMC Industrial 3",
-                          "SEAN'S ENERGY SECRET DOOR",
-                          "PTMC Industrial 1",
-                          "PTMC Covert 1"};
+                                "SEAN'S NOVAK DOOR 1",
+                                "SEAN'S NOVAK DOOR 2",
+                                "SEAN'S NOVAK DOOR 3",
+                                "PTMC Industrial 2",
+                                "SEAN'S DUCTWORK DOOR",
+                                "PTMC Industrial 4",
+                                "SEAN'S STEAMVENT DOOR",
+                                "SEAN'S HEATSINK DOOR",
+                                "DAN'S VAULT DOOR",
+                                "CED 1",
+                                "SEAN'S TRAPDOOR",
+                                "LUKE'S SECRET DOOR",
+                                "PTMC Industrial 5",
+                                "PTMC Industrial 6",
+                                "PTMC Industrial 7",
+                                "!!!CED BROKEN!!!",
+                                "PLACEHOLDER DOOR",
+                                "PTMC Industrial 3",
+                                "SEAN'S ENERGY SECRET DOOR",
+                                "PTMC Industrial 1",
+                                "PTMC Covert 1"};
 
 #define NUM_RENAMED_DOORS (sizeof(Old_door_names) / sizeof(*Old_door_names))
 

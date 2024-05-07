@@ -601,7 +601,7 @@ static float GetDeathAnimTime(object *objp);
 static void SetFallingPhysics(object *objp);
 
 // Shake variables
-static matrix Old_player_orient;
+static vec::matrix Old_player_orient;
 float Shake_magnitude = 0.0;
 
 // Causes an object to deform
@@ -835,7 +835,7 @@ bool ApplyDamageToPlayer(object *playerobj, object *killer, int damage_type, flo
     if (weapon_obj != NULL) {
       Players[playerobj->id].invul_magnitude = 1;
       Players[playerobj->id].invul_vector = weapon_obj->pos - playerobj->pos;
-      vm_NormalizeVectorFast(&Players[playerobj->id].invul_vector);
+      vec::vm_NormalizeVectorFast(&Players[playerobj->id].invul_vector);
     }
     return false;
   } else {
@@ -1091,9 +1091,9 @@ void SetFallingPhysics(object *objp) {
 
   // Special stuff for walkers
   if (objp->movement_type == MT_WALKING) {
-    objp->mtype.phys_info.rotvel = Zero_vector;
+    objp->mtype.phys_info.rotvel = vec::Zero_vector;
     objp->mtype.phys_info.flags |= PF_POINT_COLLIDE_WALLS;
-    float proj = objp->mtype.phys_info.velocity * objp->orient.uvec;
+    float proj = simd::dot(objp->mtype.phys_info.velocity, objp->orient.uvec);
     if (proj < 0.0f)
       objp->mtype.phys_info.velocity -= proj * objp->orient.uvec;
 
@@ -1102,7 +1102,7 @@ void SetFallingPhysics(object *objp) {
   } else { // not a walker
 
     // If not spinning much, give the object a good spin
-    if (vm_GetMagnitude(&objp->mtype.phys_info.rotvel) < 4000.0f) {
+    if (simd::length(objp->mtype.phys_info.rotvel) < 4000.0f) {
       objp->mtype.phys_info.rotvel.x = (float)((60000.0f * (float)(D3_RAND_MAX / 2 - ps_rand())) / (float)(D3_RAND_MAX / 2));
       objp->mtype.phys_info.rotvel.y = (float)((60000.0f * (float)(D3_RAND_MAX / 2 - ps_rand())) / (float)(D3_RAND_MAX / 2));
       objp->mtype.phys_info.rotvel.z = (float)((60000.0f * (float)(D3_RAND_MAX / 2 - ps_rand())) / (float)(D3_RAND_MAX / 2));
@@ -1443,7 +1443,7 @@ void ShakePlayer() {
   uint16_t pitch_adjust = ((ps_rand() % 5) - 2) * mag;
   uint16_t bank_adjust = ((ps_rand() % 5) - 2) * mag;
   uint16_t heading_adjust = ((ps_rand() % 5) - 2) * mag;
-  matrix m, tempm;
+  vec::matrix m, tempm;
 
   Old_player_orient = Player_object->orient;
 
@@ -1477,9 +1477,9 @@ void UnshakePlayer() { ObjSetOrient(Player_object, &Old_player_orient); }
 // point of
 // face 					hitvec - the direction in which the thing that's breaking the glass is
 // moving.  If NULL, 						uses the negative of the surface normal
-void BreakGlassFace(room *rp, int facenum, vector *hitpnt, vector *hitvec) {
+void BreakGlassFace(room *rp, int facenum, simd::float3 *hitpnt, simd::float3 *hitvec) {
   int roomnum;
-  vector t_hitpnt, t_hitvec;
+  simd::float3 t_hitpnt, t_hitvec;
   face *fp = &rp->faces[facenum];
 
   ASSERT(fp->portal_num != -1);
@@ -1511,7 +1511,7 @@ void BreakGlassFace(room *rp, int facenum, vector *hitpnt, vector *hitvec) {
   // Play sound
   pos_state pos;
   pos.position = hitpnt;
-  pos.orient = (matrix *)&Identity_matrix;
+  pos.orient = (vec::matrix *)&vec::Identity_matrix;
   pos.roomnum = roomnum;
 
   if (sound_override_glass_breaking == -1)
@@ -1528,19 +1528,19 @@ void BreakGlassFace(room *rp, int facenum, vector *hitpnt, vector *hitvec) {
   FindHitpointUV(&hitpnt_u, &hitpnt_v, hitpnt, rp, facenum);
 
   // Calculate shard movement vector
-  vector shardvec = *hitvec;
-  vm_NormalizeVectorFast(&shardvec);
+  simd::float3 shardvec = *hitvec;
+  vec::vm_NormalizeVectorFast(&shardvec);
 
   // Create shards
-  vector prevpoint = rp->verts[fp->face_verts[fp->num_verts - 1]];
+  simd::float3 prevpoint = rp->verts[fp->face_verts[fp->num_verts - 1]];
   float prev_u = fp->face_uvls[fp->num_verts - 1].u, prev_v = fp->face_uvls[fp->num_verts - 1].v;
   for (int vertnum = 0; vertnum < fp->num_verts;) {
     int objnum;
-    vector curpoint = rp->verts[fp->face_verts[vertnum]], center;
+    simd::float3 curpoint = rp->verts[fp->face_verts[vertnum]], center;
     float cur_u = fp->face_uvls[vertnum].u, cur_v = fp->face_uvls[vertnum].v;
 
     // Check if should split edge
-    if (vm_VectorDistanceQuick(&prevpoint, &curpoint) > SHARD_MAX_EDGE_LEN) {
+    if (vec::vm_VectorDistanceQuick(&prevpoint, &curpoint) > SHARD_MAX_EDGE_LEN) {
       curpoint = (curpoint + prevpoint) / 2;
       cur_u = (cur_u + prev_u) / 2;
       cur_v = (cur_v + prev_v) / 2;

@@ -63,7 +63,7 @@ struct bspplane {
 };
 
 struct bsppolygon {
-  vector *verts;
+  simd::float3 *verts;
   int nv;
   bspplane plane;
 
@@ -100,7 +100,7 @@ void BuildBSPTree();
 
 // Runs a ray through the bsp tree
 // Returns true if a ray is occludes
-int BSPRayOccluded(vector *start, vector *end, bspnode *node);
+int BSPRayOccluded(simd::float3 *start, simd::float3 *end, bspnode *node);
 
 // Walks the BSP tree and frees up any nodes/polygons that we might be using
 void DestroyBSPTree(bsptree *tree);

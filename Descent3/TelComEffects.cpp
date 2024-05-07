@@ -507,10 +507,10 @@ void EfxInit(tceffect *tce, bool tab_stop, bool gets_focus) {
     tce->movieinfo.fps = 20.0f;
     break;
   case EFX_POLYMODEL:
-    vm_MakeZero(&tce->polyinfo.m_Rot);
-    vm_MakeZero(&tce->polyinfo.m_Pos);
-    vm_MakeZero(&tce->polyinfo.m_Ori);
-    vm_MakeIdentity(&tce->polyinfo.m_mOrient);
+    vec::vm_MakeZero(&tce->polyinfo.m_Rot);
+    vec::vm_MakeZero(&tce->polyinfo.m_Pos);
+    vec::vm_MakeZero(&tce->polyinfo.m_Ori);
+    vec::vm_MakeIdentity(&tce->polyinfo.m_mOrient);
     tce->polyinfo.handle = -1;
     break;
   case EFX_SOUND:

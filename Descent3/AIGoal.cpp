@@ -490,7 +490,7 @@ static int GoalAllocSlot(object *obj, int level, float influence);
 void GoalInitWanderAround(object *obj, goal *goal_ptr) {
   ai_frame *ai_info = obj->ai_info;
   int roomnum;
-  vector pos;
+  simd::float3 pos;
 
   //	mprintf(0, "Wander around\n");
 
@@ -646,7 +646,7 @@ void GoalDoFrame(object *obj) {
           cur_goal->dist_to_goal = ai_info->dist_to_target_actual;
         } else {
           if (goal_obj) {
-            cur_goal->dist_to_goal = vm_VectorDistance(&obj->pos, &goal_obj->pos) - obj->size - goal_obj->size;
+            cur_goal->dist_to_goal = vec::vm_VectorDistance(&obj->pos, &goal_obj->pos) - obj->size - goal_obj->size;
             if (cur_goal->dist_to_goal < 0.0f) {
               cur_goal->dist_to_goal = 0.0f;
             }
@@ -659,7 +659,7 @@ void GoalDoFrame(object *obj) {
           cur_goal->status_reg &= ~AISR_CIRCLE_DIST;
         }
       } else if (POSGOAL(cur_goal)) {
-        float dist = vm_VectorDistance(&obj->pos, &cur_goal->g_info.pos);
+        float dist = simd::distance(obj->pos, cur_goal->g_info.pos);
 
         //				mprintf(0, "Dist is %f\n", dist);
         //				mprintf(0, "Dist %f, %f, %f\n", XYZ(&cur_goal->g_info.pos));
@@ -734,7 +734,7 @@ void GoalDoFrame(object *obj) {
       bool f_kill_goal = false;
       int kill_reason;
 
-      vector *posp;
+      simd::float3 *posp;
       int roomnum;
 
       if (OBJGOAL(cur_goal)) {
@@ -746,14 +746,14 @@ void GoalDoFrame(object *obj) {
           posp = &goal_obj->pos;
           roomnum = goal_obj->roomnum;
 
-          float dist = ai_info->path.num_paths == 0 ? 0.0f : vm_VectorDistance(
+          float dist = ai_info->path.num_paths == 0 ? 0.0f : vec::vm_VectorDistance(
               &AIDynamicPath[ai_info->path.num_paths - 1].pos[ai_info->path.path_end_node[ai_info->path.num_paths - 1]],
               posp);
 
           if (dist < 5.0f && ai_info->path.num_paths != 0) {
             int obj_room = BOA_INDEX(obj->roomnum);
             int path_room = BOA_INDEX(AIDynamicPath[ai_info->path.cur_path].roomnum[ai_info->path.cur_node]);
-            vector path_pos = AIDynamicPath[ai_info->path.cur_path].pos[ai_info->path.cur_node];
+            simd::float3 path_pos = AIDynamicPath[ai_info->path.cur_path].pos[ai_info->path.cur_node];
 
             if (obj_room != path_room) {
               fvi_query fq;
@@ -783,14 +783,14 @@ void GoalDoFrame(object *obj) {
         posp = &cur_goal->g_info.pos;
         roomnum = cur_goal->g_info.roomnum;
 
-        float dist = ai_info->path.num_paths == 0 ? 0.0f : vm_VectorDistance(
+        float dist = ai_info->path.num_paths == 0 ? 0.0f : vec::vm_VectorDistance(
             &AIDynamicPath[ai_info->path.num_paths - 1].pos[ai_info->path.path_end_node[ai_info->path.num_paths - 1]],
             posp);
 
         if (dist < 5.0f && ai_info->path.num_paths != 0) {
           int obj_room = BOA_INDEX(obj->roomnum);
           int path_room = BOA_INDEX(AIDynamicPath[ai_info->path.cur_path].roomnum[ai_info->path.cur_node]);
-          vector path_pos = AIDynamicPath[ai_info->path.cur_path].pos[ai_info->path.cur_node];
+          simd::float3 path_pos = AIDynamicPath[ai_info->path.cur_path].pos[ai_info->path.cur_node];
 
           if (obj_room != path_room) {
             fvi_query fq;
@@ -840,7 +840,7 @@ void GoalPathComplete(object *obj) {
     int handle = cur_goal->g_info.handle;
     object *goal_obj = ObjGet(handle);
 
-    if ((goal_obj) && (cur_goal->g_info.pos != goal_obj->pos)) {
+    if ((goal_obj) && simd::any(cur_goal->g_info.pos != goal_obj->pos)) {
       int ignore_obj = OBJNUM(goal_obj);
 
       if (AIPathAllocPath(obj, ai_info, cur_goal, &obj->roomnum, &obj->pos, &goal_obj->roomnum, &goal_obj->pos, 0.0f, 0,
@@ -1047,7 +1047,7 @@ int GoalAddGoal(object *obj, uint32_t goal_type, void *arg_struct, int level, fl
 
   case AIG_GET_TO_POS: {
     int roomnum = ((goal_info *)arg_struct)->roomnum;
-    vector pos = ((goal_info *)arg_struct)->pos;
+    simd::float3 pos = ((goal_info *)arg_struct)->pos;
 
     goal_ptr->g_info.pos = pos;
     goal_ptr->g_info.roomnum = roomnum;

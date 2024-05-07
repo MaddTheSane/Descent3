@@ -769,16 +769,16 @@ static inline bool object_object_AABB(object *obj1, object *obj2) {
   return overlap;
 }
 // Given a face, computes the upper left corner of the face
-void ComputeDebugVisFaceUpperLeft(room *rp, face *fp, vector *upper_left, float *xdiff, float *ydiff, vector *center) {
-  matrix face_matrix, trans_matrix;
-  vector fvec;
-  vector avg_vert;
-  vector verts[MAX_VERTS_PER_FACE];
-  vector rot_vert;
+void ComputeDebugVisFaceUpperLeft(room *rp, face *fp, simd::float3 *upper_left, float *xdiff, float *ydiff, simd::float3 *center) {
+  vec::matrix face_matrix, trans_matrix;
+  simd::float3 fvec;
+  simd::float3 avg_vert;
+  simd::float3 verts[MAX_VERTS_PER_FACE];
+  simd::float3 rot_vert;
   int i;
 
   // find the center point of this face
-  vm_MakeZero(&avg_vert);
+  vec::vm_MakeZero(&avg_vert);
   for (i = 0; i < fp->num_verts; i++)
     avg_vert += rp->verts[fp->face_verts[i]];
   avg_vert /= fp->num_verts;
@@ -789,13 +789,13 @@ void ComputeDebugVisFaceUpperLeft(room *rp, face *fp, vector *upper_left, float 
   vm_VectorToMatrix(&face_matrix, &fvec, NULL, NULL);
   // Make the transformation matrix
 
-  angvec avec;
+  vec::angvec avec;
   vm_ExtractAnglesFromMatrix(&avec, &face_matrix);
   vm_AnglesToMatrix(&trans_matrix, avec.p, avec.h, avec.b);
 
   // Rotate all the points
   for (i = 0; i < fp->num_verts; i++) {
-    vector vert = rp->verts[fp->face_verts[i]];
+    simd::float3 vert = rp->verts[fp->face_verts[i]];
 
     vert -= avg_vert;
     vm_MatrixMulVector(&rot_vert, &vert, &trans_matrix);
@@ -842,7 +842,7 @@ void ComputeDebugVisFaceUpperLeft(room *rp, face *fp, vector *upper_left, float 
   }
   ASSERT(bottommost_point != -1);
   // now set the base vertex, which is where we base uv 0,0 on
-  vector base_vector;
+  simd::float3 base_vector;
   base_vector.x = verts[leftmost_point].x;
   base_vector.y = verts[topmost_point].y;
   base_vector.z = 0;
@@ -867,14 +867,14 @@ void DrawRoomVisPnts(object *obj) {
     for (t = 0; t < rp->num_portals; t++) {
       face *src_fp = &rp->faces[rp->portals[t].portal_face];
       float src_width, src_height;
-      vector src_upper_left, src_center;
-      matrix src_matrix;
-      vector src_verts[MAX_VERTS_PER_FACE], *src_vertp[MAX_VERTS_PER_FACE];
+      simd::float3 src_upper_left, src_center;
+      vec::matrix src_matrix;
+      simd::float3 src_verts[MAX_VERTS_PER_FACE], *src_vertp[MAX_VERTS_PER_FACE];
       for (j = 0; j < src_fp->num_verts; j++) {
         src_verts[j] = rp->verts[src_fp->face_verts[j]];
         src_vertp[j] = &src_verts[j];
       }
-      vector fvec = -src_fp->normal;
+      simd::float3 fvec = -src_fp->normal;
       vm_VectorToMatrix(&src_matrix, &fvec, NULL, NULL);
       ComputeDebugVisFaceUpperLeft(rp, src_fp, &src_upper_left, &src_width, &src_height, &src_center);
 
@@ -890,12 +890,12 @@ void DrawRoomVisPnts(object *obj) {
         src_upper_left -= (src_matrix.uvec * (num / 2));
         src_matrix.uvec *= num;
       }
-      vector src_vector, src_ybase;
+      simd::float3 src_vector, src_ybase;
       src_ybase = src_upper_left;
       for (int sy = 0; sy < src_height; sy++, src_ybase -= src_matrix.uvec) {
         src_vector = src_ybase;
         for (int sx = 0; sx < src_width; sx++, src_vector += src_matrix.rvec) {
-          vector src2 = src_vector;
+          simd::float3 src2 = src_vector;
           //						vector subvec=src_center-src_vector;
           //							float mag=vm_GetMagnitudeFast (&subvec);
           //							subvec/=(mag*4);
@@ -1042,7 +1042,7 @@ void DrawShardObject(object *obj) {
 }
 // Sets up the light states for an outdoor object to be rendered
 bool SetupTerrainObject(object *obj) {
-  vector camlight = Terrain_sky.lightsource;
+  simd::float3 camlight = Terrain_sky.lightsource;
   vm_NormalizeVector(&camlight);
 #ifdef EDITOR
   if (!Terrain_render_ext_room_objs)
@@ -1174,7 +1174,7 @@ bool SetupMineObject(object *objp) {
   return true;
 }
 
-bool GetLinearPosition(vector *points, float *times, int num_points, float t, vector *pos) {
+bool GetLinearPosition(simd::float3 *points, float *times, int num_points, float t, simd::float3 *pos) {
   // find between which points is the time
   int min_point;
   for (min_point = 0; min_point < num_points - 1; min_point++) {
@@ -1190,7 +1190,7 @@ bool GetLinearPosition(vector *points, float *times, int num_points, float t, ve
   float d = times[min_point + 1] - times[min_point];
   float newt = t / d;
 
-  vector vd;
+  simd::float3 vd;
   float mag;
   vd = points[min_point + 1] - points[min_point];
   mag = vm_GetMagnitude(&vd);
@@ -2189,8 +2189,8 @@ void DrawPlayerNameOnHud(object *obj) {
     return;
 
   // See if it is in our viewcone
-  vector subvec = obj->pos - Player_object->pos;
-  vm_NormalizeVectorFast(&subvec);
+  simd::float3 subvec = obj->pos - Player_object->pos;
+  vec::vm_NormalizeVectorFast(&subvec);
   if ((vm_DotProduct(&subvec, &Player_object->orient.fvec)) < HudNameTan)
     return;
   // Find out if it is o.k. to draw here.
@@ -2317,7 +2317,7 @@ void DrawPlayerSightVector(object *obj) {
   fvi_query fq;
   fvi_info hit_data;
   int fate;
-  vector end_pos = obj->pos + (obj->orient.fvec * 500);
+  simd::float3 end_pos = obj->pos + (obj->orient.fvec * 500);
 
   fq.p0 = &obj->pos;
   fq.startroom = obj->roomnum;

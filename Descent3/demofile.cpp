@@ -468,7 +468,7 @@ void DemoWriteChangedObj(object *op) {
   }
 }
 
-void DemoWriteWeaponFire(uint16_t objectnum, vector *pos, vector *dir, uint16_t weaponnum, uint16_t weapobjnum,
+void DemoWriteWeaponFire(uint16_t objectnum, simd::float3 *pos, simd::float3 *dir, uint16_t weaponnum, uint16_t weapobjnum,
                          int16_t gunnum) {
   uint32_t uniqueid = MultiGetMatchChecksum(OBJ_WEAPON, weaponnum);
   if (weapobjnum == -1)
@@ -516,7 +516,7 @@ void DemoWriteChangedObjects() {
   }
 }
 
-void DemoWriteObjCreate(uint8_t type, uint16_t id, int roomnum, vector *pos, const matrix *orient, int parent_handle,
+void DemoWriteObjCreate(uint8_t type, uint16_t id, int roomnum, simd::float3 *pos, const vec::matrix *orient, int parent_handle,
                         object *obj) {
 
   if (Demo_flags == DF_RECORDING) {
@@ -891,8 +891,8 @@ int DemoReadHeader() {
 void DemoReadObj() {
   int16_t objnum;
   object *obj;
-  vector pos;
-  matrix orient;
+  simd::float3 pos;
+  vec::matrix orient;
   ASSERT(Demo_flags == DF_PLAYBACK);
   objnum = cf_ReadShort(Demo_cfp);
 
@@ -913,8 +913,8 @@ void DemoReadObj() {
   // if((!((obj->flags&OF_DYING)||(obj->flags&OF_EXPLODING)||(obj->flags&OF_DEAD)))&&obj->type!=255)
 
   if (obj->type != OBJ_NONE) {
-    obj->mtype.phys_info.velocity = Zero_vector;
-    obj->mtype.phys_info.rotvel = Zero_vector;
+    obj->mtype.phys_info.velocity = vec::Zero_vector;
+    obj->mtype.phys_info.rotvel = vec::Zero_vector;
     ObjSetPos(obj, &pos, roomnum, &orient, true);
     poly_model *pm = &Poly_models[obj->rtype.pobj_info.model_num];
     if ((!(obj->flags & OF_ATTACHED)) && (pm->n_attach))
@@ -938,12 +938,12 @@ void DemoReadHudMessage() {
 }
 
 void DemoReadWeaponFire() {
-  vector pos, dir;
+  simd::float3 pos, dir;
   float gametime;
   uint32_t uniqueid;
   object *obj;
   int16_t weaponnum, objnum, weapobjnum;
-  vector laser_pos, laser_dir;
+  simd::float3 laser_pos, laser_dir;
 
   // Mass driver is hack
   static int mass_driver_id = -2;
@@ -980,7 +980,7 @@ void DemoReadWeaponFire() {
   weapobjnum = cf_ReadShort(Demo_cfp);
   int16_t gunnum = cf_ReadShort(Demo_cfp);
   ASSERT(uniqueid != 0xffffffff);
-  ASSERT(dir != Zero_vector);
+  ASSERT(simd::any(dir != vec::Zero_vector));
 
   // This is a hack for the napalm, omega & vauss to prevent making files incompatible
   if ((obj->type == OBJ_PLAYER) && (obj->id != Player_num)) {
@@ -1012,7 +1012,7 @@ void DemoReadWeaponFire() {
   // Do a muzzle flash from this gun
   if (Weapons[weapon_num].flags & WF_MUZZLE) {
     int visnum;
-    vector newpos;
+    simd::float3 newpos;
 
     if (obj == &Objects[Players[Player_num].objnum]) {
       newpos = laser_pos + (laser_dir);
@@ -1055,7 +1055,7 @@ void DemoReadWeaponFire() {
     fvi_query fq;
     fvi_info hit_data;
 
-    vector dest_vec = laser_pos + (laser_dir * 5000);
+    simd::float3 dest_vec = laser_pos + (laser_dir * 5000);
 
     fq.p0 = &laser_pos;
     fq.startroom = obj->roomnum;
@@ -1067,7 +1067,7 @@ void DemoReadWeaponFire() {
 
     fvi_FindIntersection(&fq, &hit_data);
 
-    float mag = vm_VectorDistanceQuick(&hit_data.hit_pnt, &obj->pos);
+    float mag = vec::vm_VectorDistanceQuick(&hit_data.hit_pnt, &obj->pos);
 
     int visnum;
 
@@ -1098,8 +1098,8 @@ void DemoReadObjCreate() {
   // float gametime;
   uint8_t type;
   uint8_t use_orient;
-  matrix orient;
-  vector pos;
+  vec::matrix orient;
+  simd::float3 pos;
   int roomnum;
   int16_t id;
   int parent_handle;
@@ -1335,13 +1335,13 @@ void DemoReadPowerups() {
   cf_ReadBytes(buffer, len, Demo_cfp);
   MultiDoMSafePowerup(buffer);
 }
-extern void collide_player_and_weapon(object *playerobj, object *weapon, vector *collision_point,
-                                      vector *collision_normal, bool f_reverse_normal, fvi_info *hit_info);
-extern void collide_generic_and_weapon(object *robotobj, object *weapon, vector *collision_point,
-                                       vector *collision_normal, bool f_reverse_normal, fvi_info *hit_info);
+extern void collide_player_and_weapon(object *playerobj, object *weapon, simd::float3 *collision_point,
+                                      simd::float3 *collision_normal, bool f_reverse_normal, fvi_info *hit_info);
+extern void collide_generic_and_weapon(object *robotobj, object *weapon, simd::float3 *collision_point,
+                                       simd::float3 *collision_normal, bool f_reverse_normal, fvi_info *hit_info);
 
-void DemoWriteCollidePlayerWeapon(object *playerobj, object *weapon, vector *collision_point, vector *collision_normal,
-                                  bool f_reverse_normal, void *hit_info) {
+void DemoWriteCollidePlayerWeapon(object *playerobj, object *weapon, simd::float3 *collision_point,
+                                  simd::float3 *collision_normal, bool f_reverse_normal, void *hit_info) {
   cf_WriteByte(Demo_cfp, DT_COLLIDE_PLR);
   cf_WriteShort(Demo_cfp, OBJNUM(playerobj));
   cf_WriteShort(Demo_cfp, OBJNUM(weapon));
@@ -1351,8 +1351,8 @@ void DemoWriteCollidePlayerWeapon(object *playerobj, object *weapon, vector *col
 }
 
 void DemoReadCollidePlayerWeapon(void) {
-  vector collision_p;
-  vector collision_n;
+  simd::float3 collision_p;
+  simd::float3 collision_n;
   bool f_reverse_normal;
   uint16_t real_weapnum;
   int16_t plr_objnum = cf_ReadShort(Demo_cfp);
@@ -1371,8 +1371,8 @@ void DemoReadCollidePlayerWeapon(void) {
   }
 }
 
-void DemoWriteCollideGenericWeapon(object *robotobj, object *weapon, vector *collision_point, vector *collision_normal,
-                                   bool f_reverse_normal, void *hit_info) {
+void DemoWriteCollideGenericWeapon(object *robotobj, object *weapon, simd::float3 *collision_point,
+                                   simd::float3 *collision_normal, bool f_reverse_normal, void *hit_info) {
   cf_WriteByte(Demo_cfp, DT_COLLIDE_GEN);
   cf_WriteShort(Demo_cfp, OBJNUM(robotobj));
   cf_WriteShort(Demo_cfp, OBJNUM(weapon));
@@ -1382,8 +1382,8 @@ void DemoWriteCollideGenericWeapon(object *robotobj, object *weapon, vector *col
 }
 
 void DemoReadCollideGenericWeapon(void) {
-  vector collision_p;
-  vector collision_n;
+  simd::float3 collision_p;
+  simd::float3 collision_n;
   bool f_reverse_normal;
   uint16_t real_weapnum;
   int16_t gen_objnum = cf_ReadShort(Demo_cfp);

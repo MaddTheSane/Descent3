@@ -258,14 +258,14 @@ void BlendLightingEdges(lightmap_info *lmi_ptr) {
 }
 
 // Does lighting for the passed in external room
-void ApplyLightingToExternalRoom(vector *pos, int roomnum, float light_dist, float red_scale, float green_scale,
-                                 float blue_scale, vector *light_direction, float dot_range) {
+void ApplyLightingToExternalRoom(simd::float3 *pos, int roomnum, float light_dist, float red_scale, float green_scale,
+                                 float blue_scale, simd::float3 *light_direction, float dot_range) {
   int i, lm_handle, t;
   uint16_t *dest_data;
-  vector rad;
+  simd::float3 rad;
   room *rp = &Rooms[roomnum];
-  vector Light_min_xyz;
-  vector Light_max_xyz;
+  simd::float3 Light_min_xyz;
+  simd::float3 Light_max_xyz;
   uint16_t lmilist[MAX_DYNAMIC_FACES];
   int num_spoken_for = 0;
 
@@ -313,17 +313,17 @@ void ApplyLightingToExternalRoom(vector *pos, int roomnum, float light_dist, flo
     int lmw = lm_w(lmi_ptr->lm_handle);
 
     // Check for backfaces
-    vector subvec = *pos - lmi_ptr->upper_left;
-    float dist_from_plane = fabs(vm_DotProduct(&subvec, &lmi_ptr->normal));
+    simd::float3 subvec = *pos - lmi_ptr->upper_left;
+    float dist_from_plane = fabs(simd::dot(subvec, lmi_ptr->normal));
 
     if (dist_from_plane > light_dist)
       continue;
 
     if (light_direction) {
       // If this is a directional light, check for backfaces
-      vector norm_vec = *pos - rp->verts[fp->face_verts[0]];
+      simd::float3 norm_vec = *pos - rp->verts[fp->face_verts[0]];
 
-      if ((norm_vec * lmi_ptr->normal) < 0) {
+      if (simd::dot(norm_vec, lmi_ptr->normal) < 0) {
         // Backface, skip this light
         continue;
       }
@@ -331,7 +331,7 @@ void ApplyLightingToExternalRoom(vector *pos, int roomnum, float light_dist, flo
       int in_front = 0; //
       for (t = 0; t < fp->num_verts && in_front == 0; t++) {
         norm_vec = rp->verts[fp->face_verts[t]] - *pos;
-        if (norm_vec * *light_direction > 0)
+        if (simd::dot(norm_vec, *light_direction) > 0)
           in_front = 1;
       }
 
@@ -340,20 +340,20 @@ void ApplyLightingToExternalRoom(vector *pos, int roomnum, float light_dist, flo
     }
 
     // Compute face matrix
-    matrix facematrix;
-    vector fvec = -lmi_ptr->normal;
-    vm_VectorToMatrix(&facematrix, &fvec, NULL, NULL);
+    vec::matrix facematrix;
+    simd::float3 fvec = -lmi_ptr->normal;
+    vec::vm_VectorToMatrix(&facematrix, &fvec, NULL, NULL);
 
     // Get upper left vector of face
-    vector base_vector = lmi_ptr->upper_left;
+    simd::float3 base_vector = lmi_ptr->upper_left;
 
     // Get the area of effect for this light
     float area_of_effect = (1.0 - (dist_from_plane / light_dist)) * light_dist;
-    vector touch_vector = *pos - (lmi_ptr->normal * dist_from_plane);
+    simd::float3 touch_vector = *pos - (lmi_ptr->normal * dist_from_plane);
 
     subvec = touch_vector - base_vector;
-    float rdist = vm_DotProduct(&subvec, &facematrix.rvec);
-    float udist = -vm_DotProduct(&subvec, &facematrix.uvec);
+    float rdist = simd::dot(subvec, facematrix.rvec);
+    float udist = -simd::dot(subvec, facematrix.uvec);
     int x_add = 1 + ((area_of_effect + (lmi_ptr->xspacing / 2)) / lmi_ptr->xspacing);
     int y_add = 1 + ((area_of_effect + (lmi_ptr->yspacing / 2)) / lmi_ptr->yspacing);
 
@@ -466,7 +466,7 @@ void ApplyLightingToExternalRoom(vector *pos, int roomnum, float light_dist, flo
       Edges_to_blend[Num_edges_to_blend++] = fp->lmi_handle;
     }
 
-    vector element_vec;
+    simd::float3 element_vec;
 
     base_vector -= (start_y * (facematrix.uvec * lmi_ptr->yspacing));
     base_vector += (start_x * (facematrix.rvec * lmi_ptr->xspacing));
@@ -489,13 +489,13 @@ void ApplyLightingToExternalRoom(vector *pos, int roomnum, float light_dist, flo
         if (!(lightmap_texel & OPAQUE_FLAG))
           continue;
 
-        float dist = vm_VectorDistanceQuick(&element_vec, pos);
+        float dist = vec::vm_VectorDistanceQuick(&element_vec, pos);
         float scalar = 1.0 - (dist / light_dist);
 
         if (light_direction) {
-          vector lsubvec = element_vec - *pos;
-          vm_NormalizeVectorFast(&lsubvec);
-          float dp = vm_DotProduct(&lsubvec, light_direction);
+          simd::float3 lsubvec = element_vec - *pos;
+          vec::vm_NormalizeVectorFast(&lsubvec);
+          float dp = simd::dot(lsubvec, *light_direction);
           if (dp < dot_range) {
             continue;
           } else {
@@ -550,19 +550,19 @@ void ApplyLightingToExternalRoom(vector *pos, int roomnum, float light_dist, flo
 }
 
 struct light_instance_context {
-  vector p;
-  vector dir;
+  simd::float3 p;
+  simd::float3 dir;
 } Light_instance_stack[MAX_SUBOBJECTS];
 
 int Light_instance_depth = 0;
 uint8_t Use_light_direction = 0;
 
-vector Light_position;
-vector Light_direction;
+simd::float3 Light_position;
+simd::float3 Light_direction;
 
 // instance at specified point with specified orientation
-void StartLightingInstance(vector *pos, matrix *orient) {
-  vector tempv;
+void StartLightingInstance(simd::float3 *pos, vec::matrix *orient) {
+  simd::float3 tempv;
 
   ASSERT(Light_instance_depth < MAX_SUBOBJECTS);
 
@@ -598,10 +598,10 @@ void DoneLightingInstance() {
 // Applies lighting to a submodel and all its children
 void ApplyLightingToSubmodel(object *obj, poly_model *pm, bsp_info *sm, float light_dist, float red_scale,
                              float green_scale, float blue_scale, float dot_range) {
-  matrix mat;
-  vector Light_min_xyz;
-  vector Light_max_xyz;
-  vector rad;
+  vec::matrix mat;
+  simd::float3 Light_min_xyz;
+  simd::float3 Light_max_xyz;
+  simd::float3 rad;
   int i, t;
   int subnum = sm - pm->submodel;
   int lm_handle;
@@ -617,16 +617,16 @@ void ApplyLightingToSubmodel(object *obj, poly_model *pm, bsp_info *sm, float li
     return; // Don't do shells, frontfaces, etc
 
   // Start instance stuff
-  vector temp_vec = sm->mod_pos + sm->offset;
-  vm_AnglesToMatrix(&mat, sm->angs.p, sm->angs.h, sm->angs.b);
+  simd::float3 temp_vec = sm->mod_pos + sm->offset;
+  vec::vm_AnglesToMatrix(&mat, sm->angs.p, sm->angs.h, sm->angs.b);
   StartLightingInstance(&temp_vec, &mat);
 
   rad.x = light_dist;
   rad.y = light_dist;
   rad.z = light_dist;
 
-  vector light_pos = Light_position;
-  vector light_dir = Light_direction;
+  simd::float3 light_pos = Light_position;
+  simd::float3 light_dir = Light_direction;
 
   Light_min_xyz = light_pos - rad;
   Light_max_xyz = light_pos + rad;
@@ -660,18 +660,18 @@ void ApplyLightingToSubmodel(object *obj, poly_model *pm, bsp_info *sm, float li
 
     // Check for backfaces
     // Get upper left vector of face
-    vector base_vector = lmi_ptr->upper_left;
-    vector subvec = light_pos - lmi_ptr->upper_left;
-    float dist_from_plane = fabs(vm_DotProduct(&subvec, &lmi_ptr->normal));
+    simd::float3 base_vector = lmi_ptr->upper_left;
+    simd::float3 subvec = light_pos - lmi_ptr->upper_left;
+    float dist_from_plane = fabs(simd::dot(subvec, lmi_ptr->normal));
 
     if (dist_from_plane > light_dist)
       continue;
 
     if (Use_light_direction) {
       // If this is a directional light, check for backfaces
-      vector norm_vec = light_pos - base_vector;
+      simd::float3 norm_vec = light_pos - base_vector;
 
-      if ((norm_vec * lmi_ptr->normal) < 0) {
+      if (simd::dot(norm_vec, lmi_ptr->normal) < 0) {
         // Backface, skip this face
         continue;
       }
@@ -681,7 +681,7 @@ void ApplyLightingToSubmodel(object *obj, poly_model *pm, bsp_info *sm, float li
       int in_front = 0; //
       for (t = 0; t < fp->num_verts && in_front == 0; t++) {
         norm_vec = sm->verts[poly_fp->vertnums[t]] - light_pos;
-        if (norm_vec * light_dir > 0)
+        if (simd::dot(norm_vec, light_dir) > 0)
           in_front = 1;
       }
 
@@ -690,17 +690,17 @@ void ApplyLightingToSubmodel(object *obj, poly_model *pm, bsp_info *sm, float li
     }
 
     // Compute face matrix
-    matrix facematrix;
-    vector fvec = -lmi_ptr->normal;
-    vm_VectorToMatrix(&facematrix, &fvec, NULL, NULL);
+    vec::matrix facematrix;
+    simd::float3 fvec = -lmi_ptr->normal;
+    vec::vm_VectorToMatrix(&facematrix, &fvec, NULL, NULL);
 
     // Get the area of effect for this light
     float area_of_effect = (1.0 - (dist_from_plane / light_dist)) * light_dist;
-    vector touch_vector = light_pos - (lmi_ptr->normal * dist_from_plane);
+    simd::float3 touch_vector = light_pos - (lmi_ptr->normal * dist_from_plane);
 
     subvec = touch_vector - base_vector;
-    float rdist = vm_DotProduct(&subvec, &facematrix.rvec);
-    float udist = -vm_DotProduct(&subvec, &facematrix.uvec);
+    float rdist = simd::dot(subvec, facematrix.rvec);
+    float udist = -simd::dot(subvec, facematrix.uvec);
     int x_add = 1 + ((area_of_effect + (lmi_ptr->xspacing / 2)) / lmi_ptr->xspacing);
     int y_add = 1 + ((area_of_effect + (lmi_ptr->yspacing / 2)) / lmi_ptr->yspacing);
 
@@ -815,7 +815,7 @@ void ApplyLightingToSubmodel(object *obj, poly_model *pm, bsp_info *sm, float li
       Edges_to_blend[Num_edges_to_blend++] = fp->lmi_handle;
     }
 
-    vector element_vec;
+    simd::float3 element_vec;
 
     base_vector -= (start_y * (facematrix.uvec * lmi_ptr->yspacing));
     base_vector += (start_x * (facematrix.rvec * lmi_ptr->xspacing));
@@ -838,13 +838,13 @@ void ApplyLightingToSubmodel(object *obj, poly_model *pm, bsp_info *sm, float li
         if (!(lightmap_texel & OPAQUE_FLAG))
           continue;
 
-        float dist = vm_VectorDistanceQuick(&element_vec, &light_pos);
+        float dist = vec::vm_VectorDistanceQuick(&element_vec, &light_pos);
         float scalar = 1.0 - (dist / light_dist);
 
         if (Use_light_direction) {
-          vector lsubvec = element_vec - light_pos;
-          vm_NormalizeVectorFast(&lsubvec);
-          float dp = vm_DotProduct(&lsubvec, &light_dir);
+          simd::float3 lsubvec = element_vec - light_pos;
+          vec::vm_NormalizeVectorFast(&lsubvec);
+          float dp = simd::dot(lsubvec, light_dir);
           if (dp < dot_range) {
             continue;
           } else {
@@ -902,7 +902,7 @@ void ApplyLightingToSubmodel(object *obj, poly_model *pm, bsp_info *sm, float li
 }
 /*
 // Test to see if this wall should show specular lighting from this light source
-void ApplySpecularLightingToWall (room *rp,face *fp,vector *pos,float light_dist,float dist_from_plane,float
+void ApplySpecularLightingToWall (room *rp,face *fp,simd::float3 *pos,float light_dist,float dist_from_plane,float
 red_scale,float green_scale,float blue_scale)
 {
         special_face *sf=&SpecialFaces[fp->special_handle];
@@ -929,10 +929,10 @@ red_scale,float green_scale,float blue_scale)
 }*/
 
 // Applys dynamic volumetric lighting to an object
-void ApplyVolumeLightToObject(vector *pos, object *obj, float light_dist, float red_scale, float green_scale,
-                              float blue_scale, vector *light_direction, float dot_range) {
-  vector subvec = *pos - obj->pos;
-  float mag = vm_GetMagnitudeFast(&subvec);
+void ApplyVolumeLightToObject(simd::float3 *pos, object *obj, float light_dist, float red_scale, float green_scale,
+                              float blue_scale, simd::float3 *light_direction, float dot_range) {
+  simd::float3 subvec = *pos - obj->pos;
+  float mag = vec::vm_GetMagnitudeFast(&subvec);
 
   float scalar = mag / light_dist;
   if (scalar > 1)
@@ -942,9 +942,9 @@ void ApplyVolumeLightToObject(vector *pos, object *obj, float light_dist, float 
 
   if (light_direction) {
     // Do a directional light
-    vector dir_vec = obj->pos - *pos;
-    float mag = vm_NormalizeVectorFast(&dir_vec);
-    float dp = dir_vec * *light_direction;
+    simd::float3 dir_vec = obj->pos - *pos;
+    float mag = vec::vm_NormalizeVectorFast(&dir_vec);
+    float dp = simd::dot(dir_vec, *light_direction);
 
     if (mag > 1.0) {
       if (dp < dot_range)
@@ -987,8 +987,8 @@ void ApplyVolumeLightToObject(vector *pos, object *obj, float light_dist, float 
 }
 
 // Applies lighting to all objects in a certain distance
-void ApplyLightingToObjects(vector *pos, int roomnum, float light_dist, float red_scale, float green_scale,
-                            float blue_scale, vector *light_direction, float dot_range) {
+void ApplyLightingToObjects(simd::float3 *pos, int roomnum, float light_dist, float red_scale, float green_scale,
+                            float blue_scale, simd::float3 *light_direction, float dot_range) {
   int16_t objlist[MAX_DYNAMIC_FACES];
   int num_objects, i;
   float normalized_time[MAX_SUBOBJECTS];
@@ -1050,8 +1050,8 @@ void ApplyLightingToObjects(vector *pos, int roomnum, float light_dist, float re
 
 // Applys dynamic lightmap changes to rooms and room objects.  If light direction is non-null, we are applying a
 // directional light
-void ApplyLightingToRooms(vector *pos, int roomnum, float light_dist, float red_scale, float green_scale,
-                          float blue_scale, vector *light_direction, float dot_range) {
+void ApplyLightingToRooms(simd::float3 *pos, int roomnum, float light_dist, float red_scale, float green_scale,
+                          float blue_scale, simd::float3 *light_direction, float dot_range) {
   fvi_face_room_list facelist[MAX_DYNAMIC_FACES];
   uint16_t lmilist[MAX_DYNAMIC_FACES];
   int num_spoken_for = 0;
@@ -1107,17 +1107,17 @@ void ApplyLightingToRooms(vector *pos, int roomnum, float light_dist, float red_
     int lmw = lm_w(lmi_ptr->lm_handle);
 
     // Check for backfaces
-    vector subvec = *pos - lmi_ptr->upper_left;
-    float dist_from_plane = fabs(vm_DotProduct(&subvec, &lmi_ptr->normal));
+    simd::float3 subvec = *pos - lmi_ptr->upper_left;
+    float dist_from_plane = fabs(simd::dot(subvec, lmi_ptr->normal));
 
     if (dist_from_plane > light_dist)
       continue;
 
     if (light_direction) {
       // If this is a directional light, check for backfaces
-      vector norm_vec = *pos - rp->verts[fp->face_verts[0]];
+      simd::float3 norm_vec = *pos - rp->verts[fp->face_verts[0]];
 
-      if ((norm_vec * lmi_ptr->normal) < 0) {
+      if (simd::dot(norm_vec, lmi_ptr->normal) < 0) {
         // Backface, skip this light
         continue;
       }
@@ -1125,7 +1125,7 @@ void ApplyLightingToRooms(vector *pos, int roomnum, float light_dist, float red_
       int in_front = 0; //
       for (t = 0; t < fp->num_verts && in_front == 0; t++) {
         norm_vec = rp->verts[fp->face_verts[t]] - *pos;
-        if (norm_vec * *light_direction > 0)
+        if (simd::dot(norm_vec, *light_direction) > 0)
           in_front = 1;
       }
 
@@ -1140,20 +1140,20 @@ void ApplyLightingToRooms(vector *pos, int roomnum, float light_dist, float red_
     }*/
 
     // Compute face matrix
-    matrix facematrix;
-    vector fvec = -lmi_ptr->normal;
-    vm_VectorToMatrix(&facematrix, &fvec, NULL, NULL);
+    vec::matrix facematrix;
+    simd::float3 fvec = -lmi_ptr->normal;
+    vec::vm_VectorToMatrix(&facematrix, &fvec, NULL, NULL);
 
     // Get upper left vector of face
-    vector base_vector = lmi_ptr->upper_left;
+    simd::float3 base_vector = lmi_ptr->upper_left;
 
     // Get the area of effect for this light
     float area_of_effect = (1.0 - (dist_from_plane / light_dist)) * light_dist;
-    vector touch_vector = *pos - (lmi_ptr->normal * dist_from_plane);
+    simd::float3 touch_vector = *pos - (lmi_ptr->normal * dist_from_plane);
 
     subvec = touch_vector - base_vector;
-    float rdist = vm_DotProduct(&subvec, &facematrix.rvec);
-    float udist = -vm_DotProduct(&subvec, &facematrix.uvec);
+    float rdist = simd::dot(subvec, facematrix.rvec);
+    float udist = -simd::dot(subvec, facematrix.uvec);
     int x_add = 1 + ((area_of_effect + (lmi_ptr->xspacing / 2)) / lmi_ptr->xspacing);
     int y_add = 1 + ((area_of_effect + (lmi_ptr->yspacing / 2)) / lmi_ptr->yspacing);
 
@@ -1266,7 +1266,7 @@ void ApplyLightingToRooms(vector *pos, int roomnum, float light_dist, float red_
       Edges_to_blend[Num_edges_to_blend++] = fp->lmi_handle;
     }
 
-    vector element_vec;
+    simd::float3 element_vec;
 
     base_vector -= (start_y * (facematrix.uvec * lmi_ptr->yspacing));
     base_vector += (start_x * (facematrix.rvec * lmi_ptr->xspacing));
@@ -1289,13 +1289,13 @@ void ApplyLightingToRooms(vector *pos, int roomnum, float light_dist, float red_
         if (!(lightmap_texel & OPAQUE_FLAG))
           continue;
 
-        float dist = vm_VectorDistanceQuick(&element_vec, pos);
+        float dist = vec::vm_VectorDistanceQuick(&element_vec, pos);
         float scalar = 1.0 - (dist / light_dist);
 
         if (light_direction) {
-          vector lsubvec = element_vec - *pos;
-          vm_NormalizeVectorFast(&lsubvec);
-          float dp = vm_DotProduct(&lsubvec, light_direction);
+          simd::float3 lsubvec = element_vec - *pos;
+          vec::vm_NormalizeVectorFast(&lsubvec);
+          float dp = simd::dot(lsubvec, *light_direction);
           if (dp < dot_range) {
             continue;
           } else {
@@ -1457,8 +1457,8 @@ void ClearDynamicLightmaps() {
 }
 
 // Changes the terrain shading to approximate lighting
-void ApplyLightingToTerrain(vector *pos, int cellnum, float light_dist, float red_scale, float green_scale,
-                            float blue_scale, vector *light_direction, float dot_range) {
+void ApplyLightingToTerrain(simd::float3 *pos, int cellnum, float light_dist, float red_scale, float green_scale,
+                            float blue_scale, simd::float3 *light_direction, float dot_range) {
   int celllist[MAX_DYNAMIC_CELLS];
   int num_cells, i;
 
@@ -1503,21 +1503,21 @@ void ApplyLightingToTerrain(vector *pos, int cellnum, float light_dist, float re
     }
 
     // Check for backfaces
-    vector tpos;
+    simd::float3 tpos;
 
     tpos.x = (seg_x * TERRAIN_SIZE) + (TERRAIN_SIZE / 2);
     tpos.z = (seg_z * TERRAIN_SIZE) + (TERRAIN_SIZE / 2);
     tpos.y = tseg->y;
 
-    vector subvec = *pos - tpos;
+    simd::float3 subvec = *pos - tpos;
 
-    float dist = vm_GetMagnitudeFast(&subvec);
+    float dist = vec::vm_GetMagnitudeFast(&subvec);
     float scalar = 1.0 - (dist / light_dist);
 
     if (light_direction) {
-      vector lsubvec = -subvec;
+      simd::float3 lsubvec = -subvec;
       lsubvec /= dist;
-      float dp = vm_DotProduct(&lsubvec, light_direction);
+      float dp = simd::dot(lsubvec, *light_direction);
       if (dp < dot_range) {
         continue;
       } else {
@@ -1623,18 +1623,18 @@ int GetVolumeSizeOfRoom(room *rp, int *w, int *h, int *d) {
 
 /*
 // Returns a lightmap that can be applied for specular lighting
-int GetSpecularLightmapForFace (vector *pos,room *rp,face *fp)
+int GetSpecularLightmapForFace (simd::float3 *pos,room *rp,face *fp)
 {
         int xres=lmi_w(fp->lmi_handle);
         int yres=lmi_h(fp->lmi_handle);
         lightmap_info *lmi_ptr=&LightmapInfo[fp->lmi_handle];
 
         matrix facematrix;
-        vector fvec=-lmi_ptr->normal;
+        simd::float3 fvec=-lmi_ptr->normal;
         vm_VectorToMatrix(&facematrix,&fvec,NULL,NULL);
 
         // Get upper left vector of face
-        vector base_vector=lmi_ptr->upper_left;
+        simd::float3 base_vector=lmi_ptr->upper_left;
 
         int square_res=GameLightmaps[lmi_ptr->lm_handle].square_res;
 
@@ -1683,7 +1683,7 @@ int GetSpecularLightmapForFace (vector *pos,room *rp,face *fp)
 
         GameLightmaps[lm_handle].flags|=LF_CHANGED;
 
-        vector element_vec;
+        simd::float3 element_vec;
 
         // Choose material
         int material_type=0;
@@ -1730,15 +1730,15 @@ int GetSpecularLightmapForFace (vector *pos,room *rp,face *fp)
                                 int old_g=lightmap_texel>>5 & 0x1f;
                                 int old_b=lightmap_texel & 0x1f;
 
-                                vector subvec=*pos-element_vec;
+                                simd::float3 subvec=*pos-element_vec;
                                 vm_NormalizeVectorFast (&subvec);
 
-                                vector
+                                simd::float3
 incident_norm=element_vec-SpecialFaces[fp->special_handle].spec_instance[i].bright_center; vm_NormalizeVectorFast
 (&incident_norm);
 
                                 float d=incident_norm * fp->normal;
-                                vector upvec=d * fp->normal;
+                                simd::float3 upvec=d * fp->normal;
                                 incident_norm-=(2*upvec);
 
                                 float dotp=subvec * incident_norm;
@@ -1778,20 +1778,20 @@ incident_norm=element_vec-SpecialFaces[fp->special_handle].spec_instance[i].brig
 
 /*
 // Returns a lightmap that can be applied for specular lighting
-int GetSpecularLightmapForFace (vector *pos,room *rp,face *fp)
+int GetSpecularLightmapForFace (simd::float3 *pos,room *rp,face *fp)
 {
 
         int xres=lmi_w(fp->lmi_handle);
         int yres=lmi_h(fp->lmi_handle);
         lightmap_info *lmi_ptr=&LightmapInfo[fp->lmi_handle];
-        vector center=SpecialFaces[fp->special_handle].center;
+        simd::float3 center=SpecialFaces[fp->special_handle].center;
 
-        matrix facematrix;
-        vector fvec=-lmi_ptr->normal;
+        vec::matrix facematrix;
+        simd::float3 fvec=-lmi_ptr->normal;
         vm_VectorToMatrix(&facematrix,&fvec,NULL,NULL);
 
         // Get upper left vector of face
-        vector base_vector=lmi_ptr->upper_left;
+        simd::float3 base_vector=lmi_ptr->upper_left;
 
         int start_x=fp->x1;
         int start_y=fp->y1;
@@ -1849,8 +1849,8 @@ int GetSpecularLightmapForFace (vector *pos,room *rp,face *fp)
         GameLightmaps[lm_handle].flags|=LF_CHANGED;
 
         // Rotate the base_vector, the eyepoint, face normal and the lightsource into the Z plane
-        vector tempvec,eye_pos,light_pos[4];
-        vector norm;
+        simd::float3 tempvec,eye_pos,light_pos[4];
+        simd::float3 norm;
 
         base_vector-=center;
 
@@ -1872,7 +1872,7 @@ int GetSpecularLightmapForFace (vector *pos,room *rp,face *fp)
         vm_MatrixMulVector (&norm,&fp->normal,&facematrix);
 
         // Move to offset
-        vector element_vec;
+        simd::float3 element_vec;
 
         base_vector.y-=(start_y*lmi_ptr->yspacing);
         base_vector.x+=(start_x*lmi_ptr->xspacing);
@@ -1933,14 +1933,14 @@ int GetSpecularLightmapForFace (vector *pos,room *rp,face *fp)
                                 int old_g=lightmap_texel>>5 & 0x1f;
                                 int old_b=lightmap_texel & 0x1f;
 
-                                vector subvec=eye_pos-element_vec;
+                                simd::float3 subvec=eye_pos-element_vec;
                                 vm_NormalizeVectorFast (&subvec);
 
-                                vector incident_norm=element_vec-light_pos[i];
+                                simd::float3 incident_norm=element_vec-light_pos[i];
                                 vm_NormalizeVectorFast (&incident_norm);
 
                                 float d=incident_norm * norm;
-                                vector upvec=d * norm;
+                                simd::float3 upvec=d * norm;
                                 incident_norm-=(2*upvec);
 
                                 float dotp=subvec * incident_norm;
@@ -1986,7 +1986,7 @@ int GetSpecularLightmapForFace (vector *pos,room *rp,face *fp)
 
 // Kills the lighting that a face casts and dampens all the faces that light influences
 void DestroyLight(int roomnum, int facenum) {
-  vector vecs[MAX_VERTS_PER_FACE], center;
+  simd::float3 vecs[MAX_VERTS_PER_FACE], center;
   room *destroy_rp = &Rooms[roomnum];
   face *destroy_fp = &destroy_rp->faces[facenum];
   float r, g, b;
@@ -2022,7 +2022,7 @@ void DestroyLight(int roomnum, int facenum) {
   for (i = 0; i < destroy_fp->num_verts; i++)
     vecs[i] = destroy_rp->verts[destroy_fp->face_verts[i]];
 
-  float area = vm_GetCentroid(&center, vecs, destroy_fp->num_verts);
+  float area = vec::vm_GetCentroid(&center, vecs, destroy_fp->num_verts);
 
   // Get the sphere of influence of this light
   float power = rmax * area;
@@ -2060,8 +2060,8 @@ void DestroyLight(int roomnum, int facenum) {
 
     int lmw = lm_w(lmi_ptr->lm_handle);
 
-    vector subvec = center - lmi_ptr->upper_left;
-    float dist_from_plane = vm_DotProduct(&subvec, &lmi_ptr->normal);
+    simd::float3 subvec = center - lmi_ptr->upper_left;
+    float dist_from_plane = simd::dot(subvec, lmi_ptr->normal);
 
     // Check for backfaces
     if (dist_from_plane < 0)
@@ -2073,20 +2073,20 @@ void DestroyLight(int roomnum, int facenum) {
       continue;
 
     // Compute face matrix
-    matrix facematrix;
-    vector fvec = -lmi_ptr->normal;
-    vm_VectorToMatrix(&facematrix, &fvec, NULL, NULL);
+    vec::matrix facematrix;
+    simd::float3 fvec = -lmi_ptr->normal;
+    vec::vm_VectorToMatrix(&facematrix, &fvec, NULL, NULL);
 
     // Get upper left vector of face
-    vector base_vector = lmi_ptr->upper_left;
+    simd::float3 base_vector = lmi_ptr->upper_left;
 
     // Get the area of effect for this light
     float area_of_effect = (1.0 - (dist_from_plane / sphere_dist)) * sphere_dist;
-    vector touch_vector = center - (lmi_ptr->normal * dist_from_plane);
+    simd::float3 touch_vector = center - (lmi_ptr->normal * dist_from_plane);
 
     subvec = touch_vector - base_vector;
-    float rdist = vm_DotProduct(&subvec, &facematrix.rvec);
-    float udist = -vm_DotProduct(&subvec, &facematrix.uvec);
+    float rdist = simd::dot(subvec, facematrix.rvec);
+    float udist = -simd::dot(subvec, facematrix.uvec);
     int x_add = 1 + ((area_of_effect + (lmi_ptr->xspacing / 2)) / lmi_ptr->xspacing);
     int y_add = 1 + ((area_of_effect + (lmi_ptr->yspacing / 2)) / lmi_ptr->yspacing);
 
@@ -2156,7 +2156,7 @@ void DestroyLight(int roomnum, int facenum) {
     Lmi_spoken_for[fp->lmi_handle / 8] |= (1 << (fp->lmi_handle % 8));
     num_spoken_for++;
 
-    vector element_vec;
+    simd::float3 element_vec;
 
     base_vector -= (start_y * (facematrix.uvec * lmi_ptr->yspacing));
     base_vector += (start_x * (facematrix.rvec * lmi_ptr->xspacing));
@@ -2179,7 +2179,7 @@ void DestroyLight(int roomnum, int facenum) {
         if (!(lightmap_texel & OPAQUE_FLAG))
           continue;
 
-        float dist = vm_VectorDistanceQuick(&element_vec, &center);
+        float dist = vec::vm_VectorDistanceQuick(&element_vec, &center);
         float scalar = 1.0 - (dist / sphere_dist);
 
         if (scalar <= 0)

@@ -138,9 +138,9 @@ float vm_VectorNormalize(simd::float3 *a) {
 }
 
 float vm_GetMagnitude(simd::float3 *a) {
-  float f;
+  float f = simd::length_squared(*a);
 
-  f = (a->x * a->x) + (a->y * a->y) + (a->z * a->z);
+  //  f = (a->x * a->x) + (a->y * a->y) + (a->z * a->z);
 
   return (sqrt(f));
 }

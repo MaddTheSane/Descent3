@@ -547,7 +547,7 @@ void InitRoom(room *rp, int nverts, int nfaces, int nportals) {
   ASSERT(nfaces > 0);
 #endif
 
-  rp->wind = Zero_vector;
+  rp->wind = vec::Zero_vector;
 
   rp->num_faces = nfaces;
   rp->num_verts = nverts;
@@ -563,11 +563,11 @@ void InitRoom(room *rp, int nverts, int nfaces, int nportals) {
 
   rp->num_bbf_regions = 0;
 
-  rp->verts = RoomMemAlloc<vector>(nverts);
+  rp->verts = RoomMemAlloc<simd::float3>(nverts);
   ASSERT(rp->verts != NULL);
 
   if (Katmai) {
-    rp->verts4 = (vector4 *)mem_malloc(nverts * sizeof(*rp->verts4));
+    rp->verts4 = (simd::float4 *)mem_malloc(nverts * sizeof(*rp->verts4));
     ASSERT(rp->verts4 != NULL);
   }
 
@@ -632,7 +632,7 @@ void InitRoomFace(face *fp, int nverts) {
 }
 
 // Finds out if we are in a room or outside the mine (-1 if we are outside)
-int FindPointRoom(vector *pnt) {
+int FindPointRoom(simd::float3 *pnt) {
   int i;
 
   ASSERT(pnt != NULL);
@@ -758,7 +758,7 @@ void FreeRoomFace(face *fp) {
 // Finds the center point of a room
 // Parameters:	vp - filled in with the center point
 //					rp - the room whose center to find
-void ComputeRoomCenter(vector *vp, room *rp) {
+void ComputeRoomCenter(simd::float3 *vp, room *rp) {
   int i;
 
   vp->x = vp->y = vp->z = 0;
@@ -773,7 +773,7 @@ void ComputeRoomCenter(vector *vp, room *rp) {
 }
 
 // Computes the center point on a face by averaging the points in the face
-void ComputeCenterPointOnFace(vector *vp, room *rp, int facenum) {
+void ComputeCenterPointOnFace(simd::float3 *vp, room *rp, int facenum) {
   face *fp = &rp->faces[facenum];
   int i;
 
@@ -816,7 +816,7 @@ bool ComputeFaceNormal(room *rp, int facenum) {
 //					verts - the array of vertices into which the elements of vertnum_list index
 // Returns:		true if the normal is ok
 //					false if the normal has a very small (pre-normalization) magnitude
-bool ComputeNormal(vector *normal, int num_verts, short *vertnum_list, vector *verts) {
+bool ComputeNormal(simd::float3 *normal, int num_verts, short *vertnum_list, simd::float3 *verts) {
   int i;
   float largest_mag;
 
@@ -824,10 +824,10 @@ bool ComputeNormal(vector *normal, int num_verts, short *vertnum_list, vector *v
   largest_mag = 0.0;
 
   for (i = 0; i < num_verts; i++) {
-    vector tnormal;
+    simd::float3 tnormal;
     float mag;
 
-    mag = vm_GetNormal(&tnormal, &verts[vertnum_list[i]], &verts[vertnum_list[(i + 1) % num_verts]],
+    mag = vec::vm_GetNormal(&tnormal, &verts[vertnum_list[i]], &verts[vertnum_list[(i + 1) % num_verts]],
                        &verts[vertnum_list[(i + 2) % num_verts]]);
 
     if (mag > largest_mag) {
@@ -848,12 +848,12 @@ bool ComputeNormal(vector *normal, int num_verts, short *vertnum_list, vector *v
 }
 
 // Computes the center point on a face by averaging the points in the portal
-void ComputePortalCenter(vector *vp, room *rp, int portal_index) {
+void ComputePortalCenter(simd::float3 *vp, room *rp, int portal_index) {
   portal *pp = &rp->portals[portal_index];
   face *fp = &rp->faces[pp->portal_face];
   int i;
 
-  vm_MakeZero(vp);
+  vec::vm_MakeZero(vp);
 
   for (i = 0; i < fp->num_verts; i++)
     *vp += rp->verts[fp->face_verts[i]];
@@ -959,16 +959,16 @@ float GetAreaForFace(room *rp, int facenum) {
 
   face *fp = &rp->faces[facenum];
   int i;
-  vector normal;
+  simd::float3 normal;
   float area = 0;
 
-  vm_GetPerp(&normal, &rp->verts[fp->face_verts[0]], &rp->verts[fp->face_verts[1]], &rp->verts[fp->face_verts[2]]);
-  area = (vm_GetMagnitude(&normal) / 2);
+  vec::vm_GetPerp(&normal, &rp->verts[fp->face_verts[0]], &rp->verts[fp->face_verts[1]], &rp->verts[fp->face_verts[2]]);
+  area = (simd::length(normal) / 2);
 
   for (i = 2; i < fp->num_verts - 1; i++) {
-    vm_GetPerp(&normal, &rp->verts[fp->face_verts[0]], &rp->verts[fp->face_verts[i]],
+    vec::vm_GetPerp(&normal, &rp->verts[fp->face_verts[0]], &rp->verts[fp->face_verts[i]],
                &rp->verts[fp->face_verts[i + 1]]);
-    area += (vm_GetMagnitude(&normal) / 2);
+    area += (simd::length(normal) / 2);
   }
 
   return area;
@@ -977,7 +977,7 @@ float GetAreaForFace(room *rp, int facenum) {
 // Returns indeces of the two elements of points on a face to use as a 2d projection
 // Parameters:	normal - the surface normal of the face
 //					ii,jj - filled in with elements numbers (0,1, or 2)
-void GetIJ(const vector *normal, int *ii, int *jj) {
+void GetIJ(const simd::float3 *normal, int *ii, int *jj) {
 
   // To project onto 2d, find the largest element of the surface normal
   if (fabs(normal->x) > fabs(normal->y))
@@ -1026,7 +1026,7 @@ void GetIJ(const vector *normal, int *ii, int *jj) {
 //					pnt - the point we're checking
 //					rp - pointer to the room that pnt is in
 //					fp - pointer to the face that pnt is on
-void FindPointUV(float *u, float *v, const vector *pnt, const room *rp, const face *fp) {
+void FindPointUV(float *u, float *v, const simd::float3 *pnt, const room *rp, const face *fp) {
   int roomnum = ROOMNUM(rp);
   int ii, jj;
   vector vec0, vec1;
@@ -1067,7 +1067,7 @@ void FindPointUV(float *u, float *v, const vector *pnt, const room *rp, const fa
 //					rp - pointer to the room that pnt is in
 //					facenum - the face that pnt is on
 // Returns:	true if can pass through the given point, else 0
-int CheckTransparentPoint(const vector *pnt, const room *rp, const int facenum) {
+int CheckTransparentPoint(const simd::float3 *pnt, const room *rp, const int facenum) {
   int bm_handle;
   face *fp = &rp->faces[facenum];
   float u, v;
@@ -1095,11 +1095,11 @@ int CheckTransparentPoint(const vector *pnt, const room *rp, const int facenum) 
 // Parameters: center - filled in with the center point of the sphere
 //		rp - the room we're bounding
 // Returns: the radius of the bounding sphere
-float ComputeRoomBoundingSphere(vector *center, room *rp) {
+float ComputeRoomBoundingSphere(simd::float3 *center, room *rp) {
   // This algorithm is from Graphics Gems I.  There's a better algorithm in Graphics Gems III that
   // we should probably implement sometime.
 
-  vector *min_x, *max_x, *min_y, *max_y, *min_z, *max_z, *vp;
+  simd::float3 *min_x, *max_x, *min_y, *max_y, *min_z, *max_z, *vp;
   float dx, dy, dz;
   float rad, rad2;
   int i;
@@ -1340,7 +1340,7 @@ void DoRoomChangeFrame() {
 }
 
 // Sets up a room to change its fog or wind over time
-int SetRoomChangeOverTime(int roomnum, bool fog, vector *end, float depth_end, float time) {
+int SetRoomChangeOverTime(int roomnum, bool fog, simd::float3 *end, float depth_end, float time) {
   room *rp = &Rooms[roomnum];
   int index, i;
 

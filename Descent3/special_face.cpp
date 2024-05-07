@@ -65,7 +65,7 @@ int AllocSpecialFace(int type, int num, bool vertnorms, int num_vertnorms) {
   SpecialFaces[n].used = 1;
 
   if (vertnorms) {
-    SpecialFaces[n].vertnorms = (vector *)mem_malloc(num_vertnorms * sizeof(vector));
+    SpecialFaces[n].vertnorms = (simd::float3 *)mem_malloc(num_vertnorms * sizeof(simd::float3));
     ASSERT(SpecialFaces[n].vertnorms);
     SpecialFaces[n].flags |= SFF_SPEC_SMOOTH;
   }

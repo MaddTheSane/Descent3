@@ -250,7 +250,7 @@ void vec::vm_CrossProduct(simd::float3 *dest, simd::float3 *u, simd::float3 *v) 
 float vec::vm_NormalizeVector(simd::float3 *a) {
   float mag;
 
-  mag = vm_GetMagnitude(a);
+  mag = simd::length(*a);
 
   if (mag > 0)
     *a /= mag;
@@ -263,13 +263,12 @@ float vec::vm_NormalizeVector(simd::float3 *a) {
   return mag;
 }
 
-// TODO: find libsimd replacement!
 float vec::vm_GetMagnitude(simd::float3 *a) {
-  float f;
+  float f = simd::length_squared(*a);
 
-  f = (a->x * a->x) + (a->y * a->y) + (a->z * a->z);
+  //  f = (a->x * a->x) + (a->y * a->y) + (a->z * a->z);
 
-  return (sqrt(f));
+  return (std::sqrt(f));
 }
 
 void vec::vm_ClearMatrix(vec::matrix *dest) { memset(dest, 0, sizeof(matrix)); }

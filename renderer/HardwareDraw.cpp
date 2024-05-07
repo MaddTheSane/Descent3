@@ -271,7 +271,8 @@ void g3_DrawBitmap(simd::float3 *pos, float width, float height, int bm, int col
     float cornerScaleV = (i & 2) ? 1.0f : -1.0f;
 
     // find the point (parallel to the view frame)
-    simd::float3 cornerPos = *pos + (viewOrient.uvec * (height * -cornerScaleV)) + (viewOrient.rvec * (width * cornerScaleU));
+    simd::float3 cornerPos =
+        *pos + (viewOrient.uvec * (height * -cornerScaleV)) + (viewOrient.rvec * (width * cornerScaleU));
     corners[i].p3_codes = 0;
     g3_RotatePoint(pts[i], &cornerPos);
 
@@ -351,7 +352,8 @@ void g3_DrawRotatedBitmap(simd::float3 *pos, vec::angle rot_angle, float width, 
 }
 
 // Draws a bitmap on a specific plane.  Also does rotation.  Angle of rotation is passed as 'rot_angle'
-void g3_DrawPlanarRotatedBitmap(simd::float3 *pos, simd::float3 *norm, vec::angle rot_angle, float width, float height, int bm) {
+void g3_DrawPlanarRotatedBitmap(simd::float3 *pos, simd::float3 *norm, vec::angle rot_angle, float width, float height,
+                                int bm) {
   vec::matrix rot_matrix;
   vm_VectorToMatrix(&rot_matrix, norm, NULL, NULL);
   vm_TransposeMatrix(&rot_matrix);

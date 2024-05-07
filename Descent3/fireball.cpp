@@ -723,7 +723,7 @@ void DrawFireballObject(object *obj) {
   }
   if (obj->id == GRAVITY_FIELD_INDEX) {
     // Draw two blast rings
-    matrix tempm;
+    vec::matrix tempm;
     vm_MakeIdentity(&tempm);
     ObjSetOrient(obj, &tempm);
     DrawBlastRingObject(obj);
@@ -821,7 +821,7 @@ void DrawFireballObject(object *obj) {
   rend_SetZBufferWriteMask(1);
 }
 // Creates a gravity field that sucks objects into it
-int CreateGravityField(vector *pos, int roomnum, float size, float time, int parent_handle) {
+int CreateGravityField(simd::float3 *pos, int roomnum, float size, float time, int parent_handle) {
   int index = CreateFireball(pos, GRAVITY_FIELD_INDEX, roomnum, REAL_FIREBALL);
   if (index < 0)
     return -1;
@@ -836,7 +836,7 @@ int CreateGravityField(vector *pos, int roomnum, float size, float time, int par
   return index;
 }
 // Creates a fireball and then sets its size
-int CreateFireball(vector *pos, int fireball_num, int roomnum, int realtype) {
+int CreateFireball(simd::float3 *pos, int fireball_num, int roomnum, int realtype) {
   int objnum;
 
   ASSERT(roomnum != -1);
@@ -859,7 +859,7 @@ int CreateFireball(vector *pos, int fireball_num, int roomnum, int realtype) {
 }
 // TODO: MTS: used only in this file.
 // Creates a fireball object with a custom texture/vclip
-int CreateCustomFireballObject(vector *pos, int fireball_num, int tex_handle, int roomnum) {
+int CreateCustomFireballObject(simd::float3 *pos, int fireball_num, int tex_handle, int roomnum) {
   int objnum;
   ASSERT(GameTextures[tex_handle].used >= 1);
 
@@ -890,7 +890,7 @@ int CreateCustomFireballObject(vector *pos, int fireball_num, int tex_handle, in
 // Putting in some explosion stuff
 //----------------------------------
 // Creates a debris piece that goes off in a given direction, with a given magnitude
-object *CreateSubobjectDebrisDirected(object *parent, int subobj_num, vector *dir, float explosion_mag,
+object *CreateSubobjectDebrisDirected(object *parent, int subobj_num, simd::float3 *dir, float explosion_mag,
                                       int death_flags) {
   int objnum;
   object *obj;
@@ -928,7 +928,7 @@ object *CreateSubobjectDebrisDirected(object *parent, int subobj_num, vector *di
   if (obj->mtype.phys_info.velocity.z < -100000.0f)
     obj->mtype.phys_info.velocity.z = -100000.0f;
   obj->mtype.phys_info.rotvel = parent->mtype.phys_info.rotvel;
-  vm_MakeZero(&obj->mtype.phys_info.rotthrust);
+  vec::vm_MakeZero(&obj->mtype.phys_info.rotthrust);
   obj->size = Poly_models[obj->rtype.pobj_info.model_num].submodel[subobj_num].rad * 0.5;
   obj->mtype.phys_info.mass = 40.0;
   obj->mtype.phys_info.drag = .001f;
@@ -957,13 +957,13 @@ object *CreateSubobjectDebrisDirected(object *parent, int subobj_num, vector *di
 }
 // Creates a subobject debris piece that goes off in a random direction
 object *CreateSubobjectDebris(object *parent, int subobj_num, float explosion_mag, int death_flags) {
-  vector rand_vec;
+  simd::float3 rand_vec;
   // Set physics data for this object
   rand_vec.x = (float)(D3_RAND_MAX / 2 - ps_rand());
   rand_vec.y = (float)(D3_RAND_MAX / 2 - ps_rand()) + .2f * D3_RAND_MAX; // a habit of moving upwards
   rand_vec.z = (float)(D3_RAND_MAX / 2 - ps_rand());
 
-  vm_NormalizeVectorFast(&rand_vec);
+  vec::vm_NormalizeVectorFast(&rand_vec);
   explosion_mag *= 1.0f + ((float)(D3_RAND_MAX / 2 - ps_rand()) / (float)(D3_RAND_MAX / 2) * 0.05); // +5/-5 percent
   return CreateSubobjectDebrisDirected(parent, subobj_num, &rand_vec, explosion_mag, death_flags);
 }
@@ -980,7 +980,7 @@ void CreateExtraFireballs(object *obj, float size_scale) {
   extras = std::min(12, extras);
   CreateRandomSparks(extras, &obj->pos, obj->roomnum);
   for (i = 0; i < extras; i++) {
-    vector pos = obj->pos;
+    simd::float3 pos = obj->pos;
     float vals[10], add_time;
     float upwards;
     // Make this a billowing explosion
@@ -1040,13 +1040,13 @@ void BreakApartModel(object *obj, float explosion_mag, int death_flags) {
 void CreateSplintersFromBody(object *obj, float explosion_mag, float lifetime) {
   ASSERT(obj->flags & OF_POLYGON_OBJECT);
   int facenums[MAX_SPLINTERS_PER_OBJECT];
-  vector rot_vecs[MAX_SUBOBJECTS];
+  simd::float3 rot_vecs[MAX_SUBOBJECTS];
   int num_splinters = 0;
   int i, t;
   int parent_objnum = obj - Objects;
-  matrix m;
+  vec::matrix m;
   m = obj->orient;
-  vm_TransposeMatrix(&m);
+  vec::vm_TransposeMatrix(&m);
   poly_model *pm = &Poly_models[obj->rtype.pobj_info.model_num];
   // If submodel 0 not renderable, bail
   if (IsNonRenderableSubmodel(pm, 0))
@@ -1067,15 +1067,15 @@ void CreateSplintersFromBody(object *obj, float explosion_mag, float lifetime) {
   // Now, create those splinters!
   for (i = 0; i < num_splinters; i++) {
     int facenum = facenums[i];
-    vector dest, center;
+    simd::float3 dest, center;
     int num_verts = std::min<float>(sm->faces[facenum].nverts, MAX_VERTS_PER_SPLINTER);
 
-    vm_MakeZero(&dest);
-    vm_MakeZero(&center);
+    vec::vm_MakeZero(&dest);
+    vec::vm_MakeZero(&center);
     // First get the center of this particular face
     for (t = 0; t < num_verts; t++) {
-      vector pnt = sm->verts[sm->faces[facenum].vertnums[t]];
-      vector temp_vec;
+      simd::float3 pnt = sm->verts[sm->faces[facenum].vertnums[t]];
+      simd::float3 temp_vec;
 
       temp_vec = pnt * m;
       rot_vecs[t] = temp_vec;
@@ -1099,9 +1099,9 @@ void CreateSplintersFromBody(object *obj, float explosion_mag, float lifetime) {
       for (t = 0; t < num_verts; t++)
         splinter_obj->ctype.splinter_info.verts[t] = (rot_vecs[t]) - center;
       splinter_obj->ctype.splinter_info.center = center;
-      vector subvec = dest - obj->pos;
-      vm_NormalizeVector(&subvec);
-      ObjSetOrient(splinter_obj, &Identity_matrix);
+      simd::float3 subvec = dest - obj->pos;
+      vec::vm_NormalizeVector(&subvec);
+      ObjSetOrient(splinter_obj, &vec::Identity_matrix);
       splinter_obj->mtype.phys_info.velocity =
           (obj->mtype.phys_info.velocity) + (((subvec * obj->size) / lifetime) * 4);
       splinter_obj->mtype.phys_info.flags |= PF_FIXED_ROT_VELOCITY;
@@ -1110,7 +1110,7 @@ void CreateSplintersFromBody(object *obj, float explosion_mag, float lifetime) {
       splinter_obj->mtype.phys_info.velocity *= 1.0 + ((((ps_rand() % 100) - 50) / 50.0) * .2);
       splinter_obj->mtype.phys_info.rotvel *= 1.0 + ((((ps_rand() % 100) - 50) / 50.0) * .2);
 
-      vm_MakeZero(&splinter_obj->mtype.phys_info.rotthrust);
+      vec::vm_MakeZero(&splinter_obj->mtype.phys_info.rotthrust);
       splinter_obj->size = .5f;
       splinter_obj->mtype.phys_info.mass = 2500.0f;
       splinter_obj->mtype.phys_info.drag = .01f;
@@ -1329,7 +1329,7 @@ void CreateDeadObject(object *objp) {
       if (stricmp(Object_info[objp->id].name, dead_object_types[i * 2]) == 0) {
         int id = FindObjectIDName(dead_object_types[i * 2 + 1]);
         if (id != -1) {
-          vector old_point, pos;
+          simd::float3 old_point, pos;
           PhysCalcGround(&old_point, NULL, objp, 0); // Old ground point
           poly_model *pm = GetPolymodelPointer(Object_info[id].render_handle);
           pos = old_point - pm->ground_slots[0].pnt * ~objp->orient;
@@ -1353,7 +1353,7 @@ void DestroyObject(object *objp, float explosion_mag, int death_flags) {
   if ((death_flags & DF_FIREBALL) || (death_flags & DF_BREAKS_APART)) {
     // Shake the player.  The odd magnitude is from Jason's old code.
     // maybe it would make more sense to base the shake on the explosion size
-    float dist = vm_VectorDistanceQuick(&Player_object->pos, &objp->pos);
+    float dist = vec::vm_VectorDistanceQuick(&Player_object->pos, &objp->pos);
     if (dist / objp->size < 30.0)
       AddToShakeMagnitude(objp->size * 5.0 - dist / 6.0);
     // Do a shockwave
@@ -1464,9 +1464,9 @@ void DoDyingFrame(object *objp) {
   }
   // If fireball death, do fireballs
   if (death_flags & DF_DELAY_FIREBALL) {
-    vector velocity_norm = objp->mtype.phys_info.velocity;
-    vm_NormalizeVector(&velocity_norm);
-    vector pos = objp->pos - (velocity_norm * (objp->size / 2));
+    simd::float3 velocity_norm = objp->mtype.phys_info.velocity;
+    vec::vm_NormalizeVector(&velocity_norm);
+    simd::float3 pos = objp->pos - (velocity_norm * (objp->size / 2));
     if (OBJECT_OUTSIDE(objp))
       CreateFireball(&pos, BLACK_SMOKE_INDEX, objp->roomnum, VISUAL_FIREBALL);
     // Create an explosion that follows every now and then
@@ -1474,7 +1474,7 @@ void DoDyingFrame(object *objp) {
       if (!(objp->flags & OF_POLYGON_OBJECT))
         return;
       objp->ctype.dying_info.last_fireball_time = Gametime;
-      vector dest;
+      simd::float3 dest;
       poly_model *pm = &Poly_models[objp->rtype.pobj_info.model_num];
       bsp_info *sm = &pm->submodel[0];
       int vertnum = ps_rand() % sm->nverts;
@@ -1511,7 +1511,7 @@ void DoGravityFieldEffect(object *obj) {
   float max_size = obj->ctype.blast_info.max_size;
   float lifenorm = (obj->lifetime - obj->lifeleft) / obj->lifetime;
   float dist, force;
-  vector vforce;
+  simd::float3 vforce;
   int i;
   object *hit_obj_ptr;
   float time_norm = 1.0 - (obj->lifeleft / obj->lifetime);
@@ -1520,7 +1520,7 @@ void DoGravityFieldEffect(object *obj) {
   if (sphere_norm < 0)
     sphere_norm = 0;
   SetShakeMagnitude(25);
-  float vdist = vm_VectorDistanceQuick(&Viewer_object->pos, &obj->pos);
+  float vdist = vec::vm_VectorDistanceQuick(&Viewer_object->pos, &obj->pos);
   CreateRandomSparks(3, &obj->pos, obj->roomnum, -1, 2);
 
   if (!(obj->flags & OF_SERVER_SAYS_DELETE)) {
@@ -1562,13 +1562,13 @@ void DoGravityFieldEffect(object *obj) {
       // Cast 3 rays out from the center
       for (i = 0; i < 3; i++) {
       again:
-        vector rand_vector, test_vector;
+        simd::float3 rand_vector, test_vector;
         rand_vector.x = ((ps_rand() % 100 - 50) / 50.0) + .1; // So we don't get a zero vector
         rand_vector.y = ((ps_rand() % 100) - 50) / 50.0;
         rand_vector.z = ((ps_rand() % 100) - 50) / 50.0;
-        vm_NormalizeVector(&rand_vector);
+        vec::vm_NormalizeVector(&rand_vector);
         test_vector = obj->pos + (rand_vector * 1000);
-        vector dest_pos;
+        simd::float3 dest_pos;
         int dest_room;
         fvi_query fq;
         fvi_info hit_info;
@@ -1585,7 +1585,7 @@ void DoGravityFieldEffect(object *obj) {
         dest_pos = hit_info.hit_pnt;
         dest_room = hit_info.hit_room;
         if (count < 5) {
-          if (vm_VectorDistance(&obj->pos, &dest_pos) < 2) {
+          if (simd::distance(obj->pos, dest_pos) < 2) {
             count++;
             goto again;
           } else
@@ -1649,11 +1649,12 @@ void DoGravityFieldEffect(object *obj) {
     // The distance is actually the objects' centers minus some of the hit object's radius (I set it to 80%)
     if ((hit_obj_ptr->flags & OF_POLYGON_OBJECT) && hit_obj_ptr->type != OBJ_WEAPON &&
         hit_obj_ptr->type != OBJ_POWERUP && hit_obj_ptr->type != OBJ_DEBRIS) {
-      vector pos;
+      simd::float3 pos;
       pos = hit_obj_ptr->pos + hit_obj_ptr->wall_sphere_offset;
-      dist = vm_VectorDistanceQuick(&pos, &obj->pos) - Poly_models[hit_obj_ptr->rtype.pobj_info.model_num].wall_size;
+      dist =
+          vec::vm_VectorDistanceQuick(&pos, &obj->pos) - Poly_models[hit_obj_ptr->rtype.pobj_info.model_num].wall_size;
     } else {
-      dist = vm_VectorDistanceQuick(&hit_obj_ptr->pos, &obj->pos) - hit_obj_ptr->size;
+      dist = vec::vm_VectorDistanceQuick(&hit_obj_ptr->pos, &obj->pos) - hit_obj_ptr->size;
     }
 
     if (dist < 0.0f)
@@ -1667,7 +1668,7 @@ void DoGravityFieldEffect(object *obj) {
         force = 500;
 
       // Find the force vector on the object
-      vm_GetNormalizedDirFast(&vforce, &hit_obj_ptr->pos, &obj->pos);
+      vec::vm_GetNormalizedDirFast(&vforce, &hit_obj_ptr->pos, &obj->pos);
       vforce *= (-force); // Sucking vector
       if (hit_obj_ptr->mtype.phys_info.mass > 1)
         vforce *= (hit_obj_ptr->mtype.phys_info.mass * 5);
@@ -1718,7 +1719,7 @@ void DoExplosionFrame(object *obj) {
 
       //	Blow the damn thing up and register a kill.
 
-      float mag = vm_VectorDistanceQuick(&obj->pos, &Player_object->pos);
+      float mag = vec::vm_VectorDistanceQuick(&obj->pos, &Player_object->pos);
       if (mag > obj->ctype.blast_info.max_size)
         mag = 0;
       else
@@ -1811,7 +1812,7 @@ void DoConcussiveForce(object *explode_obj_ptr, int parent_handle, float player_
     return;
   {
     float dist, force;
-    vector vforce;
+    simd::float3 vforce;
     float damage;
     int i;
     object *hit_obj_ptr;
@@ -1844,12 +1845,12 @@ void DoConcussiveForce(object *explode_obj_ptr, int parent_handle, float player_
         // The distance is actually the objects' centers minus some of the hit object's radius (I set it to 80%)
         if ((hit_obj_ptr->flags & OF_POLYGON_OBJECT) && hit_obj_ptr->type != OBJ_WEAPON &&
             hit_obj_ptr->type != OBJ_POWERUP && hit_obj_ptr->type != OBJ_DEBRIS) {
-          vector pos;
+          simd::float3 pos;
           pos = hit_obj_ptr->pos + hit_obj_ptr->wall_sphere_offset;
-          dist = vm_VectorDistanceQuick(&pos, &explode_obj_ptr->pos) -
+          dist = vec::vm_VectorDistanceQuick(&pos, &explode_obj_ptr->pos) -
                  Poly_models[hit_obj_ptr->rtype.pobj_info.model_num].wall_size;
         } else {
-          dist = vm_VectorDistanceQuick(&hit_obj_ptr->pos, &explode_obj_ptr->pos) - hit_obj_ptr->size;
+          dist = vec::vm_VectorDistanceQuick(&hit_obj_ptr->pos, &explode_obj_ptr->pos) - hit_obj_ptr->size;
         }
 
         if (dist < 0.0f)
@@ -1874,9 +1875,9 @@ void DoConcussiveForce(object *explode_obj_ptr, int parent_handle, float player_
               if (!BOA_IsVisible(hit_obj_ptr->roomnum, explode_obj_ptr->roomnum)) {
                 continue;
               }
-              vector subvec = hit_obj_ptr->pos - explode_obj_ptr->pos;
-              vm_NormalizeVectorFast(&subvec);
-              vector hitvec = (explode_obj_ptr->pos + (subvec * .05f));
+              simd::float3 subvec = hit_obj_ptr->pos - explode_obj_ptr->pos;
+              vec::vm_NormalizeVectorFast(&subvec);
+              simd::float3 hitvec = (explode_obj_ptr->pos + (subvec * .05f));
               fq.p0 = &hitvec;
               fq.p1 = &hit_obj_ptr->pos;
               fq.startroom = explode_obj_ptr->roomnum;
@@ -1897,7 +1898,7 @@ void DoConcussiveForce(object *explode_obj_ptr, int parent_handle, float player_
 
             force = maxforce - (dist / maxdistance) * maxforce;
             // Find the force vector on the object
-            vm_GetNormalizedDirFast(&vforce, &hit_obj_ptr->pos, &explode_obj_ptr->pos);
+            vec::vm_GetNormalizedDirFast(&vforce, &hit_obj_ptr->pos, &explode_obj_ptr->pos);
             vforce *= force;
 
             if (hit_obj_ptr->type == OBJ_CLUTTER) // Reduces the ping pong effect
@@ -1916,8 +1917,8 @@ void DoConcussiveForce(object *explode_obj_ptr, int parent_handle, float player_
                 //	 shake player cockpit if damage is pretty bad.
                 if (hit_obj_ptr->id == Player_num) {
                   float mag = damage / 200.0f;
-                  vector vec = vforce;
-                  vm_NormalizeVector(&vec);
+                  simd::float3 vec = vforce;
+                  vec::vm_NormalizeVector(&vec);
                   StartCockpitShake(mag, &vec);
                 }
               } else if (IS_GENERIC(hit_obj_ptr->type) || (hit_obj_ptr->type == OBJ_DOOR)) {
@@ -1932,7 +1933,7 @@ void DoConcussiveForce(object *explode_obj_ptr, int parent_handle, float player_
   } // end if (maxdamage...
   //	return obj;
 }
-void CreateBlueBlastRing(vector *pos, int index, float lifetime, float max_size, int roomnum, int objnum,
+void CreateBlueBlastRing(simd::float3 *pos, int index, float lifetime, float max_size, int roomnum, int objnum,
                          int force_up) {
   if (!Viewer_object)
     return;
@@ -1948,21 +1949,21 @@ void CreateBlueBlastRing(vector *pos, int index, float lifetime, float max_size,
     Objects[objnum].flags |= OF_USES_LIFELEFT;
     Objects[objnum].ctype.blast_info.max_size = max_size;
   }
-  matrix tempm;
+  vec::matrix tempm;
   // Point straight up
 
   if (ps_rand() % 2 || force_up) {
-    memset(&tempm, 0, sizeof(matrix));
+    memset(&tempm, 0, sizeof(vec::matrix));
     tempm.rvec.x = 1.0;
     tempm.uvec.z = -1.0;
     tempm.fvec.y = 1.0;
   } else {
     // Face the viewer
-    vector fvec = Viewer_object->pos - *pos;
-    vm_NormalizeVectorFast(&fvec);
-    if (vm_GetMagnitudeFast(&fvec) < .5)
+    simd::float3 fvec = Viewer_object->pos - *pos;
+    vec::vm_NormalizeVectorFast(&fvec);
+    if (vec::vm_GetMagnitudeFast(&fvec) < .5)
       return;
-    vm_VectorToMatrix(&tempm, &fvec, NULL, NULL);
+    vec::vm_VectorToMatrix(&tempm, &fvec, NULL, NULL);
   }
   ObjSetOrient(&Objects[objnum], &tempm);
   Objects[objnum].lifeleft = lifetime / 2;
@@ -1970,7 +1971,7 @@ void CreateBlueBlastRing(vector *pos, int index, float lifetime, float max_size,
   Objects[objnum].ctype.blast_info.bm_handle = Fireballs[BLUE_BLAST_RING_INDEX].bm_handle;
 }
 // Creates a blast ring to be drawn
-int CreateBlastRing(vector *pos, int index, float lifetime, float max_size, int roomnum, int force_blue) {
+int CreateBlastRing(simd::float3 *pos, int index, float lifetime, float max_size, int roomnum, int force_blue) {
   int objnum;
   float vals[4];
   fvi_info hit_info;
@@ -2007,7 +2008,7 @@ int CreateBlastRing(vector *pos, int index, float lifetime, float max_size, int 
   Objects[objnum].ctype.blast_info.max_size = max_size;
   Objects[objnum].ctype.blast_info.bm_handle = Fireballs[index].bm_handle;
   if ((ps_rand() % 2)) {
-    ObjSetOrient(&Objects[objnum], &Identity_matrix);
+    ObjSetOrient(&Objects[objnum], &vec::Identity_matrix);
     if ((ps_rand() % 3) == 0 || force_blue)
       CreateBlueBlastRing(pos, index, lifetime, max_size, roomnum, -1, force_blue);
   } else
@@ -2023,9 +2024,9 @@ int CreateObjectBlastRing(object *objp) {
 }
 // TODO: MTS: Not used?
 // Creates a smolding smoke to be drawn
-int CreateSmolderingObject(vector *pos, int index, float lifetime, float max_size, int roomnum) {
+int CreateSmolderingObject(simd::float3 *pos, int index, float lifetime, float max_size, int roomnum) {
   int objnum;
-  vector new_pos = *pos;
+  simd::float3 new_pos = *pos;
   new_pos.y = GetTerrainGroundPoint(&new_pos);
 
   objnum = ObjCreate(OBJ_FIREBALL, index, roomnum, &new_pos, NULL);
@@ -2041,7 +2042,7 @@ int CreateSmolderingObject(vector *pos, int index, float lifetime, float max_siz
   return objnum;
 }
 // Draws a colored alpha disk...useful for cool lighting effects
-void DrawColoredDisk(vector *pos, float r, float g, float b, float inner_alpha, float outer_alpha, float size,
+void DrawColoredDisk(simd::float3 *pos, float r, float g, float b, float inner_alpha, float outer_alpha, float size,
                      uint8_t saturate, uint8_t lod) {
   rend_SetZBufferWriteMask(0);
   DrawColoredRing(pos, r, g, b, inner_alpha, outer_alpha, size, 0, saturate, lod);
@@ -2049,7 +2050,7 @@ void DrawColoredDisk(vector *pos, float r, float g, float b, float inner_alpha, 
 }
 // TODO: MTS: Not used?
 // Draws a glowing cone of light using a bitmap
-void DrawColoredGlow(vector *pos, float r, float g, float b, float size) {
+void DrawColoredGlow(simd::float3 *pos, float r, float g, float b, float size) {
   rend_SetTextureType(TT_LINEAR);
   rend_SetAlphaType(AT_SATURATE_TEXTURE);
   rend_SetLighting(LS_GOURAUD);
@@ -2060,9 +2061,9 @@ void DrawColoredGlow(vector *pos, float r, float g, float b, float size) {
 }
 
 // Draws a colored alpha ring...useful for cool lighting effects
-void DrawColoredRing(vector *pos, float r, float g, float b, float inner_alpha, float outer_alpha, float size,
+void DrawColoredRing(simd::float3 *pos, float r, float g, float b, float inner_alpha, float outer_alpha, float size,
                      float inner_ring_ratio, uint8_t saturate, uint8_t lod) {
-  static vector circleVecs[3][32];
+  static simd::float3 circleVecs[3][32];
   static int lodSegments[3] = {32, 16, 8};
   static bool firstCall = true;
 
@@ -2098,7 +2099,7 @@ void DrawColoredRing(vector *pos, float r, float g, float b, float inner_alpha, 
   int i, numSegments = lodSegments[lod];
 
   // get the view matrix
-  matrix viewOrient;
+  vec::matrix viewOrient;
   g3_GetUnscaledMatrix(&viewOrient);
   viewOrient = ~viewOrient;
 
@@ -2107,9 +2108,9 @@ void DrawColoredRing(vector *pos, float r, float g, float b, float inner_alpha, 
   float innerRingSize = size * inner_ring_ratio;
   float outerRingSize = size;
   for (i = 0; i < numSegments; ++i) {
-    vector worldSpaceCircleVec = circleVecs[lod][i] * viewOrient;
-    vector innerPos = (*pos) + (worldSpaceCircleVec * innerRingSize);
-    vector outerPos = (*pos) + (worldSpaceCircleVec * outerRingSize);
+    simd::float3 worldSpaceCircleVec = circleVecs[lod][i] * viewOrient;
+    simd::float3 innerPos = (*pos) + (worldSpaceCircleVec * innerRingSize);
+    simd::float3 outerPos = (*pos) + (worldSpaceCircleVec * outerRingSize);
 
     g3_RotatePoint(&innerPoints[i], &innerPos);
     innerPoints[i].p3_flags |= PF_RGBA;
@@ -2140,8 +2141,8 @@ void DrawColoredRing(vector *pos, float r, float g, float b, float inner_alpha, 
 
 // TODO: MTS: not used?
 // Draws a sphere with the appropriate texture.  If texture=-1, then uses rgb as colors
-void DrawSphere(vector *pos, float r, float g, float b, float alpha, float size, int texture, uint8_t saturate) {
-  static vector sphere_vecs[16][16];
+void DrawSphere(simd::float3 *pos, float r, float g, float b, float alpha, float size, int texture, uint8_t saturate) {
+  static simd::float3 sphere_vecs[16][16];
   static int first = 1;
   g3Point sphere_points[16][16], *pntlist[4], draw_points[4];
   int bm_handle = -1;
@@ -2157,12 +2158,12 @@ void DrawSphere(vector *pos, float r, float g, float b, float alpha, float size,
     int increment = 65536 / 16;
     for (i = 0; i < 16; i++) {
       for (t = 0; t < 16; t++) {
-        matrix tempm;
+        vec::matrix tempm;
         angle pitch, heading;
         pitch = i * increment;
         heading = t * increment;
 
-        vm_AnglesToMatrix(&tempm, pitch, heading, 0);
+        vec::vm_AnglesToMatrix(&tempm, pitch, heading, 0);
         sphere_vecs[i][t] = tempm.fvec;
       }
     }
@@ -2197,7 +2198,7 @@ void DrawSphere(vector *pos, float r, float g, float b, float alpha, float size,
 
   for (i = 0; i < 16; i++) {
     for (t = 0; t < 16; t++) {
-      vector temp_vec = *pos + (sphere_vecs[i][t] * size);
+      simd::float3 temp_vec = *pos + (sphere_vecs[i][t] * size);
       g3_RotatePoint(&sphere_points[i][t], &temp_vec);
     }
   }
@@ -2224,7 +2225,7 @@ void DrawSphere(vector *pos, float r, float g, float b, float alpha, float size,
 // TODO: MTS: only used in this file.
 //  Draws a blast ring
 void DrawBlastRingObject(object *obj) {
-  vector inner_vecs[30], outer_vecs[30];
+  simd::float3 inner_vecs[30], outer_vecs[30];
   g3Point inner_points[30], outer_points[30];
   float lifenorm = (obj->lifetime - obj->lifeleft) / obj->lifetime;
   float cur_size = lifenorm * obj->ctype.blast_info.max_size;
@@ -2346,7 +2347,7 @@ void DoBlastRingEvent(int eventnum, void *data) {
 //  Creates an explosion
 void DoExplosionEvent(int eventnum, void *data) {
   float *vals = (float *)data;
-  vector pos;
+  simd::float3 pos;
   int fireball_num, roomnum;
   float size;
   float upwards_velocity;
@@ -2360,8 +2361,8 @@ void DoExplosionEvent(int eventnum, void *data) {
   upwards_velocity = vals[6];
   int visnum = CreateFireball(&pos, fireball_num, roomnum, VISUAL_FIREBALL);
   if (visnum >= 0) {
-    vector zero_vec = {0, 0, 0};
-    matrix id_mat = Identity_matrix;
+    simd::float3 zero_vec = {0, 0, 0};
+    vec::matrix id_mat = vec::Identity_matrix;
 
     sound_pos.position = &pos;
     sound_pos.roomnum = roomnum;
@@ -2415,9 +2416,9 @@ int GetRandomBillowingExplosion() {
   return (choices[pick]);
 }
 void DrawSmolderingObject(object *obj) {
-  vector veca;
-  angvec angs;
-  vector world_verts[4];
+  simd::float3 veca;
+  vec::angvec angs;
+  simd::float3 world_verts[4];
   g3Point pnts[4], *pntlist[4];
   if (!Viewer_object)
     return;
@@ -2455,27 +2456,27 @@ void DrawSmolderingObject(object *obj) {
   g3_DrawPoly(4, pntlist, bm_handle);
 }
 // Creates end points that simulate lightning
-void CreateLightningRodPositions(vector *src, vector *dest, vector *world_vecs, int num_segments, float rand_mag,
-                                 bool do_flat) {
-  vector delta_vec = *dest - *src;
-  matrix mat;
+void CreateLightningRodPositions(simd::float3 *src, simd::float3 *dest, simd::float3 *world_vecs, int num_segments,
+                                 float rand_mag, bool do_flat) {
+  simd::float3 delta_vec = *dest - *src;
+  vec::matrix mat;
 
   // Setup some interpolants
-  float mag = vm_GetMagnitudeFast(&delta_vec);
+  float mag = vec::vm_GetMagnitudeFast(&delta_vec);
   float delta_dist = mag / num_segments;
   delta_vec /= mag;
   // Create matrix for randomization
   vm_VectorToMatrix(&mat, &delta_vec, NULL, NULL);
 
-  vector cur_pos = *src;
+  simd::float3 cur_pos = *src;
 
-  vector from = cur_pos;
+  simd::float3 from = cur_pos;
   world_vecs[0] = from;
   world_vecs[num_segments - 1] = *dest;
   // Create the points
   for (int i = 1; i < num_segments - 1; i++, cur_pos += (delta_vec * delta_dist)) {
-    vector to = cur_pos + (delta_vec * delta_dist);
-    // vector to=world_vecs[i-1]+(delta_vec*delta_dist);
+    simd::float3 to = cur_pos + (delta_vec * delta_dist);
+    // simd::float3 to=world_vecs[i-1]+(delta_vec*delta_dist);
     to += mat.rvec * ((((ps_rand() % 200) - 100) / 100.0) * rand_mag);
     if (!do_flat)
       to += mat.uvec * ((((ps_rand() % 200) - 100) / 100.0) * rand_mag);

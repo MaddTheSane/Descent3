@@ -84,7 +84,7 @@ static struct {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void GetCenterPoint(int *x, int *y, vector *wpos);
+void GetCenterPoint(int *x, int *y, simd::float3 *wpos);
 
 void NewPyroInitGauges() {
   int texhandle;
@@ -423,7 +423,7 @@ void NewPyroSecondaryWeaponGauge(tGauge *gauge, tGaugePos *pos) {
 //////////////////////////////////////////////////////////////////////////////////////////
 
 //	This function will return the center point of a flat face in global screen coordinates
-void GetCenterPoint(int *x, int *y, vector *wpos) {
+void GetCenterPoint(int *x, int *y, simd::float3 *wpos) {
   g3Point pt;
 
   g3_RotatePoint(&pt, wpos);

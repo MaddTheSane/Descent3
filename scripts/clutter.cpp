@@ -98,7 +98,7 @@ public:
 };
 
 struct tTNTHighYield {
-  vector last_vel;
+  simd::float3 last_vel;
   float lifetime;
 };
 class TNTHighYield : public ClutterScript {
@@ -293,7 +293,7 @@ int GetObjectID(int object) {
 int16_t FragCrate::CallEvent(int event, tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_DESTROY:
-    vector pos;
+    simd::float3 pos;
     float mag;
     int weapon_id;
     int handle;
@@ -314,13 +314,13 @@ int16_t FragCrate::CallEvent(int event, tOSIRISEventInfo *data) {
 int16_t NapalmBarrel::CallEvent(int event, tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_DESTROY:
-    vector pos;
+    simd::float3 pos;
     float mag;
     int weapon_id;
     int handle;
     int i;
     int room;
-    matrix o, orient;
+    vec::matrix o, orient;
 
     Obj_Value(data->me_handle, VF_GET, OBJV_M_ORIENT, &o);
     Obj_Value(data->me_handle, VF_GET, OBJV_I_ROOMNUM, &room);
@@ -336,7 +336,7 @@ int16_t NapalmBarrel::CallEvent(int event, tOSIRISEventInfo *data) {
     handle = Obj_Create(OBJ_WEAPON, weapon_id, room, &pos, &orient, data->me_handle);
 
     // Set direction
-    vector v;
+    simd::float3 v;
     float amount_r, amount_u;
     amount_r = (float(rand()) - float(RAND_MAX) / 2.0f) / float(RAND_MAX);
     amount_u = (float(rand()) - float(RAND_MAX) / 2.0f) / float(RAND_MAX);
@@ -355,7 +355,7 @@ int16_t AliencuplinkScript::CallEvent(int event, tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AI_INIT:
     int handle, id, room;
-    vector pos;
+    simd::float3 pos;
     id = Obj_FindID("Aliencuplinkhousing");
 
     if (id != -1) {
@@ -411,7 +411,7 @@ int16_t TNTMedYield::CallEvent(int event, tOSIRISEventInfo *data) {
   } break;
 
   case EVT_INTERVAL: {
-    vector vel;
+    simd::float3 vel;
     float vel_val;
     float last_vel;
     float delta_vel;
@@ -454,7 +454,7 @@ int16_t TNTHighYield::CallEvent(int event, tOSIRISEventInfo *data) {
     ch.my_id.objhandle = data->me_handle;
 
     memory = (tTNTHighYield *)Scrpt_MemAlloc(&ch);
-    vm_MakeZero(&memory->last_vel);
+    vec::vm_MakeZero(&memory->last_vel);
     memory->lifetime = 0;
 
   } break;
@@ -464,8 +464,8 @@ int16_t TNTHighYield::CallEvent(int event, tOSIRISEventInfo *data) {
   } break;
 
   case EVT_INTERVAL: {
-    vector vel;
-    vector diff_vel;
+    simd::float3 vel;
+    simd::float3 diff_vel;
     float vel_val;
     float delta_vel;
     float frametime;
@@ -512,7 +512,7 @@ int16_t TNTHighYield::CallEvent(int event, tOSIRISEventInfo *data) {
     int roomnum;
     int rockpile_id;
     float amount;
-    vector pos;
+    simd::float3 pos;
 
     Obj_Value(data->me_handle, VF_GET, OBJV_I_ROOMNUM, &roomnum);
     Obj_Value(data->me_handle, VF_GET, OBJV_V_POS, &pos);

@@ -38,8 +38,8 @@ void DrawSplinterObject(object *obj) {
   poly_model *pm = &Poly_models[obj->id];
   bsp_info *sm = &pm->submodel[obj->ctype.splinter_info.subobj_num];
   int facenum = obj->ctype.splinter_info.facenum;
-  vector world_verts[MAX_VERTS_PER_SPLINTER];
-  vector temp_vec;
+  simd::float3 world_verts[MAX_VERTS_PER_SPLINTER];
+  simd::float3 temp_vec;
   g3Point pnts[MAX_VERTS_PER_SPLINTER];
   g3Point *pntlist[MAX_VERTS_PER_SPLINTER];
 

@@ -250,14 +250,14 @@ uint8_t Flat_terrain = 0;
 static float ViewDistance1 = .68f, ViewDistance2 = 1.0f;
 static float TS_Lambda, TS_SimplifyCondition;
 
-static matrix *TS_View_matrix;
-static vector *TS_View_position;
+static vec::matrix *TS_View_matrix;
+static simd::float3 *TS_View_position;
 
-static vector TS_PreRows[TERRAIN_DEPTH];
-static vector TS_FVectorAdd, TS_RVectorAdd;
+static simd::float3 TS_PreRows[TERRAIN_DEPTH];
+static simd::float3 TS_FVectorAdd, TS_RVectorAdd;
 
 static uint8_t Terrain_y_flags[256];
-static vector Terrain_y_cache[256];
+static simd::float3 Terrain_y_cache[256];
 
 static uint16_t LOD_sort_bucket[MAX_TERRAIN_LOD][MAX_CELLS_TO_RENDER];
 static uint16_t LOD_sort_num[MAX_TERRAIN_LOD];
@@ -265,23 +265,23 @@ static uint16_t LOD_sort_num[MAX_TERRAIN_LOD];
 // Variable to determine if we're in editor or game
 extern function_mode View_mode;
 
-static vector TJoint_VectorAddZ;
-static vector TJoint_VectorAddX;
+static simd::float3 TJoint_VectorAddZ;
+static simd::float3 TJoint_VectorAddX;
 
 // Since our terrain points increment in finite steps we can rotate 2 points (x,z)
 // just add them to a base point to get the final rotated point
 void PreRotateTerrain() {
-  vector rvec = {1 * TERRAIN_SIZE, 0, 0};
-  vector fvec = {0, 0, 1 * TERRAIN_SIZE};
+  simd::float3 rvec = {1 * TERRAIN_SIZE, 0, 0};
+  simd::float3 fvec = {0, 0, 1 * TERRAIN_SIZE};
 
-  vector tj_rvec = {4, 0, 0};
-  vector tj_fvec = {0, 0, 4};
+  simd::float3 tj_rvec = {4, 0, 0};
+  simd::float3 tj_fvec = {0, 0, 4};
 
   TS_FVectorAdd = fvec * *TS_View_matrix;
   TS_RVectorAdd = rvec * *TS_View_matrix;
 
-  vector start_vec = {0.0f, 0.0f, 0.0f};
-  vector temp_vec = start_vec - *TS_View_position;
+  simd::float3 start_vec = {0.0f, 0.0f, 0.0f};
+  simd::float3 temp_vec = start_vec - *TS_View_position;
   start_vec = temp_vec * *TS_View_matrix;
 
   TS_PreRows[0] = start_vec;
@@ -293,12 +293,12 @@ void PreRotateTerrain() {
 }
 
 static inline vector *GetDYVector(int h) {
-  vector *dyp;
+  simd::float3 *dyp;
 
   dyp = &Terrain_y_cache[h];
 
   if (!Terrain_y_flags[h]) {
-    vector up_vector = {0, h * TERRAIN_HEIGHT_INCREMENT, 0};
+    simd::float3 up_vector = {0, h * TERRAIN_HEIGHT_INCREMENT, 0};
 
     *dyp = up_vector * *TS_View_matrix;
 
@@ -351,8 +351,8 @@ void GetSpecialRotatedPoint(g3Point *dest, int x, int z, float yvalue) {
   if (yvalue > MAX_TERRAIN_HEIGHT)
     yvalue = MAX_TERRAIN_HEIGHT;
 
-  vector up_vector = {0, yvalue, 0};
-  vector dyp = up_vector * *TS_View_matrix;
+  simd::float3 up_vector = {0, yvalue, 0};
+  simd::float3 dyp = up_vector * *TS_View_matrix;
 
   dest->p3_vec = TS_PreRows[z];
   dest->p3_vec += TS_RVectorAdd * x;
@@ -365,7 +365,7 @@ void GetSpecialRotatedPoint(g3Point *dest, int x, int z, float yvalue) {
   dest->p3_vecPreRot.z = TERRAIN_SIZE * z;
 }
 
-void Terrain_start_frame(vector *eye, matrix *view_orient) {
+void Terrain_start_frame(simd::float3 *eye, vec::matrix *view_orient) {
   TS_View_position = eye;
   TS_View_matrix = view_orient;
 
@@ -403,7 +403,7 @@ void SortLodLevels(int count) {
   qsort(Terrain_list, count, sizeof(terrain_render_info), (int (*)(const void *, const void *))LodSortingFunction);
 }
 // returns number of cells in visible terrain
-int GetVisibleTerrain(vector *eye, matrix *view_orient) {
+int GetVisibleTerrain(simd::float3 *eye, vec::matrix *view_orient) {
   int cellcount = 0;
   int i, t, count;
 
@@ -733,7 +733,7 @@ int SearchQuadTree(int x1, int y1, int x2, int y2, int dir, int *ccount) {
 
 // Given a position, returns the terrain segment that that position is in/over
 // returns -1 if not over terrain
-int GetTerrainCellFromPos(vector *pos) {
+int GetTerrainCellFromPos(simd::float3 *pos) {
   int x = pos->x / TERRAIN_SIZE;
   int z = pos->z / TERRAIN_SIZE;
 
@@ -743,10 +743,10 @@ int GetTerrainCellFromPos(vector *pos) {
   return (z * TERRAIN_WIDTH + x);
 }
 
-int GetTerrainRoomFromPos(vector *pos) { return MAKE_ROOMNUM(GetTerrainCellFromPos(pos)); }
+int GetTerrainRoomFromPos(simd::float3 *pos) { return MAKE_ROOMNUM(GetTerrainCellFromPos(pos)); }
 
 // Computes the center of the segment in x,z and also sets y touching the ground
-void ComputeTerrainSegmentCenter(vector *pos, int segnum) {
+void ComputeTerrainSegmentCenter(simd::float3 *pos, int segnum) {
   int segx = segnum % TERRAIN_WIDTH;
   int segz = segnum / TERRAIN_WIDTH;
 
@@ -757,9 +757,9 @@ void ComputeTerrainSegmentCenter(vector *pos, int segnum) {
 }
 
 // Given an position, returns the terrain Y coord at that location
-float GetTerrainGroundPoint(vector *pos, vector *normal) {
+float GetTerrainGroundPoint(simd::float3 *pos, simd::float3 *normal) {
   float y;
-  vector pnt, norm;
+  simd::float3 pnt, norm;
   int t;
   int x, z;
 
@@ -792,7 +792,7 @@ float GetTerrainGroundPoint(vector *pos, vector *normal) {
 }
 
 int SimplifyVertexSlow(int x, int z, float delta) {
-  vector *eye = TS_View_position;
+  simd::float3 *eye = TS_View_position;
   g3Point p1, p2;
 
   p1.p3_codes = 0;
@@ -817,8 +817,8 @@ int SimplifyVertexSlow(int x, int z, float delta) {
 }
 
 int SimplifyVertex(int x, int z, float delta) {
-  vector *eye = TS_View_position;
-  vector vec;
+  simd::float3 *eye = TS_View_position;
+  simd::float3 vec;
   float inner;
 
   vec.x = x * TERRAIN_SIZE;

@@ -196,10 +196,10 @@ static void update_path_info(q_item *node_list[MAX_ROOMS], int start, int end);
 static void FindPath(int i, int j);
 static void compute_next_segs();
 static void compute_blockage_info();
-static void ComputeBOAVisFaceUpperLeft(room *rp, face *fp, vector *upper_left, float *xdiff, float *ydiff,
-                                       vector *center);
+static void ComputeBOAVisFaceUpperLeft(room *rp, face *fp, simd::float3 *upper_left, float *xdiff, float *ydiff,
+                                       simd::float3 *center);
 static int BOAGetRoomChecksum(int i);
-static bool IsPathPointValid(int room, vector *pos);
+static bool IsPathPointValid(int room, simd::float3 *pos);
 static void ValidateRoomPathPoint(int room, char *message, int len);
 static void verify_connections();
 static void find_small_portals();
@@ -325,8 +325,8 @@ bool BOA_LockedDoor(object *obj, int roomnum) {
 //	return true;
 //}
 
-int BOA_DetermineStartRoomPortal(int start_room, vector *start_pos, int end_room, vector *end_pos, bool f_for_sound,
-                                 bool f_making_robot_path_invalid_list, int *blocked_portal) {
+int BOA_DetermineStartRoomPortal(int start_room, simd::float3 *start_pos, int end_room, simd::float3 *end_pos,
+                                 bool f_for_sound, bool f_making_robot_path_invalid_list, int *blocked_portal) {
   int i;
 
   if (start_room > Highest_room_index && end_room > Highest_room_index)
@@ -872,8 +872,8 @@ void clear_BOA() {
 
 void compute_costs() {
   int i, j;
-  vector from_pnt; //, to_pnt;
-  vector portal_pnt;
+  simd::float3 from_pnt; //, to_pnt;
+  simd::float3 portal_pnt;
 
   for (i = 0; i <= Highest_room_index; i++) {
 
@@ -887,7 +887,7 @@ void compute_costs() {
 
           ComputePortalCenter(&portal_pnt, &Rooms[i], j);
 
-          BOA_cost_array[i][j] = vm_VectorDistance(&from_pnt, &portal_pnt);
+          BOA_cost_array[i][j] = simd::distance(from_pnt, portal_pnt);
         } else {
           BOA_cost_array[i][j] = -1.0;
         }
@@ -1283,8 +1283,8 @@ int BOAGetRoomChecksum(int i) {
 
 #pragma optimize("", on)
 
-bool IsPathPointValid(int room, vector *pos) {
-  // vector c_pnt = Rooms[room].path_pnt;
+bool IsPathPointValid(int room, simd::float3 *pos) {
+  // simd::float3 c_pnt = Rooms[room].path_pnt;
   int i;
 
   if (Rooms[room].flags & RF_EXTERNAL)
@@ -1298,7 +1298,7 @@ bool IsPathPointValid(int room, vector *pos) {
     if (!BOA_PassablePortal(room, i))
       continue;
 
-    vector portal_pnt = Rooms[room].portals[i].path_pnt;
+    simd::float3 portal_pnt = Rooms[room].portals[i].path_pnt;
 
     // shoot a ray from the light position to the current vertex
     fq.p0 = &portal_pnt;
@@ -1324,7 +1324,7 @@ bool IsPathPointValid(int room, vector *pos) {
 #define MAX_SUBDIVISIONS 12 // Actually 19 (we don't do extremities)
 
 void ValidateRoomPathPoint(int room, char *message, int len) {
-  vector pos;
+  simd::float3 pos;
   int i, j, k;
 
   pos = Rooms[room].path_pnt;
@@ -1333,15 +1333,15 @@ void ValidateRoomPathPoint(int room, char *message, int len) {
     return;
 
   bool f_found = false;
-  // vector best_pnt;
+  // simd::float3 best_pnt;
   // float best_distance;
 
-  vector diff = (Rooms[room].max_xyz - Rooms[room].min_xyz) / MAX_SUBDIVISIONS;
+  simd::float3 diff = (Rooms[room].max_xyz - Rooms[room].min_xyz) / MAX_SUBDIVISIONS;
 
   for (i = 1; i < MAX_SUBDIVISIONS - 1; i++) {
     for (j = 1; j < MAX_SUBDIVISIONS - 1; j++) {
       for (k = 1; k < MAX_SUBDIVISIONS - 1; k++) {
-        vector t_pnt = Rooms[room].min_xyz;
+        simd::float3 t_pnt = Rooms[room].min_xyz;
         t_pnt.x += diff.x * i;
         t_pnt.y += diff.y * j;
         t_pnt.z += diff.z * k;
@@ -1385,16 +1385,17 @@ void BOA_ComputePathPoints(char *message, int len) {
 }
 
 // Given a face, computes the upper left corner of the face
-void ComputeBOAVisFaceUpperLeft(room *rp, face *fp, vector *upper_left, float *xdiff, float *ydiff, vector *center) {
-  matrix face_matrix, trans_matrix;
-  vector fvec;
-  vector avg_vert;
-  vector verts[MAX_VERTS_PER_FACE];
-  vector rot_vert;
+void ComputeBOAVisFaceUpperLeft(room *rp, face *fp, simd::float3 *upper_left, float *xdiff, float *ydiff,
+                                simd::float3 *center) {
+  vec::matrix face_matrix, trans_matrix;
+  simd::float3 fvec;
+  simd::float3 avg_vert;
+  simd::float3 verts[MAX_VERTS_PER_FACE];
+  simd::float3 rot_vert;
   int i;
 
   // find the center point of this face
-  vm_MakeZero(&avg_vert);
+  vec::vm_MakeZero(&avg_vert);
   for (i = 0; i < fp->num_verts; i++)
     avg_vert += rp->verts[fp->face_verts[i]];
 
@@ -1404,16 +1405,16 @@ void ComputeBOAVisFaceUpperLeft(room *rp, face *fp, vector *upper_left, float *x
   // Reverse the normal because we're looking "at" the face, not from it
   fvec = -fp->normal;
 
-  vm_VectorToMatrix(&face_matrix, &fvec, NULL, NULL);
+  vec::vm_VectorToMatrix(&face_matrix, &fvec, NULL, NULL);
   // Make the transformation matrix
 
-  angvec avec;
-  vm_ExtractAnglesFromMatrix(&avec, &face_matrix);
-  vm_AnglesToMatrix(&trans_matrix, avec.p, avec.h, avec.b);
+  vec::angvec avec;
+  vec::vm_ExtractAnglesFromMatrix(&avec, &face_matrix);
+  vec::vm_AnglesToMatrix(&trans_matrix, avec.p, avec.h, avec.b);
 
   // Rotate all the points
   for (i = 0; i < fp->num_verts; i++) {
-    vector vert = rp->verts[fp->face_verts[i]];
+    simd::float3 vert = rp->verts[fp->face_verts[i]];
 
     vert -= avg_vert;
     vm_MatrixMulVector(&rot_vert, &vert, &trans_matrix);
@@ -1475,7 +1476,7 @@ void ComputeBOAVisFaceUpperLeft(room *rp, face *fp, vector *upper_left, float *x
 
   // now set the base vertex, which is where we base uv 0,0 on
 
-  vector base_vector;
+  simd::float3 base_vector;
 
   base_vector.x = verts[leftmost_point].x;
   base_vector.y = verts[topmost_point].y;
@@ -1697,16 +1698,16 @@ void MakeBOAVisTable(bool from_lighting) {
       for (t = 0; t < rp->num_portals && !done; t++) {
         face *src_fp = &rp->faces[rp->portals[t].portal_face];
         float src_width, src_height;
-        vector src_upper_left, src_center;
+        simd::float3 src_upper_left, src_center;
         matrix src_matrix;
-        vector src_verts[MAX_VERTS_PER_FACE], *src_vertp[MAX_VERTS_PER_FACE];
+        simd::float3 src_verts[MAX_VERTS_PER_FACE], *src_vertp[MAX_VERTS_PER_FACE];
 
         for (j = 0; j < src_fp->num_verts; j++) {
           src_verts[j] = rp->verts[src_fp->face_verts[j]];
           src_vertp[j] = &src_verts[j];
         }
 
-        vector fvec = -src_fp->normal;
+        simd::float3 fvec = -src_fp->normal;
         vm_VectorToMatrix(&src_matrix, &fvec, NULL, NULL);
 
         ComputeBOAVisFaceUpperLeft(rp, src_fp, &src_upper_left, &src_width, &src_height, &src_center);
@@ -1730,9 +1731,9 @@ void MakeBOAVisTable(bool from_lighting) {
         for (j = 0; j < Rooms[check_room].num_portals && !done; j++) {
           face *dest_fp = &Rooms[check_room].faces[Rooms[check_room].portals[j].portal_face];
           float dest_width, dest_height;
-          vector dest_upper_left, dest_center;
+          simd::float3 dest_upper_left, dest_center;
           matrix dest_matrix;
-          vector dest_verts[MAX_VERTS_PER_FACE], *dest_vertp[MAX_VERTS_PER_FACE];
+          simd::float3 dest_verts[MAX_VERTS_PER_FACE], *dest_vertp[MAX_VERTS_PER_FACE];
 
           for (int tj = 0; tj < dest_fp->num_verts; tj++) {
             dest_verts[tj] = Rooms[check_room].verts[dest_fp->face_verts[tj]];
@@ -1761,20 +1762,20 @@ void MakeBOAVisTable(bool from_lighting) {
             dest_matrix.uvec *= num;
           }
 
-          vector src_vector, src_ybase;
+          simd::float3 src_vector, src_ybase;
           src_ybase = src_upper_left;
 
           for (int sy = 0; sy < src_height && !done; sy++, src_ybase -= src_matrix.uvec) {
             src_vector = src_ybase;
 
             for (int sx = 0; sx < src_width && !done; sx++, src_vector += src_matrix.rvec) {
-              vector src2 = src_vector;
-              vector subvec;
+              simd::float3 src2 = src_vector;
+              simd::float3 subvec;
 
               if ((check_point_to_face(&src2, &src_fp->normal, src_fp->num_verts, src_vertp)))
                 continue;
 
-              vector dest_vector, dest_ybase;
+              simd::float3 dest_vector, dest_ybase;
               dest_ybase = dest_upper_left;
 
               for (int dy = 0; dy < dest_height && !done; dy++, dest_ybase -= dest_matrix.uvec) {
@@ -2077,7 +2078,7 @@ void MakeBOA(void) {
 
   //	{
   //		int cur_seg = 0;
-  //		vector pos;
+  //		simd::float3 pos;
   //		matrix orient  = IDENTITY_MATRIX;
   //
   //		while (cur_seg != Highest_segment_index) {
@@ -2166,8 +2167,8 @@ void ComputeAABB(bool f_full) {
           continue;
 
         for (j = 0; j < Rooms[i].num_faces; j++) {
-          vector face_min;
-          vector face_max;
+          simd::float3 face_min;
+          simd::float3 face_max;
 
           for (k = 0; k < Rooms[i].faces[j].num_verts; k++) {
             if (k == 0 || Rooms[i].verts[Rooms[i].faces[j].face_verts[k]].x < face_min.x)
@@ -2318,8 +2319,8 @@ void ComputeAABB(bool f_full) {
         //
         //			continue;
 
-        vector *s_max_xyz = (vector *)mem_malloc(num_structs_per_room[i] * sizeof(vector));
-        vector *s_min_xyz = (vector *)mem_malloc(num_structs_per_room[i] * sizeof(vector));
+        simd::float3 *s_max_xyz = (simd::float3 *)mem_malloc(num_structs_per_room[i] * sizeof(simd::float3));
+        simd::float3 *s_min_xyz = (simd::float3 *)mem_malloc(num_structs_per_room[i] * sizeof(simd::float3));
 
         for (count = 0; count < num_structs_per_room[i]; count++) {
 
@@ -2353,7 +2354,7 @@ void ComputeAABB(bool f_full) {
         }
 
         int best = 0;
-        vector diff = s_max_xyz[0] - s_min_xyz[0];
+        simd::float3 diff = s_max_xyz[0] - s_min_xyz[0];
         float best_size = fabs(diff.x * diff.y * diff.z);
 
         for (count = 1; count < num_structs_per_room[i]; count++) {
@@ -2391,8 +2392,8 @@ void ComputeAABB(bool f_full) {
         if (BOA_AABB_ROOM_checksum[i] != 0 && BOA_AABB_ROOM_checksum[i] == computed_room_check[i])
           continue;
 
-        vector min_xyz;
-        vector max_xyz;
+        simd::float3 min_xyz;
+        simd::float3 max_xyz;
         int pamount[6];
         int nonpart = 0;
 
@@ -2415,17 +2416,17 @@ void ComputeAABB(bool f_full) {
           rp->bbf_list[x] = (int16_t *)mem_malloc(rp->num_faces * sizeof(int16_t));
         }
         rp->num_bbf = (int16_t *)mem_malloc(MAX_REGIONS_PER_ROOM * sizeof(int16_t));
-        rp->bbf_list_min_xyz = (vector *)mem_malloc(MAX_REGIONS_PER_ROOM * sizeof(vector));
-        rp->bbf_list_max_xyz = (vector *)mem_malloc(MAX_REGIONS_PER_ROOM * sizeof(vector));
+        rp->bbf_list_min_xyz = (simd::float3 *)mem_malloc(MAX_REGIONS_PER_ROOM * sizeof(simd::float3));
+        rp->bbf_list_max_xyz = (simd::float3 *)mem_malloc(MAX_REGIONS_PER_ROOM * sizeof(simd::float3));
         rp->bbf_list_sector = (uint8_t *)mem_malloc(MAX_REGIONS_PER_ROOM * sizeof(uint8_t));
 
         for (x = 0; x < 27; x++) {
           rp->bbf_list_sector[x] = bbf_lookup[x];
         }
 
-        vector diff;
-        // vector min_diff;
-        // vector max_diff;
+        simd::float3 diff;
+        // simd::float3 min_diff;
+        // simd::float3 max_diff;
         diff.x = diff.y = diff.z = 15.0f;
 
         min_xyz = max_xyz = (rp->min_xyz + rp->max_xyz) / 2.0f;
@@ -2723,7 +2724,7 @@ void ComputeAABB(bool f_full) {
         for (j = 0; j < original_bbf_regions; j++) {
           if (rp->num_bbf[j] > 15) {
             // Test 3 split type
-            vector split = (rp->bbf_list_min_xyz[j] + rp->bbf_list_max_xyz[j]) / 2.0f;
+            simd::float3 split = (rp->bbf_list_min_xyz[j] + rp->bbf_list_max_xyz[j]) / 2.0f;
             int num_faces[3][3];
 
             int sp;
@@ -2876,8 +2877,8 @@ void ComputeAABB(bool f_full) {
     for (i = 0; i <= Highest_room_index; i++) {
       if (Rooms[i].used) {
         room *rp = &Rooms[i];
-        vector min_xyz = rp->bbf_min_xyz;
-        vector max_xyz = rp->bbf_max_xyz;
+        simd::float3 min_xyz = rp->bbf_min_xyz;
+        simd::float3 max_xyz = rp->bbf_max_xyz;
 
         if (BOA_AABB_ROOM_checksum[i] != 0 && BOA_AABB_ROOM_checksum[i] == computed_room_check[i])
           continue;
@@ -2944,8 +2945,8 @@ void ComputeAABB(bool f_full) {
 
         rp->bbf_list = (int16_t **)mem_realloc(rp->bbf_list, rp->num_bbf_regions * sizeof(int16_t *));
         rp->num_bbf = (int16_t *)mem_realloc(rp->num_bbf, rp->num_bbf_regions * sizeof(int16_t));
-        rp->bbf_list_min_xyz = (vector *)mem_realloc(rp->bbf_list_min_xyz, rp->num_bbf_regions * sizeof(vector));
-        rp->bbf_list_max_xyz = (vector *)mem_realloc(rp->bbf_list_max_xyz, rp->num_bbf_regions * sizeof(vector));
+        rp->bbf_list_min_xyz = (simd::float3 *)mem_realloc(rp->bbf_list_min_xyz, rp->num_bbf_regions * sizeof(simd::float3));
+        rp->bbf_list_max_xyz = (simd::float3 *)mem_realloc(rp->bbf_list_max_xyz, rp->num_bbf_regions * sizeof(simd::float3));
         rp->bbf_list_sector =
             (uint8_t *)mem_realloc(rp->bbf_list_sector, rp->num_bbf_regions * sizeof(uint8_t));
       }

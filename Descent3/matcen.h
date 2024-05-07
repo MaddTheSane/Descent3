@@ -71,12 +71,12 @@ private:
     int m_objref;
   };
 
-  vector m_create_pnt;
+  simd::float3 m_create_pnt;
   int m_create_room;
 
   int m_spawn_pnt[MAX_SPAWN_PNTS];
-  vector m_spawn_vec[MAX_SPAWN_PNTS];
-  vector m_spawn_normal[MAX_SPAWN_PNTS];
+  simd::float3 m_spawn_vec[MAX_SPAWN_PNTS];
+  simd::float3 m_spawn_normal[MAX_SPAWN_PNTS];
   int16_t m_spawn_vis_effects[MAX_MATCEN_EFFECT_SATURATION][MAX_SPAWN_PNTS];
 
   int m_max_prod;
@@ -147,8 +147,8 @@ public:
   int GetAttach();
   bool SetAttach(int attach);
 
-  bool GetCreatePnt(vector *pnt);
-  bool SetCreatePnt(vector *pnt);
+  bool GetCreatePnt(simd::float3 *pnt);
+  bool SetCreatePnt(simd::float3 *pnt);
   int GetCreateRoom();
   bool SetCreateRoom(int room);
 

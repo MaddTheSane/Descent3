@@ -443,7 +443,7 @@ void DeformTerrainPoint(int x, int z, int change_height) {
       c.y = tseg2->y;
       c.z = (i + 1) * TERRAIN_SIZE;
 
-      vm_GetNormal(&TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + t].normal1, &a, &b, &c);
+      vec::vm_GetNormal(&TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + t].normal1, &a, &b, &c);
 
       // Now do lower right triangle
       a.x = t * TERRAIN_SIZE;
@@ -458,7 +458,7 @@ void DeformTerrainPoint(int x, int z, int change_height) {
       c.y = tseg3->y;
       c.z = (i)*TERRAIN_SIZE;
 
-      vm_GetNormal(&TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + t].normal2, &a, &b, &c);
+      vec::vm_GetNormal(&TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + t].normal2, &a, &b, &c);
     }
   }
 }
@@ -497,12 +497,12 @@ void DeformTerrain(simd::float3 *pos, int depth, float size) {
     for (t = startx; t <= endx; t++, cur_vec.x += TERRAIN_SIZE) {
       terrain_segment *tseg = &Terrain_seg[i * TERRAIN_WIDTH + t];
 
-      if ((up_vec * TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + t].normal1) < .5)
+      if (simd::dot(up_vec, TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + t].normal1) < .5)
         continue; // not flat enough
-      if ((up_vec * TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + t].normal2) < .5)
+      if (simd::dot(up_vec, TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + t].normal2) < .5)
         continue; // not flat enough
 
-      float dist = 1.0 - (vm_VectorDistanceQuick(&local_pos, &cur_vec) / max_dist);
+      float dist = 1.0 - (vec::vm_VectorDistanceQuick(&local_pos, &cur_vec) / max_dist);
 
       int height_change = -(dist * (float)depth);
       int light_change = height_change * 2;
@@ -573,7 +573,7 @@ void BuildTerrainNormals() {
         c.y = tseg2->y;
         c.z = (i + simplemul) * TERRAIN_SIZE;
 
-        vm_GetNormal(&TerrainNormals[l][z * (TERRAIN_WIDTH / simplemul) + x].normal1, &a, &b, &c);
+        vec::vm_GetNormal(&TerrainNormals[l][z * (TERRAIN_WIDTH / simplemul) + x].normal1, &a, &b, &c);
 
         // Now do lower right triangle
         a.x = t * TERRAIN_SIZE;
@@ -588,7 +588,7 @@ void BuildTerrainNormals() {
         c.y = tseg3->y;
         c.z = (i)*TERRAIN_SIZE;
 
-        vm_GetNormal(&TerrainNormals[l][z * (TERRAIN_WIDTH / simplemul) + x].normal2, &a, &b, &c);
+        vec::vm_GetNormal(&TerrainNormals[l][z * (TERRAIN_WIDTH / simplemul) + x].normal2, &a, &b, &c);
       }
     }
   }
@@ -602,10 +602,10 @@ void GenerateTerrainLight() {
 
   simd::float3 camera_light = Terrain_sky.lightsource;
 
-  vm_NormalizeVector(&camera_light);
+  vec::vm_NormalizeVector(&camera_light);
 
   for (i = 0; i < TERRAIN_WIDTH * TERRAIN_DEPTH; i++) {
-    float dp = (-vm_DotProduct(&camera_light, &TerrainNormals[MAX_TERRAIN_LOD - 1][i].normal1) + 1.0) / 2;
+    float dp = (-simd::dot(camera_light, TerrainNormals[MAX_TERRAIN_LOD - 1][i].normal1) + 1.0) / 2;
     Terrain_seg[i].l = Float_to_ubyte(dp);
     Terrain_seg[i].r = Terrain_seg[i].l;
     Terrain_seg[i].g = Terrain_seg[i].l;
@@ -745,8 +745,8 @@ void SetupSky(float radius, int flags, uint8_t randit) {
     if (p < 6000)
       highcount++;
 
-    vm_AnglesToMatrix(&tempm, (top + p) % 65336, (ps_rand() * ps_rand()) % 65536, 0);
-    vm_ScaleVector(&starvec, &tempm.fvec, Terrain_sky.radius * 500);
+    vec::vm_AnglesToMatrix(&tempm, (top + p) % 65336, (ps_rand() * ps_rand()) % 65536, 0);
+    vec::vm_ScaleVector(&starvec, &tempm.fvec, Terrain_sky.radius * 500);
     Terrain_sky.star_vectors[i] = starvec;
 
     // Now figure out the color of this star.  The closer to horizon it is, the
@@ -785,13 +785,13 @@ void SetupSky(float radius, int flags, uint8_t randit) {
 
   for (i = 0; i < MAX_SATELLITES; i++) {
     simd::float3 satellitevec;
-    matrix tempm;
+    vec::matrix tempm;
 
     int p = ps_rand() % (65336 / 8);
     top = ((65536 / 4) * 3) + (4096); // don't do satellites that are straight up
 
-    vm_AnglesToMatrix(&tempm, (top + p) % 65336, (ps_rand() * ps_rand()) % 65536, 0);
-    vm_ScaleVector(&satellitevec, &tempm.fvec, Terrain_sky.radius * 3);
+    vec::vm_AnglesToMatrix(&tempm, (top + p) % 65336, (ps_rand() * ps_rand()) % 65536, 0);
+    vec::vm_ScaleVector(&satellitevec, &tempm.fvec, Terrain_sky.radius * 3);
     Terrain_sky.satellite_vectors[i] = satellitevec;
     Terrain_sky.satellite_size[i] = 500;
   }
@@ -1190,7 +1190,7 @@ void BuildLightingNormalForSegment(int n) {
   else
     hback = t - 1;
 
-  vm_MakeZero(&temp);
+  vec::vm_MakeZero(&temp);
 
   temp += TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + hback].normal2;
   temp += TerrainNormals[MAX_TERRAIN_LOD - 1][i * TERRAIN_WIDTH + t].normal2;

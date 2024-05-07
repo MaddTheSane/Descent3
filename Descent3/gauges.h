@@ -100,7 +100,8 @@ void InitGauges(tStatMask gauge_mask);
 void CloseGauges();
 
 //	renders gauges
-void RenderGauges(vector *cockpit_pos, matrix *cockpit_mat, float *normalized_times, bool moving, bool reset = false);
+void RenderGauges(simd::float3 *cockpit_pos, vec::matrix *cockpit_mat, float *normalized_times, bool moving,
+                  bool reset = false);
 
 //	flags certain gauges to be modified next frame.
 void FlagGaugesModified(tStatMask mask_modified);

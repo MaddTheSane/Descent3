@@ -179,8 +179,8 @@
 #include "hlsoundlib.h"
 
 // Variables needed for automap
-static vector AM_view_pos = {0, 0, 0};
-static matrix AM_view_orient;
+static simd::float3 AM_view_pos = {0, 0, 0};
+static vec::matrix AM_view_orient;
 static tTelComInfo *AM_tcs;
 static int AM_ship_model_handle = -1;
 
@@ -217,12 +217,12 @@ void ClassifyAMFaces() {
       for (int t = 0; t < rp->num_faces; t++) {
         face *fp = &rp->faces[t];
 
-        vector verts[MAX_VERTS_PER_FACE];
-        vector center;
+        simd::float3 verts[MAX_VERTS_PER_FACE];
+        simd::float3 center;
         for (int k = 0; k < fp->num_verts; k++)
           verts[k] = rp->verts[fp->face_verts[k]];
 
-        float size = vm_GetCentroidFast(&center, verts, fp->num_verts);
+        float size = vec::vm_GetCentroidFast(&center, verts, fp->num_verts);
 
         if (size < 120)
           Small_faces[i][t] = 1;
@@ -245,15 +245,15 @@ void FreeAMFaces() {
 // Returns the camera position to the player
 void TCAMCenterOnPlayer() {
 
-  vm_MakeZero(&AM_view_pos);
-  vm_MakeIdentity(&AM_view_orient);
+  vec::vm_MakeZero(&AM_view_pos);
+  vec::vm_MakeIdentity(&AM_view_orient);
 
-  matrix newmat;
-  angvec heading;
+  vec::matrix newmat;
+  vec::angvec heading;
   AM_view_pos = Viewer_object->pos - (Viewer_object->orient.fvec * 10);
-  vm_ExtractAnglesFromMatrix(&heading, &Player_object->orient);
+  vec::vm_ExtractAnglesFromMatrix(&heading, &Player_object->orient);
 
-  vm_AnglesToMatrix(&newmat, 0, heading.h, 0);
+  vec::vm_AnglesToMatrix(&newmat, 0, heading.h, 0);
   AM_view_orient = newmat;
 
   AM_heading = heading.h;
@@ -413,14 +413,14 @@ void TCAMBuildRoomList(int startroom) {
 }
 
 // Takes a min,max vector and makes a surrounding cube from it
-void MakePointsFromMinMax(vector *corners, vector *minp, vector *maxp);
+void MakePointsFromMinMax(simd::float3 *corners, simd::float3 *minp, simd::float3 *maxp);
 // Returns true if the external room is in the view cone
 // Else returns false
 bool IsRoomVisible(room *rp, float *nearz) {
   g3Point pnt;
   uint8_t ccode;
 
-  vector corners[8];
+  simd::float3 corners[8];
 
   MakePointsFromMinMax(corners, &rp->min_xyz, &rp->max_xyz);
 
@@ -480,8 +480,8 @@ void TCAMRenderRoom(int roomnum) {
     face *fp = &rp->faces[i];
 
     // See if this face is backfaced
-    vector subvec = rp->verts[fp->face_verts[0]] - AM_view_pos;
-    if (subvec * fp->normal > 0)
+    simd::float3 subvec = rp->verts[fp->face_verts[0]] - AM_view_pos;
+    if (simd::dot(subvec, fp->normal) > 0)
       continue; // backfaced
 
     int black_face = 0, wacky_face = 0;
@@ -587,7 +587,7 @@ void TCAMReadControls() {
 
   // Do rotational movement
 
-  matrix newmat;
+  vec::matrix newmat;
   float norm = ((65536 / 360) * AM_ROTATIONAL_SCALAR) * last_frametime;
 
   AM_pitch += (norm * controls.pitch_thrust);
@@ -603,10 +603,10 @@ void TCAMReadControls() {
   if (AM_heading >= 65536)
     AM_heading -= 65536;
 
-  vm_AnglesToMatrix(&newmat, (uint16_t)AM_pitch, (uint16_t)AM_heading, 0);
+  vec::vm_AnglesToMatrix(&newmat, (uint16_t)AM_pitch, (uint16_t)AM_heading, 0);
   AM_view_orient = newmat;
 
-  vm_Orthogonalize(&AM_view_orient);
+  vec::vm_Orthogonalize(&AM_view_orient);
   Game_interface_mode = save_mode;
 }
 
@@ -644,8 +644,8 @@ void TCAMRenderTerrain() {
   // Set up our z wall
   g3_SetFarClipZ(VisibleTerrainZ);
 
-  vector viewer_eye;
-  matrix viewer_orient;
+  simd::float3 viewer_eye;
+  vec::matrix viewer_orient;
   // Get scaled matrix
   g3_GetViewPosition(&viewer_eye);
   g3_GetViewMatrix(&viewer_orient);

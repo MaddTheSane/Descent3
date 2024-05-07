@@ -128,7 +128,7 @@ int VisEffectInitType(vis_effect *vis);
 
 // initialize a new viseffect.  adds to the list for the given room
 // returns the object number
-int VisEffectCreate(uint8_t type, uint8_t id, int roomnum, vector *pos);
+int VisEffectCreate(uint8_t type, uint8_t id, int roomnum, simd::float3 *pos);
 
 // link the viseffect  into the list for its room
 // Does nothing for effects over terrain
@@ -161,20 +161,20 @@ void VisEffectMoveAll();
 void DrawVisEffect(vis_effect *vis);
 
 // Creates a some sparks that go in random directions
-void CreateRandomSparks(int num_sparks, vector *pos, int roomnum, int which_index = -1, float force_scalar = 1);
+void CreateRandomSparks(int num_sparks, simd::float3 *pos, int roomnum, int which_index = -1, float force_scalar = 1);
 
 // Creates a some line sparks that go in random directions
-void CreateRandomLineSparks(int num_sparks, vector *pos, int roomnum, uint16_t color = 0, float force_scalar = 1);
+void CreateRandomLineSparks(int num_sparks, simd::float3 *pos, int roomnum, uint16_t color = 0, float force_scalar = 1);
 
 // Creates vis effects but has the caller set their parameters
 // initialize a new viseffect.  adds to the list for the given room
 // returns the vis number
-int VisEffectCreateControlled(uint8_t type, object *parent, uint8_t id, int roomnum, vector *pos, float lifetime,
-                              vector *velocity, int phys_flags = 0, float size = 0, float mass = 0.0f,
+int VisEffectCreateControlled(uint8_t type, object *parent, uint8_t id, int roomnum, simd::float3 *pos, float lifetime,
+                              simd::float3 *velocity, int phys_flags = 0, float size = 0, float mass = 0.0f,
                               float drag = 0.0f, bool isreal = 0);
 
 // Creates a some particles that go in random directions
-void CreateRandomParticles(int num_sparks, vector *pos, int roomnum, int bm_handle, float size, float life);
+void CreateRandomParticles(int num_sparks, simd::float3 *pos, int roomnum, int bm_handle, float size, float life);
 
 // Attaches viseffects that move with an object
 void AttachRandomNapalmEffectsToObject(object *obj);

@@ -196,7 +196,7 @@ done:
   return f_found;
 }
 
-bool AIPathGetCurrentNodePos(ai_path_info *aip, vector *pos, int *room) {
+bool AIPathGetCurrentNodePos(ai_path_info *aip, simd::float3 *pos, int *room) {
   int c_path = aip->cur_path;
   int c_node = aip->cur_node;
 
@@ -306,7 +306,7 @@ static bool AIPathMoveToPrevNode(ai_path_info *aip) {
   return false;
 }
 
-bool AIPathGetNextNodePos(ai_path_info *aip, vector *pos, int *room) {
+bool AIPathGetNextNodePos(ai_path_info *aip, simd::float3 *pos, int *room) {
   if (AIPathMoveToNextNode(aip)) {
     AIPathGetCurrentNodePos(aip, pos, room);
     AIPathMoveToPrevNode(aip);
@@ -317,7 +317,7 @@ bool AIPathGetNextNodePos(ai_path_info *aip, vector *pos, int *room) {
   return false;
 }
 
-bool AIPathGetPrevNodePos(ai_path_info *aip, vector *pos, int *room) {
+bool AIPathGetPrevNodePos(ai_path_info *aip, simd::float3 *pos, int *room) {
   if (AIPathMoveToPrevNode(aip)) {
     AIPathGetCurrentNodePos(aip, pos, room);
     AIPathMoveToNextNode(aip);
@@ -330,7 +330,7 @@ bool AIPathGetPrevNodePos(ai_path_info *aip, vector *pos, int *room) {
 
 static void AIPathComplete(object *obj) { GoalPathComplete(obj); }
 
-void AIPathMoveTurnTowardsNode(object *obj, vector *mdir, bool *f_moved) {
+void AIPathMoveTurnTowardsNode(object *obj, simd::float3 *mdir, bool *f_moved) {
   ai_path_info *aip = &obj->ai_info->path;
   goal *g_ptr = &obj->ai_info->goals[obj->ai_info->path.goal_index];
 
@@ -344,7 +344,7 @@ void AIPathMoveTurnTowardsNode(object *obj, vector *mdir, bool *f_moved) {
 
   ai_frame *ai_info = obj->ai_info;
 
-  vector cur_pos;
+  simd::float3 cur_pos;
 
   AIPathGetCurrentNodePos(aip, &cur_pos);
 
@@ -358,13 +358,13 @@ void AIPathMoveTurnTowardsNode(object *obj, vector *mdir, bool *f_moved) {
       f_force_complete_stopping = true;
     }
   } else {
-    vector dir = cur_pos - obj->pos;
+    simd::float3 dir = cur_pos - obj->pos;
 
     if (obj->movement_type == MT_WALKING) {
-      float dot = dir * obj->orient.uvec;
+      float dot = simd::dot(dir, obj->orient.uvec);
       dir -= dot * obj->orient.uvec;
     }
-    vm_NormalizeVector(&dir);
+    vec::vm_NormalizeVector(&dir);
 
     *mdir = dir;
     *f_moved = false;
@@ -382,13 +382,13 @@ pass_node:
   last_p = p;
 
   if (obj->movement_type == MT_WALKING) {
-    vector dir = cur_pos - obj->pos;
+    simd::float3 dir = cur_pos - obj->pos;
 
     if (obj->movement_type == MT_WALKING) {
-      float dot = dir * obj->orient.uvec;
+      float dot = simd::dot(dir, obj->orient.uvec);
       dir -= dot * obj->orient.uvec;
     }
-    float dist = vm_GetMagnitude(&dir);
+    float dist = simd::length(dir);
 
     if (dist < 1.5f) {
       f_pass_node = true;
@@ -403,27 +403,27 @@ pass_node:
     if (!f_reverse) {
       if (AIPathAtStart(aip)) {
         if (AIPathAtEnd(aip)) {
-          if ((obj->pos - cur_pos) * (obj->last_pos - cur_pos) <= 0.0f && !f_too_far_from_end)
+          if (simd::dot((obj->pos - cur_pos), (obj->last_pos - cur_pos)) <= 0.0f && !f_too_far_from_end)
             f_pass_node = true;
         } else {
-          vector next_pos;
+          simd::float3 next_pos;
           AIPathGetNextNodePos(aip, &next_pos, NULL);
 
-          vector proj_line = obj->pos - cur_pos;
-          vector line = next_pos - cur_pos;
-          float proj = proj_line * line;
+          simd::float3 proj_line = obj->pos - cur_pos;
+          simd::float3 line = next_pos - cur_pos;
+          float proj = simd::dot(proj_line, line);
 
           if (proj >= 0.0f)
             f_pass_node = true;
         }
       } else {
-        vector prev_pos;
+        simd::float3 prev_pos;
         AIPathGetPrevNodePos(aip, &prev_pos, NULL);
 
-        vector proj = obj->pos - prev_pos;
-        vector line = cur_pos - prev_pos;
-        float line_len = vm_NormalizeVector(&line);
-        float proj_len = proj * line;
+        simd::float3 proj = obj->pos - prev_pos;
+        simd::float3 line = cur_pos - prev_pos;
+        float line_len = vec::vm_NormalizeVector(&line);
+        float proj_len = simd::dot(proj, line);
 
         if (proj_len >= line_len)
           f_pass_node = true;
@@ -431,27 +431,27 @@ pass_node:
     } else {
       if (AIPathAtEnd(aip)) {
         if (AIPathAtStart(aip)) {
-          if ((obj->pos - cur_pos) * (obj->last_pos - cur_pos) <= 0.0f && !f_too_far_from_end)
+          if (simd::dot((obj->pos - cur_pos), (obj->last_pos - cur_pos)) <= 0.0f && !f_too_far_from_end)
             f_pass_node = true;
         } else {
-          vector prev_pos;
+          simd::float3 prev_pos;
           AIPathGetPrevNodePos(aip, &prev_pos, NULL);
 
-          vector proj_line = obj->pos - cur_pos;
-          vector line = prev_pos - cur_pos;
-          float proj = proj_line * line;
+          simd::float3 proj_line = obj->pos - cur_pos;
+          simd::float3 line = prev_pos - cur_pos;
+          float proj = simd::dot(proj_line, line);
 
           if (proj >= 0.0f)
             f_pass_node = true;
         }
       } else {
-        vector next_pos;
+        simd::float3 next_pos;
         AIPathGetNextNodePos(aip, &next_pos, NULL);
 
-        vector proj = obj->pos - next_pos;
-        vector line = cur_pos - next_pos;
-        float line_len = vm_NormalizeVector(&line);
-        float proj_len = proj * line;
+        simd::float3 proj = obj->pos - next_pos;
+        simd::float3 line = cur_pos - next_pos;
+        float line_len = vec::vm_NormalizeVector(&line);
+        float proj_len = simd::dot(proj, line);
 
         if (proj_len >= line_len)
           f_pass_node = true;
@@ -608,7 +608,7 @@ static bool AIPathAddStaticPath(ai_path_info *aip, int path_id, int start_index,
   return true;
 }
 
-static inline bool AIPathAddDPathNode(ai_path_info *aip, int *slot, int *cur_node, vector *pos, int room, int handle) {
+static inline bool AIPathAddDPathNode(ai_path_info *aip, int *slot, int *cur_node, simd::float3 *pos, int room, int handle) {
   int status;
 
   if (*cur_node == MAX_NODES) {
@@ -632,10 +632,10 @@ static inline bool AIPathAddDPathNode(ai_path_info *aip, int *slot, int *cur_nod
   return true;
 }
 
-static bool AIGenerateAltBNodePath(object *obj, vector *start_pos, int *start_room, vector *end_pos, int *end_room,
+static bool AIGenerateAltBNodePath(object *obj, simd::float3 *start_pos, int *start_room, simd::float3 *end_pos, int *end_room,
                                    ai_path_info *aip, int *slot, int *cur_node, int handle) {
   int x;
-  vector *pos;
+  simd::float3 *pos;
   bool f_path_exists = true;
 
   bn_list *bnlist = BNode_GetBNListPtr(*start_room);
@@ -740,10 +740,10 @@ done:
   return f_path_exists;
 }
 
-static void AIGenerateAltBOAPath(vector *start_pos, vector *end_pos, ai_path_info *aip, int *slot, int *cur_node,
+static void AIGenerateAltBOAPath(simd::float3 *start_pos, simd::float3 *end_pos, ai_path_info *aip, int *slot, int *cur_node,
                                  int handle) {
   int x;
-  vector *pos = NULL;
+  simd::float3 *pos = NULL;
 
   for (x = 0; x < AIAltPathNumNodes - 1; x++) {
     int cur_room = AIAltPath[x];
@@ -791,11 +791,11 @@ static void AIGenerateAltBOAPath(vector *start_pos, vector *end_pos, ai_path_inf
 //		next_room = *end_room;
 //	}
 
-static bool AIGenerateBNodePath(object *obj, vector *start_pos, int *start_room, vector *end_pos, int *end_room,
+static bool AIGenerateBNodePath(object *obj, simd::float3 *start_pos, int *start_room, simd::float3 *end_pos, int *end_room,
                                 ai_path_info *aip, int *slot, int *cur_node, int handle) {
   int next_room = BOA_INDEX(*start_room);
   bool f_path_exists = true;
-  vector *pos;
+  simd::float3 *pos;
 
   bn_list *bnlist; // = BNode_GetBNListPtr(*start_room);
   int last_node = BNode_FindDirLocalVisibleBNode(*start_room, start_pos, &obj->orient.fvec, obj->size);
@@ -906,11 +906,11 @@ done:
   return f_path_exists;
 }
 
-static bool AIGenerateBOAPath(vector *start_pos, int *start_room, vector *end_pos, int *end_room, ai_path_info *aip,
+static bool AIGenerateBOAPath(simd::float3 *start_pos, int *start_room, simd::float3 *end_pos, int *end_room, ai_path_info *aip,
                               int *slot, int *cur_node, int handle) {
   int next_room = *start_room;
   bool f_path_exists = true;
-  vector *pos;
+  simd::float3 *pos;
 
   ASSERT(ROOMNUM_OUTSIDE(next_room) || (next_room >= 0 && next_room <= Highest_room_index && Rooms[next_room].used));
 
@@ -977,8 +977,8 @@ static bool AIGenerateBOAPath(vector *start_pos, int *start_room, vector *end_po
   return f_path_exists;
 }
 
-bool AIPathAllocPath(object *obj, ai_frame *ai_info, void *goal_ptr, int *start_room, vector *start_pos, int *end_room,
-                     vector *end_pos, float rad, int flags, int handle, int ignore_obj) {
+bool AIPathAllocPath(object *obj, ai_frame *ai_info, void *goal_ptr, int *start_room, simd::float3 *start_pos,
+                     int *end_room, simd::float3 *end_pos, float rad, int flags, int handle, int ignore_obj) {
   bool status;
   bool f_path_exists = true;
 
@@ -1153,9 +1153,9 @@ bool AIPathSetAsStaticPath(object *obj, void *goal_ptr, int path_id, int start_n
 #include "hud.h"
 
 int AIPath_test_end_room = 0;
-vector AIPath_test_end_pos = {0, 0, 0};
+simd::float3 AIPath_test_end_pos = {0, 0, 0};
 
-bool MakeTestPath(int *start_room, vector *pos) {
+bool MakeTestPath(int *start_room, simd::float3 *pos) {
   bool status;
   ai_frame ai_info;
   int count = 0;
@@ -1168,14 +1168,14 @@ bool MakeTestPath(int *start_room, vector *pos) {
                            &AIPath_test_end_pos, 0.0f, 0, 0);
 
   while (status) {
-    vector pos;
+    simd::float3 pos;
     int room;
 
     status = AIPathGetCurrentNodePos(&ai_info.path, &pos, &room);
 
     if (status) {
       int id = FindObjectIDName("Shield");
-      ObjCreate(OBJ_POWERUP, id, room, &pos, &Identity_matrix);
+      ObjCreate(OBJ_POWERUP, id, room, &pos, &vec::Identity_matrix);
       count++;
     }
 

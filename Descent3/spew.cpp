@@ -338,7 +338,7 @@ void SpewEmitAll(void) {
         }
 
         if (spew->use_gunpoint) {
-          vector vel_vector;
+          simd::float3 vel_vector;
           object *obj;
 
           obj = ObjGet(spew->gp.obj_handle);
@@ -385,7 +385,7 @@ void SpewEmitAll(void) {
             SpewClearEvent(spew->handle, true);
           }
         } else {
-          vector vel_vector;
+          simd::float3 vel_vector;
 
           // calc velocity vector
           vel_vector = spew->pt.normal * speed;
@@ -444,8 +444,8 @@ void SpewClearEvent(int handle, bool force) {
 
 bool SpewObjectNeedsEveryFrameUpdate(object *obj, int gun_num) {
   poly_model *pm;
-  vector pnt;
-  vector normal;
+  simd::float3 pnt;
+  simd::float3 normal;
   int mn; // submodel number
   float normalized_time[MAX_SUBOBJECTS];
 

@@ -1129,6 +1129,8 @@
 #include "gamesequence.h"
 #include "init.h"
 
+#include <algorithm>
+
 player Players[MAX_PLAYERS];
 int Player_num;
 
@@ -1165,8 +1167,8 @@ static float Player_camera_last_follow_time = 0;
 
 static int Camera_sample_index = 0;
 static int Camera_follow_index = 0;
-static vector Camera_sample_vectors[MAX_CAMERA_SAMPLES];
-static matrix Camera_sample_matrix[MAX_CAMERA_SAMPLES];
+static simd::float3 Camera_sample_vectors[MAX_CAMERA_SAMPLES];
+static vec::matrix Camera_sample_matrix[MAX_CAMERA_SAMPLES];
 static int Camera_sample_rooms[MAX_CAMERA_SAMPLES];
 
 float Total_time_dead = 0;
@@ -1623,8 +1625,8 @@ void DoNewPlayerDeathFrame(int slot);
 
 void UpdatePlayerCameraPosition() {
   object *playerobj = &Objects[Players[Player_num].objnum];
-  vector dest_pos;
-  matrix dest_mat;
+  simd::float3 dest_pos;
+  vec::matrix dest_mat;
   int dest_room;
   int total_increments = 0;
 
@@ -1641,21 +1643,21 @@ void UpdatePlayerCameraPosition() {
   }
 
   if (total_increments > 0) {
-    vector delta_vec = playerobj->pos - Camera_sample_vectors[Camera_sample_index];
+    simd::float3 delta_vec = playerobj->pos - Camera_sample_vectors[Camera_sample_index];
 
-    vector delta_r = playerobj->orient.rvec - Camera_sample_matrix[Camera_sample_index].rvec;
-    vector delta_u = playerobj->orient.uvec - Camera_sample_matrix[Camera_sample_index].uvec;
-    vector delta_f = playerobj->orient.fvec - Camera_sample_matrix[Camera_sample_index].fvec;
+    simd::float3 delta_r = playerobj->orient.rvec - Camera_sample_matrix[Camera_sample_index].rvec;
+    simd::float3 delta_u = playerobj->orient.uvec - Camera_sample_matrix[Camera_sample_index].uvec;
+    simd::float3 delta_f = playerobj->orient.fvec - Camera_sample_matrix[Camera_sample_index].fvec;
 
     delta_vec /= total_increments;
     delta_r /= total_increments;
     delta_u /= total_increments;
     delta_f /= total_increments;
 
-    vector current_pos = Camera_sample_vectors[Camera_sample_index];
-    vector current_r = Camera_sample_matrix[Camera_sample_index].rvec;
-    vector current_u = Camera_sample_matrix[Camera_sample_index].uvec;
-    vector current_f = Camera_sample_matrix[Camera_sample_index].fvec;
+    simd::float3 current_pos = Camera_sample_vectors[Camera_sample_index];
+    simd::float3 current_r = Camera_sample_matrix[Camera_sample_index].rvec;
+    simd::float3 current_u = Camera_sample_matrix[Camera_sample_index].uvec;
+    simd::float3 current_f = Camera_sample_matrix[Camera_sample_index].fvec;
 
     int current_room = Camera_sample_rooms[Camera_sample_index];
 
@@ -1725,7 +1727,7 @@ void UpdatePlayerCameraPosition() {
   // Set camera position
   fvi_info hit_data;
   fvi_query fq;
-  vector new_pos = dest_pos;
+  simd::float3 new_pos = dest_pos;
   new_pos -= dest_mat.fvec * (playerobj->size * 3);
   new_pos += dest_mat.uvec * (playerobj->size / 2);
 
@@ -2021,12 +2023,12 @@ struct tDeathSeq {
 
   float damage;
   float accel_mod;
-  vector force_dir;
+  simd::float3 force_dir;
 
   uint8_t saved_ctrl_type;
   uint32_t saved_phys_flags;
   float saved_drag;
-  vector saved_rotthrust;
+  simd::float3 saved_rotthrust;
 
   tHUDMode saved_cockpit;
   int saved_player_modelnum;
@@ -2049,7 +2051,7 @@ void debug_deathtype(int slot, int damage) {
     LOG_DEBUG << "UNKNOWN DEATH ";
 }
 
-float MoveDeathCam(int slot, vector *vec, float distance);
+float MoveDeathCam(int slot, simd::float3 *vec, float distance);
 void PlayerShipExplode(object *obj, float magnitude);
 void PlayerShipBreakup(object *obj, float magnitude);
 void PlayerShipSpewPart(object *obj, int subobjnum, float magnitude);
@@ -2076,7 +2078,7 @@ int PlayerChooseDeathFate(int slot, float damage, bool melee) {
 
   ASSERT(slot >= 0 && slot < MAX_PLAYERS);
 
-  if (vm_GetMagnitude(&playerobj->mtype.phys_info.velocity))
+  if (vec::vm_GetMagnitude(&playerobj->mtype.phys_info.velocity))
     is_moving = true;
   else
     is_moving = false;
@@ -2163,7 +2165,7 @@ void StartPlayerDeath(int slot, float damage, bool melee, int fate) {
   else
     Death[slot].force_dir = playerobj->pos - killer->pos;
 
-  vm_NormalizeVector(&Death[slot].force_dir);
+  vec::vm_NormalizeVector(&Death[slot].force_dir);
   Death[slot].force_dir = Death[slot].force_dir * playerobj->orient;
 
   //	determine fate of player ship
@@ -2306,14 +2308,14 @@ void DoNewPlayerDeathFrame(int slot) {
         Viewer_object = Death[slot].camera; // set the current viewer to be this new camera.
       }
     } else if (slot == Player_num) {
-      vector directional;
-      float death_cam_dist = vm_VectorDistanceQuick(&Death[slot].camera->pos, &playerobj->pos);
+      simd::float3 directional;
+      float death_cam_dist = vec::vm_VectorDistanceQuick(&Death[slot].camera->pos, &playerobj->pos);
 
       if (death_cam_dist < MIN_DEATHCAM_DIST) {
-        vm_MakeRandomVector(&directional);
+        vec::vm_MakeRandomVector(&directional);
         MoveDeathCam(slot, &directional, MEDIAN_DEATHCAM_DIST);
       } else if (death_cam_dist > MAX_DEATHCAM_DIST) {
-        vm_MakeRandomVector(&directional);
+        vec::vm_MakeRandomVector(&directional);
         MoveDeathCam(slot, &directional, MEDIAN_DEATHCAM_DIST);
       }
 
@@ -2333,15 +2335,15 @@ void DoNewPlayerDeathFrame(int slot) {
 
       if (hit_data.hit_type[0] == HIT_WALL) {
         //	death camera's view is obstructed, move the death cam
-        vm_MakeRandomVector(&directional);
+        vec::vm_MakeRandomVector(&directional);
         MoveDeathCam(slot, &directional, MEDIAN_DEATHCAM_DIST);
       }
 
       //	orient death camera towards player ship
       directional = playerobj->pos - Death[slot].camera->pos;
-      if (vm_GetMagnitudeFast(&directional) == 0.0f)
+      if (vec::vm_GetMagnitudeFast(&directional) == 0.0f)
         directional.x += 1.0f;
-      vm_VectorToMatrix(&Death[slot].camera->orient, &directional, NULL, NULL);
+      vec::vm_VectorToMatrix(&Death[slot].camera->orient, &directional, NULL, NULL);
     }
 
     //	perform fate specific actions here
@@ -2370,7 +2372,7 @@ void DoNewPlayerDeathFrame(int slot) {
     if ((ps_rand() % 6) == 0) {
       //	smoke
       int visnum;
-      vector smoke_pt;
+      simd::float3 smoke_pt;
       smoke_pt = (-playerobj->orient.fvec) * (playerobj->size * 0.5f);
       smoke_pt = playerobj->pos + smoke_pt;
       visnum = CreateFireball(&smoke_pt, BLACK_SMOKE_INDEX, playerobj->roomnum, VISUAL_FIREBALL);
@@ -2381,7 +2383,7 @@ void DoNewPlayerDeathFrame(int slot) {
     // Create an explosion that follows every now and then
     if ((ps_rand() % 5) == 0) {
 
-      vector dest;
+      simd::float3 dest;
       poly_model *pm = Death[slot].dying_model;
       bsp_info *sm = &pm->submodel[0];
       int vertnum = ps_rand() % sm->nverts;
@@ -2519,10 +2521,10 @@ void ResetPlayerObject(int slot, bool f_reset_pos) {
 
   playobj->size = Poly_models[playobj->rtype.pobj_info.model_num].rad;
 
-  vm_MakeZero(&playobj->mtype.phys_info.velocity);
-  vm_MakeZero(&playobj->mtype.phys_info.thrust);
-  vm_MakeZero(&playobj->mtype.phys_info.rotvel);
-  vm_MakeZero(&playobj->mtype.phys_info.rotthrust);
+  vec::vm_MakeZero(&playobj->mtype.phys_info.velocity);
+  vec::vm_MakeZero(&playobj->mtype.phys_info.thrust);
+  vec::vm_MakeZero(&playobj->mtype.phys_info.rotvel);
+  vec::vm_MakeZero(&playobj->mtype.phys_info.rotthrust);
 
   playobj->mtype.phys_info.turnroll = 0;
 
@@ -2575,10 +2577,10 @@ void ResetPlayerControlType(int slot) {
 
   playobj->mtype.phys_info = Ships[Players[slot].ship_index].phys_info;
 
-  vm_MakeZero(&playobj->mtype.phys_info.velocity);
-  vm_MakeZero(&playobj->mtype.phys_info.thrust);
-  vm_MakeZero(&playobj->mtype.phys_info.rotvel);
-  vm_MakeZero(&playobj->mtype.phys_info.rotthrust);
+  vec::vm_MakeZero(&playobj->mtype.phys_info.velocity);
+  vec::vm_MakeZero(&playobj->mtype.phys_info.thrust);
+  vec::vm_MakeZero(&playobj->mtype.phys_info.rotvel);
+  vec::vm_MakeZero(&playobj->mtype.phys_info.rotthrust);
 
   playobj->mtype.phys_info.turnroll = 0;
 
@@ -2606,10 +2608,10 @@ void PlayerSetControlToAI(int slot, float velocity) {
   pobj->mtype.phys_info.flags &= ~PF_LEVELING;
 
   // pobj->flags &= ~OF_DESTROYABLE;
-  vm_MakeZero(&pobj->mtype.phys_info.thrust);
-  vm_MakeZero(&pobj->mtype.phys_info.rotthrust);
-  vm_MakeZero(&pobj->mtype.phys_info.rotvel);
-  vm_MakeZero(&pobj->mtype.phys_info.velocity);
+  vec::vm_MakeZero(&pobj->mtype.phys_info.thrust);
+  vec::vm_MakeZero(&pobj->mtype.phys_info.rotthrust);
+  vec::vm_MakeZero(&pobj->mtype.phys_info.rotvel);
+  vec::vm_MakeZero(&pobj->mtype.phys_info.velocity);
 
   // Put the player in AI mode
   SetObjectControlType(pobj, CT_AI);
@@ -2641,7 +2643,7 @@ void PlayerSetControlToAI(int slot, float velocity) {
   pobj->ai_info->last_render_time = -1.0f;
   pobj->ai_info->next_target_update_time = Gametime;
   pobj->ai_info->notify_flags |= AI_NOTIFIES_ALWAYS_ON;
-  pobj->ai_info->last_see_target_pos = Zero_vector;
+  pobj->ai_info->last_see_target_pos = vec::Zero_vector;
   pobj->ai_info->dodge_vel_percent = 1.0f;
   pobj->ai_info->attack_vel_percent = 1.0f;
   pobj->ai_info->fight_same = 0.0f;
@@ -2684,10 +2686,10 @@ void StartPlayerExplosion(int slot) {
 }
 
 //	Detaches a subobject from the player ship
-void DeadPlayerShipHit(object *obj, int hit_room, vector *hitpt, float magnitude) {
+void DeadPlayerShipHit(object *obj, int hit_room, simd::float3 *hitpt, float magnitude) {
   fvi_info hit_data;
   fvi_query fq;
-  vector hitvec, hitpt2;
+  simd::float3 hitvec, hitpt2;
   int subobjnum = -1;
 
   //	vector from hitpoint to object center position
@@ -2757,7 +2759,7 @@ void PlayerSpewGuidebot(object *parent, int type, int id) {
 
   obj->mtype.phys_info.velocity = parent->mtype.phys_info.velocity + parent->orient.fvec * 30.0;
 
-  vm_MakeZero(&obj->mtype.phys_info.rotthrust);
+  vec::vm_MakeZero(&obj->mtype.phys_info.rotthrust);
 
   obj->size = Object_info[ROBOT_GUIDEBOT].size;
   obj->mtype.phys_info.mass = 40.0;
@@ -2783,7 +2785,7 @@ void PlayerSpewGuidebot(object *parent, int type, int id) {
 }
 
 // Spews an object in a random direction
-void PlayerSpewObject(object *objp, int timed, int room, vector *pos, matrix *orient) {
+void PlayerSpewObject(object *objp, int timed, int room, simd::float3 *pos, vec::matrix *orient) {
   ASSERT((!(Game_mode & GM_MULTI)) || (Netgame.local_role == LR_SERVER));
 
   ObjSetPos(objp, pos, room, orient, true);
@@ -2864,7 +2866,7 @@ int PlayerSpewObject(object *parent, int type, int id, int timed, void *sinfo) {
 // This is a terrible hack -- it maps powerup to multi-pack versions
 // This mapping should really be on the powerup page
 const char *powerup_multipacks[] = {"Concussion", "4packConc",   "Frag",   "4packFrag",
-                              "Guided",     "4packGuided", "Homing", "4packHoming"};
+                                    "Guided",     "4packGuided", "Homing", "4packHoming"};
 #define N_POWERUP_MULTIPACKS (sizeof(powerup_multipacks) / sizeof(*powerup_multipacks) / 2)
 
 // Returns the index of the multipack version of the specified powerup, or -1 if none
@@ -3184,7 +3186,7 @@ void PlayerShipSpewPart(object *obj, int subobjnum, float magnitude) {
 }
 
 void PlayerShipSpewPartSub(object *obj, bsp_info *submodel, float magnitude) {
-  vector rand_vec;
+  simd::float3 rand_vec;
   int subobjnum = submodel - Poly_models[obj->rtype.pobj_info.model_num].submodel;
   int i;
   int visnum;
@@ -3206,12 +3208,12 @@ void PlayerShipSpewPartSub(object *obj, bsp_info *submodel, float magnitude) {
   else
     rand_vec.y = (float)((float)D3_RAND_MAX / 1.5f - (float)ps_rand()); // A habit of moving upward
   rand_vec.z = (float)(D3_RAND_MAX / 2 - ps_rand());
-  vm_NormalizeVectorFast(&rand_vec);
+  vec::vm_NormalizeVectorFast(&rand_vec);
 
   object *subobj = CreateSubobjectDebrisDirected(obj, subobjnum, &rand_vec, magnitude);
   if (subobj) {
     //	create mini-explosion at start of debris fall.
-    vector newpos = subobj->pos + submodel->offset;
+    simd::float3 newpos = subobj->pos + submodel->offset;
     visnum = CreateFireball(&newpos, MED_EXPLOSION_INDEX, subobj->roomnum, VISUAL_FIREBALL);
     if (visnum >= 0) {
       VisEffects[visnum].size *= (2.5f * (magnitude / MAX_EXPLOSION_MAG));
@@ -3228,16 +3230,16 @@ void PlayerShipSpewPartSub(object *obj, bsp_info *submodel, float magnitude) {
 //	Moves death camera a certain distance based off of direction from vec from
 //	the player. returns new dist
 //
-static vector Death_cam_vectors[] = {{0, 1, 0},  {0, 1, -1}, {0, 0, -1}, {0, -1, -1}, {0, -1, 0},  {0, -1, 1},
-                                     {0, 0, 1},  {0, 1, 1},  {1, 0, 0},  {1, 0, -1},  {-1, 0, -1}, {-1, 0, 0},
-                                     {-1, 0, 1}, {1, 0, 1},  {1, 1, 0},  {1, -1, 0},  {-1, -1, 0}, {-1, 1, 0}};
+static simd::float3 Death_cam_vectors[] = {{0, 1, 0},  {0, 1, -1}, {0, 0, -1}, {0, -1, -1}, {0, -1, 0},  {0, -1, 1},
+                                           {0, 0, 1},  {0, 1, 1},  {1, 0, 0},  {1, 0, -1},  {-1, 0, -1}, {-1, 0, 0},
+                                           {-1, 0, 1}, {1, 0, 1},  {1, 1, 0},  {1, -1, 0},  {-1, -1, 0}, {-1, 1, 0}};
 
-#define NUM_DEATH_VECS (sizeof(Death_cam_vectors) / sizeof(vector))
+#define NUM_DEATH_VECS (sizeof(Death_cam_vectors) / sizeof(simd::float3))
 
-float MoveDeathCam(int slot, vector *vec, float distance) {
+float MoveDeathCam(int slot, simd::float3 *vec, float distance) {
   fvi_info hit_data;
   fvi_query fq;
-  vector best_vec, next_vec, cam_vec;
+  simd::float3 best_vec, next_vec, cam_vec;
   float far_scale;
   int cur_vec_index, init_vec_index, loop_count;
   object *playobj = &Objects[Players[slot].objnum];
@@ -3256,7 +3258,7 @@ float MoveDeathCam(int slot, vector *vec, float distance) {
     cam_vec = Death_cam_vectors[cur_vec_index++];
     cam_vec.x += ((ps_rand() % 5) - 2) * 0.1f;
     cam_vec.y += ((ps_rand() % 5) - 2) * 0.1f;
-    vm_NormalizeVector(&cam_vec);
+    vec::vm_NormalizeVector(&cam_vec);
 
     cam_vec = cam_vec * distance;
     best_vec = playobj->pos + cam_vec;
@@ -3299,7 +3301,7 @@ float MoveDeathCam(int slot, vector *vec, float distance) {
       else
         ObjSetPos(Death[slot].camera, &best_vec, hit_data.hit_room, NULL, false);
     } else {
-      float ray_dist = vm_VectorDistanceQuick(&hit_data.hit_pnt, &playobj->pos);
+      float ray_dist = vec::vm_VectorDistanceQuick(&hit_data.hit_pnt, &playobj->pos);
       if (ray_dist < distance) {
         hit_data.hit_type[0] = HIT_NONE;
       }
@@ -3378,8 +3380,8 @@ void PlayerSetLighting(int slot, float dist, float r, float g, float b) {
 }
 
 // Gets the position of a given ball in world coords
-void PlayerGetBallPosition(vector *dest, int slot, int num) {
-  matrix rotmat, tempm;
+void PlayerGetBallPosition(simd::float3 *dest, int slot, int num) {
+  vec::matrix rotmat, tempm;
   object *obj = &Objects[Players[slot].objnum];
 
   // Get position in circle
@@ -3765,9 +3767,9 @@ void ResetWaypoint() {
 }
 
 struct waypoint {
-  vector pos;
+  simd::float3 pos;
   int roomnum;
-  matrix orient;
+  vec::matrix orient;
 };
 
 waypoint Waypoints[MAX_WAYPOINTS];

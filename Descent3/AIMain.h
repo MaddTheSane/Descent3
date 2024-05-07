@@ -173,12 +173,13 @@ void AIFrameAll(void);
 bool AIInit(object *obj, uint8_t ai_class, uint8_t ai_type, uint8_t ai_movement);
 void AIInitAll(void);
 void AIPowerSwitch(object *obj, bool f_on);
-void AITurnTowardsDir(object *obj, /*velocity *new_vel,*/ vector *goal_dir /*, bool remain_level*/, float turn_rate);
-void AIMoveTowardsDir(object *obj, vector *dir, float scale = 1.0f);
-bool AIMoveTowardsPosition(object *obj, /*velocity *new_vel,*/ vector *pos, float scale, bool stop_at_end_point,
-                           vector *mdir, bool *f_moved);
-void AITurnTowardsPosition(object *obj, /*velocity *new_vel,*/ vector *pos /*, bool remain_level*/);
-bool AIFindHidePos(object *hide_obj, object *view_obj, vector *hpos, int *hroom, float max_hide_time = 3.0f);
+void AITurnTowardsDir(object *obj, /*velocity *new_vel,*/ simd::float3 *goal_dir /*, bool remain_level*/,
+                      float turn_rate);
+void AIMoveTowardsDir(object *obj, simd::float3 *dir, float scale = 1.0f);
+bool AIMoveTowardsPosition(object *obj, /*velocity *new_vel,*/ simd::float3 *pos, float scale, bool stop_at_end_point,
+                           simd::float3 *mdir, bool *f_moved);
+void AITurnTowardsPosition(object *obj, /*velocity *new_vel,*/ simd::float3 *pos /*, bool remain_level*/);
+bool AIFindHidePos(object *hide_obj, object *view_obj, simd::float3 *hpos, int *hroom, float max_hide_time = 3.0f);
 int AIFindRoomWithFlag(object *obj, int flag);
 object *AIFindObjOfType(object *obj, int type, int id, bool f_ignore_init_room, int parent_handle = OBJECT_HANDLE_NONE);
 bool AIStatusCircleFrame(object *obj, object *g_obj, float dist, float c_dist, int *status_reg);
@@ -187,7 +188,7 @@ bool AISetTarget(object *obj, int handle);
 void AIDestroyObj(object *obj);
 bool AIObjFriend(object *obj, object *target);
 void AIUpdateAnim(object *obj);
-bool AITurnTowardsMatrix(object *obj, float turn_rate, matrix *g_orient);
+bool AITurnTowardsMatrix(object *obj, float turn_rate, vec::matrix *g_orient);
 int AIFindRandomRoom(object *obj, ai_frame *ai_info, goal *goal_ptr, int avoid_room, int min_depth, int max_depth,
                      bool f_check_path, bool f_cur_room_ok, int *depth);
 int AIMakeNextRoomList(int roomnum, int *next_rooms, int max_rooms);

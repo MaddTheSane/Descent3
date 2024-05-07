@@ -34,7 +34,7 @@ void RenderObject(object *obj);
 void RenderObject_SetStatic(float r, float g, float b);
 
 // Sets the polygon render object type to gouraud
-void RenderObject_SetGouraud(vector *dir, float r, float g, float b, float scalar = 1.0);
+void RenderObject_SetGouraud(simd::float3 *dir, float r, float g, float b, float scalar = 1.0);
 
 // Sets the object render to draw a polymodel with lightmaps applied
 void RenderObject_SetLightmaps(lightmap_object *lmobject);
@@ -45,11 +45,11 @@ void RenderObject_DrawPolymodel(object *obj, float *normalized_times);
 
 // Sets the direction of the lightsource to be used when calculating vertex lighting
 // The light source vector should be in the models coordinate space
-void RenderObject_SetLightDirection(vector *dir);
+void RenderObject_SetLightDirection(simd::float3 *dir);
 
 // Given a position in 3space and a size, returns whether or not that sized point is
 // visible from the current view matrix
-int IsPointVisible(vector *, float, float *pointz = NULL);
+int IsPointVisible(simd::float3 *, float, float *pointz = NULL);
 
 // Draws the 'typing message' icon indicator above an object
 void DrawPlayerTypingIndicator(object *obj);

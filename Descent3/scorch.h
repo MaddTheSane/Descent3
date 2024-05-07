@@ -47,7 +47,7 @@ void ResetScorches();
 //					pos - where the scorch goes
 //					texture_handle - the texture for the scorch mark
 //					size - how big the scorch is
-void AddScorch(int roomnum, int facenum, vector *pos, int texture_handle, float size);
+void AddScorch(int roomnum, int facenum, simd::float3 *pos, int texture_handle, float size);
 
 // Draw the scorch(es) for a given face
 void DrawScorches(int roomnum, int facenum);

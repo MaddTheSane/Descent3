@@ -90,8 +90,8 @@
 postrender_struct Postrender_list[MAX_POSTRENDERS];
 int Num_postrenders = 0;
 
-static vector Viewer_eye;
-static matrix Viewer_orient;
+static simd::float3 Viewer_eye;
+static vec::matrix Viewer_orient;
 static int Viewer_roomnum;
 
 // Resets out postrender list for a new frame

@@ -740,14 +740,14 @@ void msafe_GetValue(int type, msafe_struct *mstruct) {
   case MSAFE_OBJECT_POS:
     objp = ObjGet(mstruct->objhandle);
     if (!objp)
-      mstruct->pos = Zero_vector;
+      mstruct->pos = vec::Zero_vector;
     else
       mstruct->pos = objp->pos;
     break;
   case MSAFE_OBJECT_ORIENT:
     objp = ObjGet(mstruct->objhandle);
     if (!objp)
-      mstruct->orient = Identity_matrix;
+      mstruct->orient = vec::Identity_matrix;
     else
       mstruct->orient = objp->orient;
     break;
@@ -761,8 +761,8 @@ void msafe_GetValue(int type, msafe_struct *mstruct) {
   case MSAFE_OBJECT_WORLD_POSITION:
     objp = ObjGet(mstruct->objhandle);
     if (!objp) {
-      mstruct->pos = Zero_vector;
-      mstruct->orient = Identity_matrix;
+      mstruct->pos = vec::Zero_vector;
+      mstruct->orient = vec::Identity_matrix;
       mstruct->roomnum = -1;
     } else {
       mstruct->orient = objp->orient;
@@ -773,28 +773,28 @@ void msafe_GetValue(int type, msafe_struct *mstruct) {
   case MSAFE_OBJECT_VELOCITY:
     objp = ObjGet(mstruct->objhandle);
     if (!objp || (objp->movement_type != MT_WALKING && objp->movement_type != MT_PHYSICS))
-      mstruct->velocity = Zero_vector;
+      mstruct->velocity = vec::Zero_vector;
     else
       mstruct->velocity = objp->mtype.phys_info.velocity;
     break;
   case MSAFE_OBJECT_ROTVELOCITY:
     objp = ObjGet(mstruct->objhandle);
     if (!objp || (objp->movement_type != MT_WALKING && objp->movement_type != MT_PHYSICS))
-      mstruct->rot_velocity = Zero_vector;
+      mstruct->rot_velocity = vec::Zero_vector;
     else
       mstruct->rot_velocity = objp->mtype.phys_info.rotvel;
     break;
   case MSAFE_OBJECT_THRUST:
     objp = ObjGet(mstruct->objhandle);
     if (!objp || (objp->movement_type != MT_WALKING && objp->movement_type != MT_PHYSICS))
-      mstruct->thrust = Zero_vector;
+      mstruct->thrust = vec::Zero_vector;
     else
       mstruct->thrust = objp->mtype.phys_info.thrust;
     break;
   case MSAFE_OBJECT_ROTTHRUST:
     objp = ObjGet(mstruct->objhandle);
     if (!objp || (objp->movement_type != MT_WALKING && objp->movement_type != MT_PHYSICS))
-      mstruct->rot_thrust = Zero_vector;
+      mstruct->rot_thrust = vec::Zero_vector;
     else
       mstruct->rot_thrust = objp->mtype.phys_info.rotthrust;
     break;
@@ -1342,7 +1342,7 @@ void msafe_CallFunction(uint8_t type, msafe_struct *mstruct) {
       vis->velocity.z = mstruct->index;
 
       vis->flags = VF_USES_LIFELEFT | VF_WINDSHIELD_EFFECT | VF_LINK_TO_VIEWER;
-      vis->size = vm_VectorDistanceQuick(&vis->pos, &vis->end_pos);
+      vis->size = vec::vm_VectorDistanceQuick(&vis->pos, &vis->end_pos);
       if (mstruct->flags) // Do attached lightning effect
       {
         vis->flags |= VF_ATTACHED;
@@ -1430,7 +1430,7 @@ void msafe_CallFunction(uint8_t type, msafe_struct *mstruct) {
   case MSAFE_ROOM_CHANGING_FOG: {
     if (!VALIDATE_ROOM(mstruct->roomnum))
       return;
-    vector fog_vec;
+    simd::float3 fog_vec;
     fog_vec.x = mstruct->fog_r;
     fog_vec.y = mstruct->fog_g;
     fog_vec.z = mstruct->fog_b;
@@ -1493,7 +1493,7 @@ void msafe_CallFunction(uint8_t type, msafe_struct *mstruct) {
     break;
   }
   case MSAFE_ROOM_BREAK_GLASS: {
-    void ComputeCenterPointOnFace(vector * vp, room * rp, int facenum);
+    void ComputeCenterPointOnFace(simd::float3 * vp, room * rp, int facenum);
     if (!VALIDATE_ROOM_PORTAL(mstruct->roomnum, mstruct->portalnum))
       return;
     send_it = 0; // Handled in function below
@@ -1865,7 +1865,7 @@ void msafe_CallFunction(uint8_t type, msafe_struct *mstruct) {
   case MSAFE_OBJECT_SHAKE_AREA: {
     object *objp = ObjGet(mstruct->objhandle);
     if (objp) {
-      float dist = vm_VectorDistanceQuick(&Viewer_object->pos, &objp->pos);
+      float dist = vec::vm_VectorDistanceQuick(&Viewer_object->pos, &objp->pos);
       if (dist < mstruct->scalar)
         AddToShakeMagnitude(mstruct->amount * (1.0 - (dist / mstruct->scalar)));
     }

@@ -675,7 +675,7 @@ void MultiSendMSafeFunction(uint8_t type, msafe_struct *mstruct) {
       if (!(NetPlayers[i].flags & NPF_CONNECTED))
         continue;
 
-      float dist = vm_VectorDistanceQuick(&Objects[Players[i].objnum].pos, &obj->pos);
+      float dist = vec::vm_VectorDistanceQuick(&Objects[Players[i].objnum].pos, &obj->pos);
       if (dist < mstruct->scalar)
         to_bitmask |= (1 << i);
     }

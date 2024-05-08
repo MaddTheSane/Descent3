@@ -1339,7 +1339,7 @@ int ObjAllocate(void);
 // Creates the player object in the center of the given room
 void CreatePlayerObject(int roomnum) {
   int objnum;
-  vector pos;
+  simd::float3 pos;
 
   ComputeRoomCenter(&pos, &Rooms[roomnum]);
 
@@ -1645,14 +1645,14 @@ void ObjFree(int objnum) {
 }
 
 void ObjSetAABB(object *obj) {
-  vector object_rad;
+  simd::float3 object_rad;
 
   if (obj->type == OBJ_ROOM) {
     obj->min_xyz = Rooms[obj->id].min_xyz;
     obj->max_xyz = Rooms[obj->id].max_xyz;
   } else if (obj->flags & OF_POLYGON_OBJECT && obj->type != OBJ_WEAPON && obj->type != OBJ_DEBRIS &&
              obj->type != OBJ_POWERUP && obj->type != OBJ_PLAYER) {
-    vector offset_pos;
+    simd::float3 offset_pos;
 
     object_rad.x = object_rad.y = object_rad.z = Poly_models[obj->rtype.pobj_info.model_num].anim_size;
     offset_pos = obj->pos + obj->anim_sphere_offset;
@@ -1673,7 +1673,7 @@ void ObjSetAABB(object *obj) {
 //-----------------------------------------------------------------------------
 // initialize a new object.  adds to the list for the given room
 // returns the object number
-int ObjCreate(uint8_t type, uint16_t id, int roomnum, vector *pos, const matrix *orient, int parent_handle) {
+int ObjCreate(uint8_t type, uint16_t id, int roomnum, simd::float3 *pos, const vec::matrix *orient, int parent_handle) {
   int objnum;
   object *obj;
   int handle;
@@ -1720,7 +1720,7 @@ int ObjCreate(uint8_t type, uint16_t id, int roomnum, vector *pos, const matrix 
 
   // Set the object's orietation
   // THIS MUST BE DONE AFTER ObjInit (as ObjInit could load in a polymodel and set the anim and wall offsets)
-  ObjSetOrient(obj, orient ? orient : &Identity_matrix);
+  ObjSetOrient(obj, orient ? orient : &vec::Identity_matrix);
 
   // Link object into room or terrain cell
   ObjLink(objnum, roomnum);
@@ -2276,7 +2276,7 @@ void DoFlyingControl(object *objp) {
     return;
 
   if (Timedemo_frame != -1) {
-    matrix temp_mat, rot_mat;
+    vec::matrix temp_mat, rot_mat;
 
     if (Timedemo_frame == 0) {
       Timedemo_timecount = 0;
@@ -3118,7 +3118,7 @@ void ResetFreeObjects() {
 }
 
 // sets the orientation of an object.  This should be called to orient an object
-void ObjSetOrient(object *obj, const matrix *orient) {
+void ObjSetOrient(object *obj, const vec::matrix *orient) {
   // Accounts for if the orientation was set and then this function is being used
   // to update the other stuff
   if (&obj->orient != orient)
@@ -3127,24 +3127,24 @@ void ObjSetOrient(object *obj, const matrix *orient) {
   // Recompute the orientation dependant information
   if (obj->flags & OF_POLYGON_OBJECT) {
     if (obj->type != OBJ_WEAPON && obj->type != OBJ_DEBRIS && obj->type != OBJ_POWERUP && obj->type != OBJ_ROOM) {
-      matrix m;
+      vec::matrix m;
 
       m = obj->orient;
-      vm_TransposeMatrix(&m);
+      vec::vm_TransposeMatrix(&m);
 
       obj->wall_sphere_offset = Poly_models[obj->rtype.pobj_info.model_num].wall_size_offset * m;
       obj->anim_sphere_offset = Poly_models[obj->rtype.pobj_info.model_num].anim_size_offset * m;
     } else {
-      obj->wall_sphere_offset = Zero_vector;
-      obj->anim_sphere_offset = Zero_vector;
+      obj->wall_sphere_offset = vec::Zero_vector;
+      obj->anim_sphere_offset = vec::Zero_vector;
     }
   }
 }
 
 // sets the position of an object.  This should be called to move an object
-void ObjSetPos(object *obj, vector *pos, int roomnum, matrix *orient, bool f_update_attached_children) {
+void ObjSetPos(object *obj, simd::float3 *pos, int roomnum, vec::matrix *orient, bool f_update_attached_children) {
   int oldroomnum = obj->roomnum;
-  vector old_pos = obj->pos;
+  simd::float3 old_pos = obj->pos;
 
   // Reset the position & recalculate the AABB
   obj->pos = *pos;
@@ -3254,7 +3254,7 @@ object *ObjGet(int handle) {
     return NULL;
 }
 
-void GetObjectPointInWorld(vector *dest, object *obj, int subnum, int vertnum) {
+void GetObjectPointInWorld(simd::float3 *dest, object *obj, int subnum, int vertnum) {
   poly_model *pm = &Poly_models[obj->rtype.pobj_info.model_num];
   bsp_info *sm = &pm->submodel[subnum];
   float normalized_time[MAX_SUBOBJECTS];
@@ -3268,13 +3268,13 @@ void GetObjectPointInWorld(vector *dest, object *obj, int subnum, int vertnum) {
 
   SetModelAnglesAndPos(pm, normalized_time);
 
-  vector pnt = sm->verts[vertnum];
+  simd::float3 pnt = sm->verts[vertnum];
   int mn = subnum;
-  matrix m;
+  vec::matrix m;
 
   // Instance up the tree for this gun
   while (mn != -1) {
-    vector tpnt;
+    simd::float3 tpnt;
 
     vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
     vm_TransposeMatrix(&m);

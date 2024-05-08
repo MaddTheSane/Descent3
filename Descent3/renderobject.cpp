@@ -631,7 +631,7 @@ float RenderObjectStaticBlueValue = 1.0f;
 float RenderObjectStaticScalar = 1.0f;
 uint8_t *RenderObjectGouraudValue = NULL;
 lightmap_object *RenderObjectLightmapObject = NULL;
-vector RenderObject_LightDirection;
+simd::float3 RenderObject_LightDirection;
 
 float Last_powerup_sparkle_time = 0.0f;
 bool Render_powerup_sparkles = false;
@@ -657,7 +657,7 @@ void DrawVirusLightning(object *obj);
 // Draws the little corner brackets around the selected object
 // Actually, only draws those either in front or in back of the object, based on front_flag
 void DrawObjectSelectionBrackets(object *obj, bool front_flag) {
-  vector viewvec;
+  simd::float3 viewvec;
   poly_model *pm = &Poly_models[obj->rtype.pobj_info.model_num];
   float line_len;
   // Get vector from object to viewer
@@ -667,7 +667,7 @@ void DrawObjectSelectionBrackets(object *obj, bool front_flag) {
   line_len = (pm->maxs.x - pm->mins.x) * 0.2f;
   // Do each corner
   for (int c = 0; c < 8; c++) {
-    vector corner;
+    simd::float3 corner;
     // Get the corner relative to the object
     corner = (obj->orient.rvec * ((c & 1) ? pm->mins.x : pm->maxs.x)) +
              (obj->orient.uvec * ((c & 2) ? pm->mins.y : pm->maxs.y)) +
@@ -680,9 +680,9 @@ void DrawObjectSelectionBrackets(object *obj, bool front_flag) {
     // Draw line for each axis at this corner
     for (int a = 0; a < 3; a++) {
       g3Point pp0, pp1;
-      vector t;
+      simd::float3 t;
       // Grab the x,y, or z axis, and scale by the line segment length
-      t = corner + ((((vector *)&obj->orient)[a]) * ((c & (1 << a)) ? line_len : -line_len));
+      t = corner + ((((simd::float3 *)&obj->orient)[a]) * ((c & (1 << a)) ? line_len : -line_len));
       // Rotate both ends of the line
       g3_RotatePoint(&pp0, &corner);
       g3_RotatePoint(&pp1, &t);
@@ -714,7 +714,7 @@ static float ArrayY[10][20] = {{1, 1, -1, -1, 1},
                                {1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 0.0, 0.0},
                                {1.0, 1.0, 0.0, 0.0, 1.0, -1.0}};
 static int NumOfPoints[] = {5, 6, 10, 7, 6, 10, 10, 4, 10, 6};
-static void DrawNumber(int num, vector pos, float size, ddgr_color c1) {
+static void DrawNumber(int num, simd::float3 pos, float size, ddgr_color c1) {
   g3Point basepnt, rot_pnt[20];
   int num_array[10];
   int i, j;
@@ -736,7 +736,7 @@ static void DrawNumber(int num, vector pos, float size, ddgr_color c1) {
     total -= num_array[j] * (int)powf(10.0f, (float)j);
   }
   for (j = 0; j < num_numbers; j++) {
-    vector cur_pos;
+    simd::float3 cur_pos;
 
     if (num_numbers & 0x00000001)
       cur_pos = pos + (2.1 * size * ((num_numbers >> 1) - j)) * Viewer_object->orient.rvec;
@@ -875,7 +875,7 @@ void DrawRoomVisPnts(object *obj) {
         src_vertp[j] = &src_verts[j];
       }
       simd::float3 fvec = -src_fp->normal;
-      vm_VectorToMatrix(&src_matrix, &fvec, NULL, NULL);
+      vec::vm_VectorToMatrix(&src_matrix, &fvec, NULL, NULL);
       ComputeDebugVisFaceUpperLeft(rp, src_fp, &src_upper_left, &src_width, &src_height, &src_center);
 
       if (src_width > VIS_TABLE_RESOLUTION) {
@@ -917,17 +917,17 @@ void DrawRoomVisPnts(object *obj) {
   }
 }
 void DrawDebugInfo(object *obj) {
-  matrix m;
+  vec::matrix m;
   m = obj->orient;
-  vm_TransposeMatrix(&m);
+  vec::vm_TransposeMatrix(&m);
   if (obj->type == OBJ_ROOM) {
     DrawColoredDisk(&obj->pos, 0.0f, 0.0f, 1.0f, .1f, .7f, obj->size, 1);
   } else {
     if (Game_show_sphere == 1) {
-      vector center = obj->pos + Poly_models[obj->rtype.pobj_info.model_num].wall_size_offset * m;
+      simd::float3 center = obj->pos + Poly_models[obj->rtype.pobj_info.model_num].wall_size_offset * m;
       DrawColoredDisk(&center, 0.0f, 0.0f, 1.0f, .1f, .7f, Poly_models[obj->rtype.pobj_info.model_num].wall_size, 1);
     } else if (Game_show_sphere == 2) {
-      vector center = obj->pos + Poly_models[obj->rtype.pobj_info.model_num].anim_size_offset * m;
+      simd::float3 center = obj->pos + Poly_models[obj->rtype.pobj_info.model_num].anim_size_offset * m;
       DrawColoredDisk(&center, 0.0f, 0.1f, .9f, .1f, .7f, Poly_models[obj->rtype.pobj_info.model_num].anim_size, 1);
     } else if (Game_show_sphere == 3) {
       DrawColoredDisk(&obj->pos, 0.1f, 0.2f, .9f, .1f, .7f, obj->size, 1);
@@ -935,7 +935,7 @@ void DrawDebugInfo(object *obj) {
   }
   g3Point g3p[8];
   memset(g3p, 0, 8 * sizeof(g3Point));
-  vector pos[9];
+  simd::float3 pos[9];
   // g3p[0].p3_vec = obj->pos;
   // g3p[1].p3_vec = obj->rtype.line_info.end_pos;
 
@@ -1043,7 +1043,7 @@ void DrawShardObject(object *obj) {
 // Sets up the light states for an outdoor object to be rendered
 bool SetupTerrainObject(object *obj) {
   simd::float3 camlight = Terrain_sky.lightsource;
-  vm_NormalizeVector(&camlight);
+  vec::vm_NormalizeVector(&camlight);
 #ifdef EDITOR
   if (!Terrain_render_ext_room_objs)
     return false;
@@ -1089,7 +1089,7 @@ bool SetupTerrainObject(object *obj) {
     if (obj->lighting_render_type == LRT_STATIC || Poly_models[obj->rtype.pobj_info.model_num].new_style == 0)
       RenderObject_SetStatic(scalar_r, scalar_g, scalar_b);
     else if (obj->lighting_render_type == LRT_GOURAUD || NoLightmaps) {
-      vector lightdir = {0, -1.0, 0}; // straight down for now
+      simd::float3 lightdir = {0, -1.0, 0}; // straight down for now
       RenderObject_SetGouraud(&lightdir, scalar_r, scalar_g, scalar_b, scalar);
     } else if (obj->lighting_render_type == LRT_LIGHTMAPS) {
       if (obj->lm_object.used == 0)
@@ -1109,12 +1109,12 @@ bool SetupMineObject(object *objp) {
   } else if (objp->lighting_render_type == LRT_GOURAUD || NoLightmaps) {
     float scalar_r = 1.0, scalar_g = 1.0, scalar_b = 1.0;
 
-    vector lightdir = {0, -1.0, 0}; // straight down for now
+    simd::float3 lightdir = {0, -1.0, 0}; // straight down for now
 
     // Get the volume light for this object
     if (objp->effect_info && (objp->effect_info->type_flags & EF_VOLUME_LIT) &&
         !(Rooms[objp->roomnum].flags & RF_EXTERNAL)) {
-      vector vpos = objp->pos;
+      simd::float3 vpos = objp->pos;
       if (Render_mirror_for_room)
         vpos = objp->last_pos;
       if (objp->effect_info->type_flags & EF_VOLUME_CHANGING) {
@@ -1150,7 +1150,7 @@ bool SetupMineObject(object *objp) {
         } else {
           // Make this ship brighter based on its speed
           float speed_norm;
-          speed_norm = std::min<float>(vm_GetMagnitudeFast(&objp->mtype.phys_info.velocity) / 20.0, 1);
+          speed_norm = std::min<float>(vec::vm_GetMagnitudeFast(&objp->mtype.phys_info.velocity) / 20.0, 1);
           speed_norm *= 1;
           speed_norm += 1;
           scalar_r = std::min<float>(1, scalar_r * speed_norm);
@@ -1193,8 +1193,8 @@ bool GetLinearPosition(simd::float3 *points, float *times, int num_points, float
   simd::float3 vd;
   float mag;
   vd = points[min_point + 1] - points[min_point];
-  mag = vm_GetMagnitude(&vd);
-  vm_NormalizeVector(&vd);
+  mag = simd::length(vd);
+  vec::vm_NormalizeVector(&vd);
   vd *= (mag * newt);
 
   *pos = points[min_point] + vd;
@@ -1291,16 +1291,16 @@ void RenderObject(object *obj) {
       float AFT = 1.0f / 20.0f;       // Assumed frame time
       int num_iterations;             // number of iterations
 
-      vel_mag = fabs(vm_GetMagnitude(&obj->mtype.phys_info.velocity));
+      vel_mag = fabs(simd::length(obj->mtype.phys_info.velocity));
       num_iterations = (vel_mag * AFT) / (sphere_size_perc * obj->size);
 
       if (num_iterations > 12)
         num_iterations = 12;
 
       if (num_iterations >= 1) {
-        vector saved_pos;
+        simd::float3 saved_pos;
         float saved_alpha_fac;
-        vector positions[MAX_POSITION_HISTORY + 1];
+        simd::float3 positions[MAX_POSITION_HISTORY + 1];
         float times[MAX_POSITION_HISTORY + 1];
 
         // save the position of the object, because we'll have to restore it
@@ -1461,7 +1461,7 @@ void RenderObject_SetStatic(float r, float g, float b) {
   RenderObjectStaticScalar = 1.0;
 }
 // Sets the polygon render object type to gouraud (one lightval for each vertex)
-void RenderObject_SetGouraud(vector *dir, float r, float g, float b, float scalar) {
+void RenderObject_SetGouraud(simd::float3 *dir, float r, float g, float b, float scalar) {
   RenderObject_LightDirection = *dir;
   RenderObjectStaticRedValue = r;
   RenderObjectStaticGreenValue = g;
@@ -1492,7 +1492,7 @@ bool is_multi_demo = false;
 void RenderObject_DrawPolymodel(object *obj, float *normalized_times) {
   int model_num;
   int use_effect = 0;
-  vector obj_pos = obj->pos;
+  simd::float3 obj_pos = obj->pos;
   polymodel_effect pe = {0};
 
   // Do cloak effect on player
@@ -1751,7 +1751,7 @@ void RenderObject_DrawPolymodel(object *obj, float *normalized_times) {
 }
 // Sets the direction of the lightsource to be used when calculating vertex lighting
 // The light source vector should be in the models coordinate space
-void RenderObject_SetLightDirection(vector *dir) { RenderObject_LightDirection = *dir; }
+void RenderObject_SetLightDirection(simd::float3 *dir) { RenderObject_LightDirection = *dir; }
 // draw an object that has one bitmap & doesn't rotate
 void obj_draw_blob(object *obj, int bmnum) {
   //	int	orientation=0;
@@ -1777,12 +1777,12 @@ extern float Far_clip_z;
 int Point_visible_last_frame = -1;
 // Given a position in 3space and a size, returns whether or not that sized point is
 // visible from the current view matrix
-int IsPointVisible(vector *pos, float size, float *pointz) {
+int IsPointVisible(simd::float3 *pos, float size, float *pointz) {
   g3Point pnt;
   uint8_t ccode;
   static float last_render_fov = -1;
-  static vector left_normal, right_normal, top_normal, bottom_normal, view_position;
-  static matrix unscaled_matrix;
+  static simd::float3 left_normal, right_normal, top_normal, bottom_normal, view_position;
+  static vec::matrix unscaled_matrix;
 
   g3_RotatePoint(&pnt, pos);
   ccode = g3_CodePoint(&pnt);
@@ -1799,11 +1799,11 @@ int IsPointVisible(vector *pos, float size, float *pointz) {
     if (Render_FOV != last_render_fov) {
       last_render_fov = Render_FOV;
       int angle_adjust = (Render_FOV / 2) * (65536 / 360);
-      vector rvec = {1, 0, 0};
-      vector lvec = {-1, 0, 0};
-      vector tvec = {0, 1, 0};
-      vector bvec = {0, -1, 0};
-      matrix temp_mat;
+      simd::float3 rvec = {1, 0, 0};
+      simd::float3 lvec = {-1, 0, 0};
+      simd::float3 tvec = {0, 1, 0};
+      simd::float3 bvec = {0, -1, 0};
+      vec::matrix temp_mat;
       vm_AnglesToMatrix(&temp_mat, 0, 65536 - angle_adjust, 0);
       right_normal = rvec * temp_mat;
       vm_AnglesToMatrix(&temp_mat, 0, angle_adjust, 0);
@@ -1819,26 +1819,26 @@ int IsPointVisible(vector *pos, float size, float *pointz) {
       g3_GetUnscaledMatrix(&unscaled_matrix);
       g3_GetViewPosition(&view_position);
     }
-    vector temp_vec = *pos - view_position;
+    simd::float3 temp_vec = *pos - view_position;
     pnt.p3_vec = temp_vec * unscaled_matrix;
     if (ccode & CC_OFF_RIGHT) {
-      dotp = vm_DotProduct(&right_normal, &pnt.p3_vec);
+      dotp = simd::dot(right_normal, pnt.p3_vec);
       if (dotp > size)
         return 0;
     }
     if (ccode & CC_OFF_LEFT) {
-      dotp = vm_DotProduct(&left_normal, &pnt.p3_vec);
+      dotp = simd::dot(left_normal, pnt.p3_vec);
       if (dotp > size)
         return 0;
     }
 
     if (ccode & CC_OFF_TOP) {
-      dotp = vm_DotProduct(&top_normal, &pnt.p3_vec);
+      dotp = simd::dot(top_normal, pnt.p3_vec);
       if (dotp > size)
         return 0;
     }
     if (ccode & CC_OFF_BOT) {
-      dotp = vm_DotProduct(&bottom_normal, &pnt.p3_vec);
+      dotp = simd::dot(bottom_normal, pnt.p3_vec);
       if (dotp > size)
         return 0;
     }
@@ -1890,11 +1890,11 @@ void DrawPowerupSparkles(object *obj) {
       break;
     }
 
-    vector pos_delta;
+    simd::float3 pos_delta;
     pos_delta.x = (ps_rand() % 100) - 50;
     pos_delta.y = (ps_rand() % 100) - 80;
     pos_delta.z = (ps_rand() % 100) - 50;
-    vm_NormalizeVector(&pos_delta);
+    vec::vm_NormalizeVector(&pos_delta);
     pos_delta = obj->last_pos + (obj_size_delta * pos_delta);
 
     int sparknum = VisEffectCreate(VIS_FIREBALL, index, obj->roomnum, &pos_delta);
@@ -1910,7 +1910,7 @@ void DrawPowerupSparkles(object *obj) {
       vis->velocity.x = (ps_rand() % 50) - 25;
       vis->velocity.y = -10 - (ps_rand() % 20);
       vis->velocity.z = (ps_rand() % 50) - 25;
-      vm_NormalizeVector(&vis->velocity);
+      vec::vm_NormalizeVector(&vis->velocity);
       vis->velocity *= 3.0f + (ps_rand() % 4);
 
       vis->size = 0.05f + ((ps_rand() % 10) * 0.008f);
@@ -1946,8 +1946,8 @@ void DrawPowerupGlowDisk(object *obj) {
   size_adjust += 1.0;
   size_adjust /= 2; // now in range 0 to 1.0
   size_adjust += .5;
-  vector subvec = obj->pos - Viewer_object->pos;
-  float mag = vm_GetMagnitudeFast(&subvec);
+  simd::float3 subvec = obj->pos - Viewer_object->pos;
+  float mag = vec::vm_GetMagnitudeFast(&subvec);
   if (mag < 40)
     return;
 
@@ -2013,10 +2013,10 @@ void DrawPlayerInvulSphere(object *obj) {
 
   int bm_handle = Fireballs[INVUL_HIT_INDEX].bm_handle;
   // Figure out the position and orientation to draw this
-  vector hit_pos = obj->pos + (Players[obj->id].invul_vector * obj->size);
-  vector norm_vec = Players[obj->id].invul_vector;
+  simd::float3 hit_pos = obj->pos + (Players[obj->id].invul_vector * obj->size);
+  simd::float3 norm_vec = Players[obj->id].invul_vector;
   // Check to see that we're ok with the length of the vector
-  float mag = vm_GetMagnitudeFast(&norm_vec);
+  float mag = vec::vm_GetMagnitudeFast(&norm_vec);
   if (mag < 1)
     return;
   norm_vec /= mag;
@@ -2037,7 +2037,7 @@ void DrawPlayerRotatingBall(object *obj) {
     return;
   static int first = 1;
   static int bm_handle;
-  vector worldpos;
+  simd::float3 worldpos;
   rend_SetColorModel(CM_RGB);
   rend_SetLighting(LS_GOURAUD);
   rend_SetTextureType(TT_LINEAR);
@@ -2086,11 +2086,11 @@ void DrawPlayerTypingIndicator(object *obj) {
   float rad = (float)(3.14 * (float)(10) / 180.0);
   IndicatorTan = tan(rad);
   // See if it is in our viewcone
-  vector subvec = obj->pos - Player_object->pos;
-  vm_NormalizeVectorFast(&subvec);
-  if ((vm_DotProduct(&subvec, &Player_object->orient.fvec)) < IndicatorTan)
+  simd::float3 subvec = obj->pos - Player_object->pos;
+  vec::vm_NormalizeVectorFast(&subvec);
+  if ((simd::dot(subvec, Player_object->orient.fvec)) < IndicatorTan)
     return;
-  if ((vm_VectorDistanceQuick(&Viewer_object->pos, &obj->pos) > 800.0f))
+  if ((vec::vm_VectorDistanceQuick(&Viewer_object->pos, &obj->pos) > 800.0f))
     return;
   // Find out if it is o.k. to draw here.
   fvi_query fq;
@@ -2191,7 +2191,7 @@ void DrawPlayerNameOnHud(object *obj) {
   // See if it is in our viewcone
   simd::float3 subvec = obj->pos - Player_object->pos;
   vec::vm_NormalizeVectorFast(&subvec);
-  if ((vm_DotProduct(&subvec, &Player_object->orient.fvec)) < HudNameTan)
+  if ((simd::dot(subvec, Player_object->orient.fvec)) < HudNameTan)
     return;
   // Find out if it is o.k. to draw here.
   fvi_query fq;
@@ -2331,7 +2331,7 @@ void DrawPlayerSightVector(object *obj) {
   rend_SetTextureType(TT_FLAT);
   rend_SetLighting(LS_GOURAUD);
   rend_SetColorModel(CM_RGB);
-  vector vecs[2];
+  simd::float3 vecs[2];
   g3Point pnts[2];
 
   vecs[0] = obj->pos;

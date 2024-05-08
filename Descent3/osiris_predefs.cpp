@@ -637,9 +637,9 @@ void osipf_RoomValue(int roomnum, char op, char vtype, void *ptr, int index) {
     break;
   case RMV_V_WIND:
     if (op == VF_SET)
-      rp->wind = *(vector *)ptr;
+      rp->wind = *(simd::float3 *)ptr;
     else if (op == VF_GET)
-      *(vector *)ptr = rp->wind;
+      *(simd::float3 *)ptr = rp->wind;
     break;
   case RMV_C_USED:
     if (op == VF_GET)
@@ -652,9 +652,9 @@ void osipf_RoomValue(int roomnum, char op, char vtype, void *ptr, int index) {
     break;
   case RMSV_V_PATH_PNT:
     if (op == VF_SET)
-      rp->path_pnt = *(vector *)ptr;
+      rp->path_pnt = *(simd::float3 *)ptr;
     else if (op == VF_GET)
-      *(vector *)ptr = rp->path_pnt;
+      *(simd::float3 *)ptr = rp->path_pnt;
     break;
 
   case RMV_I_NUM_FACES:
@@ -679,22 +679,22 @@ void osipf_RoomValue(int roomnum, char op, char vtype, void *ptr, int index) {
     break;
   case RMSV_V_FACE_NORMAL:
     if (op == VF_GET)
-      *(vector *)ptr = rp->faces[index].normal;
+      *(simd::float3 *)ptr = rp->faces[index].normal;
     break;
   case RMSV_V_FACE_CENTER_PNT:
     if (op == VF_GET) {
       int i;
 
       if (index < 0 || index >= rp->num_faces || rp->faces[index].num_verts <= 0) {
-        *(vector *)ptr = rp->path_pnt;
+        *(simd::float3 *)ptr = rp->path_pnt;
       } else {
-        *(vector *)ptr = Zero_vector;
+        *(simd::float3 *)ptr = vec::Zero_vector;
 
         for (i = 0; i < rp->faces[index].num_verts; i++) {
-          *(vector *)ptr += rp->verts[rp->faces[index].face_verts[i]];
+          *(simd::float3 *)ptr += rp->verts[rp->faces[index].face_verts[i]];
         }
 
-        *(vector *)ptr /= rp->faces[index].num_verts;
+        *(simd::float3 *)ptr /= rp->faces[index].num_verts;
       }
     }
     break;
@@ -704,9 +704,9 @@ void osipf_RoomValue(int roomnum, char op, char vtype, void *ptr, int index) {
     break;
   case RMSV_V_PORTAL_PATH_PNT:
     if (op == VF_SET)
-      rp->portals[index].path_pnt = *(vector *)ptr; // chrishack -- make sure save game accounts for this
+      rp->portals[index].path_pnt = *(simd::float3 *)ptr; // chrishack -- make sure save game accounts for this
     else if (op == VF_GET)
-      *(vector *)ptr = rp->portals[index].path_pnt;
+      *(simd::float3 *)ptr = rp->portals[index].path_pnt;
     break;
   case RMSV_I_PORTAL_CONNECT_ROOM:
     if (op == VF_GET)
@@ -1115,9 +1115,9 @@ void osipf_AIValue(int objhandle, char op, char vtype, void *ptr) {
     break;
   case AIV_V_VEC_TO_TARGET:
     if (op == VF_SET) {
-      ai_info->vec_to_target_actual = ai_info->vec_to_target_perceived = *((vector *)ptr);
+      ai_info->vec_to_target_actual = ai_info->vec_to_target_perceived = *((simd::float3 *)ptr);
     } else {
-      *((vector *)ptr) = ai_info->vec_to_target_perceived;
+      *((simd::float3 *)ptr) = ai_info->vec_to_target_perceived;
     }
     break;
   case AIV_F_NEXT_CHECK_SEE_TARGET_TIME:
@@ -1129,9 +1129,9 @@ void osipf_AIValue(int objhandle, char op, char vtype, void *ptr) {
     break;
   case AIV_V_LAST_SEE_TARGET_POS:
     if (op == VF_SET) {
-      ai_info->last_see_target_pos = *((vector *)ptr);
+      ai_info->last_see_target_pos = *((simd::float3 *)ptr);
     } else {
-      *((vector *)ptr) = ai_info->last_see_target_pos;
+      *((simd::float3 *)ptr) = ai_info->last_see_target_pos;
     }
     break;
   case AIV_F_LAST_SEE_TARGET_TIME:
@@ -1181,16 +1181,16 @@ void osipf_AIValue(int objhandle, char op, char vtype, void *ptr) {
     break;
   case AIV_V_MOVEMENT_DIR:
     if (op == VF_SET) {
-      ai_info->movement_dir = *((vector *)ptr);
+      ai_info->movement_dir = *((simd::float3 *)ptr);
     } else {
-      *((vector *)ptr) = ai_info->movement_dir;
+      *((simd::float3 *)ptr) = ai_info->movement_dir;
     }
     break;
   case AIV_V_ROT_THRUST_VECTOR:
     if (op == VF_SET) {
-      ai_info->rot_thrust_vector = *((vector *)ptr);
+      ai_info->rot_thrust_vector = *((simd::float3 *)ptr);
     } else {
-      *((vector *)ptr) = ai_info->rot_thrust_vector;
+      *((simd::float3 *)ptr) = ai_info->rot_thrust_vector;
     }
     break;
   case AIV_F_FOV:
@@ -1410,19 +1410,19 @@ void osipf_ObjectValue(int handle, char op, char var_handle, void *ptr, int inde
     break;
   case OBJV_V_POS:
     if (op == VF_SET) {
-      ObjSetPos(obj, (vector *)ptr, obj->roomnum, NULL, true);
+      ObjSetPos(obj, (simd::float3 *)ptr, obj->roomnum, NULL, true);
       obj->flags |= OF_MOVED_THIS_FRAME;
       obj->flags &= ~OF_STOPPED_THIS_FRAME;
     } else if (op == VF_GET)
-      *(vector *)ptr = obj->pos;
+      *(simd::float3 *)ptr = obj->pos;
     break;
   case OBJV_M_ORIENT:
     if (op == VF_SET) {
-      ObjSetPos(obj, &obj->pos, obj->roomnum, (matrix *)ptr, true);
+      ObjSetPos(obj, &obj->pos, obj->roomnum, (vec::matrix *)ptr, true);
       obj->flags |= OF_MOVED_THIS_FRAME;
       obj->flags &= ~OF_STOPPED_THIS_FRAME;
     } else if (op == VF_GET)
-      *(matrix *)ptr = obj->orient;
+      *(vec::matrix *)ptr = obj->orient;
     break;
   case OBJV_I_ROOMNUM:
     if (op == VF_SET) {
@@ -1434,29 +1434,29 @@ void osipf_ObjectValue(int handle, char op, char var_handle, void *ptr, int inde
     break;
   case OBJV_V_VELOCITY:
     if (op == VF_SET)
-      obj->mtype.phys_info.velocity = *(vector *)ptr;
+      obj->mtype.phys_info.velocity = *(simd::float3 *)ptr;
     else if (op == VF_GET)
-      *(vector *)ptr = obj->mtype.phys_info.velocity;
+      *(simd::float3 *)ptr = obj->mtype.phys_info.velocity;
     break;
   case OBJV_V_ROTVELOCITY:
     if (op == VF_SET)
-      obj->mtype.phys_info.rotvel = *(vector *)ptr;
+      obj->mtype.phys_info.rotvel = *(simd::float3 *)ptr;
     else if (op == VF_GET)
-      *(vector *)ptr = obj->mtype.phys_info.rotvel;
+      *(simd::float3 *)ptr = obj->mtype.phys_info.rotvel;
     break;
     break;
   case OBJV_V_THRUST:
     if (op == VF_SET)
-      obj->mtype.phys_info.thrust = *(vector *)ptr;
+      obj->mtype.phys_info.thrust = *(simd::float3 *)ptr;
     else if (op == VF_GET)
-      *(vector *)ptr = obj->mtype.phys_info.thrust;
+      *(simd::float3 *)ptr = obj->mtype.phys_info.thrust;
     break;
     break;
   case OBJV_V_ROTTHRUST:
     if (op == VF_SET)
-      obj->mtype.phys_info.rotthrust = *(vector *)ptr;
+      obj->mtype.phys_info.rotthrust = *(simd::float3 *)ptr;
     else if (op == VF_GET)
-      (*(vector *)ptr) = obj->mtype.phys_info.rotthrust;
+      (*(simd::float3 *)ptr) = obj->mtype.phys_info.rotthrust;
     break;
     break;
   case OBJV_I_FLAGS: {
@@ -1632,7 +1632,7 @@ void osipf_ObjectValue(int handle, char op, char var_handle, void *ptr, int inde
   }
 }
 
-uint8_t osipf_AITurnTowardsVectors(int objhandle, vector *fvec, vector *uvec) {
+uint8_t osipf_AITurnTowardsVectors(int objhandle, simd::float3 *fvec, simd::float3 *uvec) {
   object *objp = ObjGet(objhandle);
 
   if (!objp) {
@@ -1645,8 +1645,8 @@ uint8_t osipf_AITurnTowardsVectors(int objhandle, vector *fvec, vector *uvec) {
     return 0;
   }
 
-  matrix g_orient;
-  vm_VectorToMatrix(&g_orient, fvec, uvec, NULL);
+  vec::matrix g_orient;
+  vec::vm_VectorToMatrix(&g_orient, fvec, uvec, NULL);
 
   return AITurnTowardsMatrix(objp, objp->ai_info->max_turn_rate, &g_orient);
 }
@@ -1670,23 +1670,23 @@ void osipf_AISetType(int objhandle, int type) {
   GoalInitTypeGoals(objp, type);
 }
 
-vector osipf_AIFindHidePos(int hideobjhandle, int viewobjhandle, float time, int *hide_room) {
+simd::float3 osipf_AIFindHidePos(int hideobjhandle, int viewobjhandle, float time, int *hide_room) {
   object *hide_obj = ObjGet(hideobjhandle);
   object *view_obj = ObjGet(viewobjhandle);
 
-  vector hpos;
+  simd::float3 hpos;
   int hroom;
 
   if (hide_obj == NULL) {
     LOG_ERROR << "Illegal Hide Object Passed To AIFindHidePos";
     *hide_room = -1;
-    return Zero_vector;
+    return vec::Zero_vector;
   }
 
   if (hide_obj->control_type != CT_AI) {
     LOG_ERROR << "Illegal Object CT Passed To AIFindHidePos";
     *hide_room = -1;
-    return Zero_vector;
+    return vec::Zero_vector;
   }
 
   if (view_obj == NULL) {
@@ -1843,7 +1843,7 @@ int osipf_AIGoalAdd(int objhandle, int goal_type, int level, float influence, in
   case AIG_GET_TO_POS: {
     // Pop Goal Local Variables
     va_start(marker, flags);
-    vector *pos = va_arg(marker, vector *);
+    simd::float3 *pos = va_arg(marker, simd::float3 *);
     int roomnum = va_arg(marker, int);
     va_end(marker);
 
@@ -1888,7 +1888,7 @@ int osipf_AIGoalAdd(int objhandle, int goal_type, int level, float influence, in
   {
     // Pop Goal Local Variables
     va_start(marker, flags);
-    vector *v_value = va_arg(marker, vector *);
+    simd::float3 *v_value = va_arg(marker, simd::float3 *);
     va_end(marker);
 
     // Do the actual goal and return;
@@ -1976,14 +1976,14 @@ int osipf_ObjMakeListOfType(int objhandle, int type, int id, bool f_ignore_init_
   return num_recorded;
 }
 
-vector osipf_AIGetRoomPathPoint(int roomnum) {
+simd::float3 osipf_AIGetRoomPathPoint(int roomnum) {
   if (ROOMNUM_OUTSIDE(roomnum)) {
     int cell = CELLNUM(roomnum);
 
     if (cell >= TERRAIN_DEPTH * TERRAIN_WIDTH) {
-      return Zero_vector;
+      return vec::Zero_vector;
     } else {
-      vector pos;
+      simd::float3 pos;
 
       ComputeTerrainSegmentCenter(&pos, cell);
       pos.y += 15.0f + ((float)ps_rand() / (float)D3_RAND_MAX) * 20; // between 15 and 35
@@ -1994,7 +1994,7 @@ vector osipf_AIGetRoomPathPoint(int roomnum) {
     return Rooms[roomnum].path_pnt;
   }
 
-  return Zero_vector;
+  return vec::Zero_vector;
 }
 
 int osipf_AIFindEnergyCenter(int objhandle) {
@@ -2075,26 +2075,26 @@ void osipf_AISetGoalCircleDist(int objhandle, int goal_handle, float dist) {
   }
 }
 
-void osipf_GetGunPos(int objhandle, int gun_number, vector *gun_pnt, vector *gun_normal) {
+void osipf_GetGunPos(int objhandle, int gun_number, simd::float3 *gun_pnt, simd::float3 *gun_normal) {
   object *obj = ObjGet(objhandle);
 
   if (obj == NULL) {
     LOG_ERROR << "Illegal Object Passed To AIGetGunPosition";
-    *gun_pnt = Zero_vector;
-    *gun_normal = Zero_vector;
+    *gun_pnt = vec::Zero_vector;
+    *gun_normal = vec::Zero_vector;
     return;
   }
 
   WeaponCalcGun(gun_pnt, gun_normal, obj, gun_number);
 }
 
-void osipf_GetGroundPos(int objhandle, int ground_number, vector *ground_pnt, vector *ground_normal) {
+void osipf_GetGroundPos(int objhandle, int ground_number, simd::float3 *ground_pnt, simd::float3 *ground_normal) {
   object *obj = ObjGet(objhandle);
 
   if (obj == NULL) {
     LOG_ERROR << "Illegal Object Passed To Obj_GetGroundPos";
-    *ground_pnt = Zero_vector;
-    *ground_normal = Zero_vector;
+    *ground_pnt = vec::Zero_vector;
+    *ground_normal = vec::Zero_vector;
     return;
   }
 
@@ -2228,9 +2228,9 @@ void osipf_MatcenValue(int matcen_id, char op, char var_handle, void *ptr, int i
     break;
   case MTNV_V_CREATE_POINT:
     if (op == VF_GET)
-      Matcen[matcen_id]->GetCreatePnt((vector *)ptr);
+      Matcen[matcen_id]->GetCreatePnt((simd::float3 *)ptr);
     else if (op == VF_SET)
-      Matcen[matcen_id]->SetCreatePnt((vector *)ptr);
+      Matcen[matcen_id]->SetCreatePnt((simd::float3 *)ptr);
     break;
   case MTNV_I_CREATE_ROOM:
     if (op == VF_GET)
@@ -2395,7 +2395,8 @@ int osipf_MatcenFindId(char *str) {
   return FindMatcenIndex(name);
 }
 
-int osipf_RayCast(int objhandle, vector *p0, vector *p1, int start_roomnum, float rad, int flags, ray_info *ri) {
+int osipf_RayCast(int objhandle, simd::float3 *p0, simd::float3 *p1, int start_roomnum, float rad, int flags,
+                  ray_info *ri) {
   int fate;
   int ignore_obj_list[100];
 
@@ -2567,8 +2568,8 @@ void osipf_OpenMessageWindow(const char *title, ...) {
   Int3(); // ummm, this is a blank function, should we ever be calling it?
 }
 
-int osipf_ObjCreate(uint8_t type, uint16_t id, int roomnum, vector *pos, const matrix *orient, int parent_handle,
-                    vector *initial_velocity) {
+int osipf_ObjCreate(uint8_t type, uint16_t id, int roomnum, simd::float3 *pos, const vec::matrix *orient, int parent_handle,
+                    simd::float3 *initial_velocity) {
   object *obj;
   int objnum;
 
@@ -2720,9 +2721,9 @@ void osipf_ObjWBValue(int obj_handle, char wb_index, char op, char vtype, void *
   case WBSV_V_GUNPT_POS:
     if (op == VF_GET) {
       if (objp->type == OBJ_PLAYER || objp->type == OBJ_OBSERVER)
-        WeaponCalcGun(((vector *)ptr), NULL, objp, pm->poly_wb[0].gp_index[g_index]);
+        WeaponCalcGun(((simd::float3 *)ptr), NULL, objp, pm->poly_wb[0].gp_index[g_index]);
       else
-        WeaponCalcGun(((vector *)ptr), NULL, objp, pm->poly_wb[wb_index].gp_index[g_index]);
+        WeaponCalcGun(((simd::float3 *)ptr), NULL, objp, pm->poly_wb[wb_index].gp_index[g_index]);
     }
     break;
 
@@ -3068,15 +3069,15 @@ void osipf_AIGoalValue(int obj_handle, char g_index, char op, char vtype, void *
   } break;
   case AIGV_V_VEC: {
     if (op == VF_GET)
-      *(vector *)ptr = g_ptr->g_info.vec;
+      *(simd::float3 *)ptr = g_ptr->g_info.vec;
     else if (op == VF_SET)
-      g_ptr->g_info.vec = *(vector *)ptr;
+      g_ptr->g_info.vec = *(simd::float3 *)ptr;
   } break;
   case AIGV_V_POS: {
     if (op == VF_GET)
-      *(vector *)ptr = g_ptr->g_info.pos;
+      *(simd::float3 *)ptr = g_ptr->g_info.pos;
     else if (op == VF_SET)
-      g_ptr->g_info.pos = *(vector *)ptr;
+      g_ptr->g_info.pos = *(simd::float3 *)ptr;
   } break;
   case AIGV_F_STEER_MIN_DIST: {
     if (op == VF_GET)
@@ -3185,16 +3186,16 @@ void osipf_AIGoalValue(int obj_handle, char g_index, char op, char vtype, void *
       g_ptr->dist_to_goal = *(float *)ptr;
   } break;
   case AIGV_I_SCRIPTED_DATA_PTR: {
-	if(op == VF_GET)
-	    *(void **)ptr = g_ptr->g_info.scripted_data_ptr;
-	else if(op == VF_SET)
-	    g_ptr->g_info.scripted_data_ptr = *((void **)ptr);
+    if (op == VF_GET)
+      *(void **)ptr = g_ptr->g_info.scripted_data_ptr;
+    else if (op == VF_SET)
+      g_ptr->g_info.scripted_data_ptr = *((void **)ptr);
   } break;
   case AIGV_V_VEC_TO_TARGET: {
     if (op == VF_GET)
-      *(vector *)ptr = g_ptr->vec_to_target;
+      *(simd::float3 *)ptr = g_ptr->vec_to_target;
     else if (op == VF_SET)
-      g_ptr->vec_to_target = *(vector *)ptr;
+      g_ptr->vec_to_target = *(simd::float3 *)ptr;
   } break;
   case AIGV_F_NEXT_CHECK_SEE_TARGET_TIME: {
     if (op == VF_GET)
@@ -3204,9 +3205,9 @@ void osipf_AIGoalValue(int obj_handle, char g_index, char op, char vtype, void *
   } break;
   case AIGV_V_LAST_SEE_TARGET_POS: {
     if (op == VF_GET)
-      *(vector *)ptr = g_ptr->last_see_target_pos;
+      *(simd::float3 *)ptr = g_ptr->last_see_target_pos;
     else if (op == VF_SET)
-      g_ptr->last_see_target_pos = *(vector *)ptr;
+      g_ptr->last_see_target_pos = *(simd::float3 *)ptr;
   } break;
   case AIGV_F_LAST_SEE_TARGET_TIME: {
     if (op == VF_GET)
@@ -3239,15 +3240,15 @@ void osipf_AIGoalValue(int obj_handle, char g_index, char op, char vtype, void *
   } break;
   case AIGV_V_ORIENT_FVEC: {
     if (op == VF_GET)
-      *(vector *)ptr = g_ptr->set_fvec;
+      *(simd::float3 *)ptr = g_ptr->set_fvec;
     else if (op == VF_SET)
-      g_ptr->set_fvec = *(vector *)ptr;
+      g_ptr->set_fvec = *(simd::float3 *)ptr;
   } break;
   case AIGV_V_ORIENT_UVEC: {
     if (op == VF_GET)
-      *(vector *)ptr = g_ptr->set_uvec;
+      *(simd::float3 *)ptr = g_ptr->set_uvec;
     else if (op == VF_SET)
-      g_ptr->set_uvec = *(vector *)ptr;
+      g_ptr->set_uvec = *(simd::float3 *)ptr;
   } break;
   case AIGSV_C_ENABLER_TYPE: {
     if (op == VF_GET)
@@ -3316,7 +3317,7 @@ void osipf_AIGoalValue(int obj_handle, char g_index, char op, char vtype, void *
   }
 }
 
-int osipf_AIGetNearbyObjs(vector *pos, int init_roomnum, float rad, int *object_handle_list, int max_elements,
+int osipf_AIGetNearbyObjs(simd::float3 *pos, int init_roomnum, float rad, int *object_handle_list, int max_elements,
                           bool f_lightmap_only, bool f_only_players_and_ais, bool f_include_non_collide_objects,
                           bool f_stop_at_closed_doors) {
   int16_t *s_list;
@@ -3416,7 +3417,7 @@ int osipf_FindPathName(const char *name) { return FindGamePathName(name); }
 
 int osipf_FindLevelGoalName(const char *name) { return Level_goals.GoalFindId(name); }
 
-void osipf_CreateRandomSparks(int num_sparks, vector *pos, int roomnum, int which_index, float force_scalar) {
+void osipf_CreateRandomSparks(int num_sparks, simd::float3 *pos, int roomnum, int which_index, float force_scalar) {
   CreateRandomSparks(num_sparks, pos, roomnum, which_index, force_scalar);
 }
 
@@ -3457,7 +3458,7 @@ void osipf_SetPlayerControlMode(int pnum, bool set_to_ai) {
 //	pathid: path number
 //	point: which path point
 // returns true if operation was successful
-bool osipf_PathGetInformation(int pathid, int point, vector *pos, int *room, matrix *orient) {
+bool osipf_PathGetInformation(int pathid, int point, simd::float3 *pos, int *room, vec::matrix *orient) {
   if (pathid < 0 || pathid >= MAX_GAME_PATHS)
     return false;
 

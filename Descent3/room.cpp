@@ -1,5 +1,5 @@
 /*
-* Descent 3 
+* Descent 3
 * Copyright (C) 2024 Parallax Software
 *
 * This program is free software: you can redistribute it and/or modify
@@ -1029,7 +1029,7 @@ void GetIJ(const simd::float3 *normal, int *ii, int *jj) {
 void FindPointUV(float *u, float *v, const simd::float3 *pnt, const room *rp, const face *fp) {
   int roomnum = ROOMNUM(rp);
   int ii, jj;
-  vector vec0, vec1;
+  simd::float3 vec0, vec1;
   float *p1, *checkp, *v0, *v1;
   float k0, k1;
   int t;
@@ -1140,9 +1140,9 @@ float ComputeRoomBoundingSphere(simd::float3 *center, room *rp) {
 
   // Calculate initial sphere
 
-  dx = vm_VectorDistance(min_x, max_x);
-  dy = vm_VectorDistance(min_y, max_y);
-  dz = vm_VectorDistance(min_z, max_z);
+  dx = simd::distance(*min_x, *max_x);
+  dy = simd::distance(*min_y, *max_y);
+  dz = simd::distance(*min_z, *max_z);
 
   if (dx > dy)
     if (dx > dz) {
@@ -1163,7 +1163,7 @@ float ComputeRoomBoundingSphere(simd::float3 *center, room *rp) {
   // Go through all points and look for ones that don't fit
   rad2 = rad * rad;
   for (i = 0, vp = rp->verts; i < rp->num_verts; i++, vp++) {
-    vector delta;
+    simd::float3 delta;
     float t2;
 
     delta = *vp - *center;
@@ -1197,7 +1197,7 @@ void CreateRoomObjects() {
   // Now go through all rooms & create objects for external ones
   for (r = 0, rp = Rooms; r <= Highest_room_index; r++, rp++)
     if (rp->used && (rp->flags & RF_EXTERNAL)) {
-      vector pos;
+      simd::float3 pos;
       float rad;
       int roomnum, objnum;
 
@@ -1209,8 +1209,8 @@ void CreateRoomObjects() {
       objnum = ObjCreate(OBJ_ROOM, r, roomnum, &pos, NULL);
       ASSERT(objnum != -1); // DAJ -1FIX moved up
       Objects[objnum].size = rad;
-      Objects[objnum].wall_sphere_offset = Zero_vector;
-      Objects[objnum].anim_sphere_offset = Zero_vector;
+      Objects[objnum].wall_sphere_offset = vec::Zero_vector;
+      Objects[objnum].anim_sphere_offset = vec::Zero_vector;
 
       if ((rad >= MIN_BIG_OBJ_RAD) && !(Objects[objnum].flags & OF_BIG_OBJECT)) {
         BigObjAdd(objnum);
@@ -1304,7 +1304,7 @@ void DoRoomChangeFrame() {
 
     if (Room_changes[i].fog) {
 
-      vector scale_color =
+      simd::float3 scale_color =
           ((Room_changes[i].end_vector - Room_changes[i].start_vector) * norm) + Room_changes[i].start_vector;
       float scale_depth =
           ((Room_changes[i].end_depth - Room_changes[i].start_depth) * norm) + Room_changes[i].start_depth;
@@ -1317,7 +1317,7 @@ void DoRoomChangeFrame() {
       rp->fog_b = scale_color.z;
       rp->fog_depth = scale_depth;
     } else {
-      vector scale_wind =
+      simd::float3 scale_wind =
           ((Room_changes[i].end_vector - Room_changes[i].start_vector) * norm) + Room_changes[i].start_vector;
 
       rp->room_change_flags |= RCF_CHANGING_WIND_FOG;

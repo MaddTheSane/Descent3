@@ -313,10 +313,10 @@ static void CannedCinematicIntroCallback(int type);
 static void CannedCinematic_Intro(int PathID, char *Text, int PlayerPath, float Seconds, int camera_handle);
 static void CannedCinematicEndLevelCallback(int type);
 static void CannedCinematic_EndLevelPath(int PathID, char *Text, int PlayerPath, float Seconds, int camera_handle);
-static void CannedCinematic_EndLevelPoint(vector *pos, int room, char *Text, int PlayerPath, float Seconds,
+static void CannedCinematic_EndLevelPoint(simd::float3 *pos, int room, char *Text, int PlayerPath, float Seconds,
                                           int camera_handle);
 static void CannedCinematicMovePlayerFadeCallback(int type);
-static void CannedCinematic_MovePlayerFade(object *player, int room, vector *pos, matrix *orient, int camera_handle);
+static void CannedCinematic_MovePlayerFade(object *player, int room, simd::float3 *pos, vec::matrix *orient, int camera_handle);
 static void CannedCinematicLevelEndFadeWhiteCallback(int type);
 static void CannedCinematic_LevelEndFadeWhite(int camera_handle, float time, char *text_to_display);
 static void Cinematic_DoFakeCannedCinematics(tCannedCinematicInfo *info);

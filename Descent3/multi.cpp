@@ -1854,12 +1854,12 @@ void BailOnMultiplayer(const char *message) {
 }
 
 // Adds the trunctuated position data to an outgoing packet
-void MultiAddPositionData(vector *pos, uint8_t *data, int *count) {
+void MultiAddPositionData(simd::float3 *pos, uint8_t *data, int *count) {
   MultiAddUshort((pos->x * 16.0), data, count);
   MultiAddUshort((pos->z * 16.0), data, count);
   MultiAddFloat(pos->y, data, count);
 }
-void MultiExtractPositionData(vector *vec, uint8_t *data, int *count) {
+void MultiExtractPositionData(simd::float3 *vec, uint8_t *data, int *count) {
   vec->x = ((float)MultiGetUshort(data, count)) / 16.0;
   vec->z = ((float)MultiGetUshort(data, count)) / 16.0;
   vec->y = MultiGetFloat(data, count);
@@ -1904,8 +1904,8 @@ int MultiStuffPosition(int slot, uint8_t *data) {
   MultiAddPositionData(&obj->pos, data, &count);
 
   // Do orientation
-  angvec angs;
-  vm_ExtractAnglesFromMatrix(&angs, &obj->orient);
+  vec::angvec angs;
+  vec::vm_ExtractAnglesFromMatrix(&angs, &obj->orient);
 
   MultiAddShort(angs.p, data, &count);
   MultiAddShort(angs.h, data, &count);
@@ -1932,8 +1932,8 @@ int MultiStuffPosition(int slot, uint8_t *data) {
     flags |= MPF_HEADLIGHT;
 
   // Do velocity
-  vector *vel = &obj->mtype.phys_info.velocity;
-  vector *rotvel = &obj->mtype.phys_info.rotvel;
+  simd::float3 *vel = &obj->mtype.phys_info.velocity;
+  simd::float3 *rotvel = &obj->mtype.phys_info.rotvel;
 
   MultiAddShort((vel->x * 128.0), data, &count);
   MultiAddShort((vel->y * 128.0), data, &count);
@@ -1999,8 +1999,8 @@ int MultiStuffRobotPosition(uint16_t objectnum, uint8_t *data) {
   // Do orientation
 
   // Do orientation
-  angvec angs;
-  vm_ExtractAnglesFromMatrix(&angs, &obj->orient);
+  vec::angvec angs;
+  vec::vm_ExtractAnglesFromMatrix(&angs, &obj->orient);
 
   MultiAddShort(angs.p, data, &count);
   MultiAddShort(angs.h, data, &count);
@@ -2015,8 +2015,8 @@ int MultiStuffRobotPosition(uint16_t objectnum, uint8_t *data) {
   else
     MultiAddByte(0, data, &count);
 
-  vector *vel = &obj->mtype.phys_info.velocity;
-  vector *rotvel = &obj->mtype.phys_info.rotvel;
+  simd::float3 *vel = &obj->mtype.phys_info.velocity;
+  simd::float3 *rotvel = &obj->mtype.phys_info.rotvel;
 
   MultiAddShort((vel->x * 128.0), data, &count);
   MultiAddShort((vel->y * 128.0), data, &count);
@@ -2028,7 +2028,7 @@ int MultiStuffRobotPosition(uint16_t objectnum, uint8_t *data) {
 
 // Puts player "slot" position info into the passed in buffer
 // Returns the number of bytes used
-int MultiSendRobotFireWeapon(uint16_t objectnum, vector *pos, vector *dir, uint16_t weaponnum) {
+int MultiSendRobotFireWeapon(uint16_t objectnum, simd::float3 *pos, simd::float3 *dir, uint16_t weaponnum) {
   int size;
   int count = 0;
   uint8_t data[MAX_GAME_DATA_SIZE];
@@ -2045,13 +2045,13 @@ int MultiSendRobotFireWeapon(uint16_t objectnum, vector *pos, vector *dir, uint1
   MultiAddUshort(objectnum, data, &count);
 
   // Do position
-  // memcpy (&data[count],pos,sizeof(vector));
-  // count+=sizeof(vector);
+  // memcpy (&data[count],pos,sizeof(simd::float3));
+  // count+=sizeof(simd::float3);
   MultiAddVector(*pos, data, &count);
 
   // Do orientation
-  // memcpy (&data[count],dir,sizeof(vector));
-  // count+=sizeof(vector);
+  // memcpy (&data[count],dir,sizeof(simd::float3));
+  // count+=sizeof(simd::float3);
   MultiAddVector(*dir, data, &count);
 
   uint32_t index = MultiGetMatchChecksum(OBJ_WEAPON, weaponnum);
@@ -2078,8 +2078,8 @@ int MultiSendRobotFireWeapon(uint16_t objectnum, vector *pos, vector *dir, uint1
 void MultiDoRobotFire(uint8_t *data) {
   int count = 0;
   uint16_t obj_num;
-  vector weapon_pos;
-  vector weapon_dir;
+  simd::float3 weapon_pos;
+  simd::float3 weapon_dir;
   uint32_t weapon_num;
   uint32_t uniqueid;
 
@@ -2097,11 +2097,11 @@ void MultiDoRobotFire(uint8_t *data) {
     return;
   }
 
-  // memcpy (&weapon_pos,&data[count],sizeof(vector));
-  // count+=sizeof(vector);
+  // memcpy (&weapon_pos,&data[count],sizeof(simd::float3));
+  // count+=sizeof(simd::float3);
   weapon_pos = MultiGetVector(data, &count);
-  // memcpy (&weapon_dir,&data[count],sizeof(vector));
-  // count+=sizeof(vector);
+  // memcpy (&weapon_dir,&data[count],sizeof(simd::float3));
+  // count+=sizeof(simd::float3);
   weapon_dir = MultiGetVector(data, &count);
 
   weapon_num = MultiGetUint(data, &count);
@@ -2117,7 +2117,7 @@ void MultiDoRobotFire(uint8_t *data) {
 void MultiAnnounceEffect(object *obj, float size, float time) {
   int visnum = VisEffectCreate(VIS_FIREBALL, BLAST_RING_INDEX, obj->roomnum, &obj->pos);
   if (visnum >= 0) {
-    vector norm = {0, 1, 0};
+    simd::float3 norm = {0, 1, 0};
     vis_effect *vis = &VisEffects[visnum];
     vis->size = size;
     vis->lifetime = time;
@@ -3009,7 +3009,7 @@ void MultiDoDoneWorldStates(uint8_t *data) {
 }
 
 // Makes an abbrievated version of a matrix
-void MultiMakeMatrix(multi_orientation *dest, matrix *src) {
+void MultiMakeMatrix(multi_orientation *dest, vec::matrix *src) {
   dest->multi_matrix[0] = (src->rvec.x * 32767.0);
   dest->multi_matrix[1] = (src->rvec.y * 32767.0);
   dest->multi_matrix[2] = (src->rvec.z * 32767.0);
@@ -3024,7 +3024,7 @@ void MultiMakeMatrix(multi_orientation *dest, matrix *src) {
 }
 
 // Extracts a matrix from an abbreviated matrix
-void MultiExtractMatrix(matrix *dest, multi_orientation *src) {
+void MultiExtractMatrix(vec::matrix *dest, multi_orientation *src) {
   dest->rvec.x = (float)src->multi_matrix[0] / 32767.0;
   dest->rvec.y = (float)src->multi_matrix[1] / 32767.0;
   dest->rvec.z = (float)src->multi_matrix[2] / 32767.0;
@@ -3055,8 +3055,8 @@ void MultiDoPlayerPos(uint8_t *data) {
 
   object *obj = &Objects[Players[slot].objnum];
 
-  vector pos;
-  matrix orient;
+  simd::float3 pos;
+  vec::matrix orient;
   uint16_t short_roomnum;
   int roomnum;
 
@@ -3075,7 +3075,7 @@ void MultiDoPlayerPos(uint8_t *data) {
 
   roomnum = short_roomnum;
 
-  vector vel = {0, 0, 0}, rotvel;
+  simd::float3 vel = {0, 0, 0}, rotvel;
   angle turnroll;
 
   //	float dist=vm_VectorDistance (&pos,&obj->pos);
@@ -3181,7 +3181,7 @@ void MultiDoPlayerPos(uint8_t *data) {
 
   if (Netgame.local_role == LR_CLIENT && use_smoothing && !(flags & MPF_FIRED)) {
     // Check to see if we need to correct this ship due to error
-    if (vm_VectorDistance(&pos, &obj->pos) < 8) {
+    if (simd::distance(pos, obj->pos) < 8) {
       int pps_player_num;
       if (Netgame.local_role == LR_SERVER) {
         pps_player_num = slot;
@@ -3189,7 +3189,7 @@ void MultiDoPlayerPos(uint8_t *data) {
         pps_player_num = Player_num;
       }
 
-      vector dest_pos = pos + (vel * (1.0 / NetPlayers[pps_player_num].pps));
+      simd::float3 dest_pos = pos + (vel * (1.0 / NetPlayers[pps_player_num].pps));
       vel = (dest_pos - obj->pos) / (1.0 / NetPlayers[pps_player_num].pps);
 
       pos = obj->pos;
@@ -3230,8 +3230,8 @@ void MultiDoRobotPos(uint8_t *data) {
   }
   object *obj = &Objects[objectnum];
 
-  vector pos;
-  matrix orient;
+  simd::float3 pos;
+  vec::matrix orient;
   uint16_t short_roomnum;
   int roomnum;
 
@@ -3252,7 +3252,7 @@ void MultiDoRobotPos(uint8_t *data) {
   roomnum = short_roomnum;
   if (terrain)
     roomnum = MAKE_ROOMNUM(roomnum);
-  vector vel = {0, 0, 0};
+  simd::float3 vel = {0, 0, 0};
 
   // Get velocity
   vel.x = ((float)MultiGetShort(data, &count)) / 128.0;
@@ -4434,11 +4434,11 @@ void MultiDoWorldStates(uint8_t *data) {
         spew.gp.obj_handle = Objects[objnum].handle;
         spew.gp.gunpoint = MultiGetByte(data, &count);
       } else {
-        // memcpy (&spew.pt.normal,&data[count],sizeof(vector));
-        // count+=sizeof(vector);
+        // memcpy (&spew.pt.normal,&data[count],sizeof(simd::float3));
+        // count+=sizeof(simd::float3);
         spew.pt.normal = MultiGetVector(data, &count);
-        // memcpy (&spew.pt.origin,&data[count],sizeof(vector));
-        // count+=sizeof(vector);
+        // memcpy (&spew.pt.origin,&data[count],sizeof(simd::float3));
+        // count+=sizeof(simd::float3);
         spew.pt.origin = MultiGetVector(data, &count);
 
         spew.pt.room_num = MultiGetInt(data, &count);
@@ -4576,7 +4576,7 @@ void MultiDoJoinObjects(uint8_t *data) {
     }
 
     uint32_t checksum;
-    matrix orient;
+    vec::matrix orient;
     uint8_t name_len = 0;
     uint8_t num_persist_vars = 0;
 
@@ -4615,15 +4615,15 @@ void MultiDoJoinObjects(uint8_t *data) {
     } else // camera
       id = 0;
 
-    vector pos;
+    simd::float3 pos;
     uint16_t short_roomnum;
     uint8_t terrain = 0;
     uint8_t lifeleft = 255;
     int roomnum;
 
     if (type != OBJ_DOOR) {
-      // memcpy (&pos,&data[count],sizeof(vector));
-      // count+=sizeof(vector);
+      // memcpy (&pos,&data[count],sizeof(simd::float3));
+      // count+=sizeof(simd::float3);
       pos = MultiGetVector(data, &count);
 
       short_roomnum = MultiGetUshort(data, &count);
@@ -5193,17 +5193,17 @@ void MultiDoObject(uint8_t *data) {
     }
   }
 
-  vector pos, vel;
-  matrix orient, *orientp = NULL;
+  simd::float3 pos, vel;
+  vec::matrix orient, *orientp = NULL;
 
   // Extract position
-  // memcpy (&pos,&data[count],sizeof(vector));
-  // count+=sizeof(vector);
+  // memcpy (&pos,&data[count],sizeof(simd::float3));
+  // count+=sizeof(simd::float3);
   pos = MultiGetVector(data, &count);
 
   // Extract velocity
-  // memcpy (&vel,&data[count],sizeof(vector));
-  // count+=sizeof(vector);
+  // memcpy (&vel,&data[count],sizeof(simd::float3));
+  // count+=sizeof(simd::float3);
   vel = MultiGetVector(data, &count);
 
   if (type != OBJ_POWERUP && type != OBJ_DUMMY) {
@@ -5343,19 +5343,19 @@ void MultiSendObject(object *obj, uint8_t announce, uint8_t demo_record) {
     MultiAddByte(obj->dummy_type, data, &count);
 
   // Send position
-  // memcpy (&data[count],&obj->pos,sizeof(vector));
-  // count+=sizeof(vector);
+  // memcpy (&data[count],&obj->pos,sizeof(simd::float3));
+  // count+=sizeof(simd::float3);
   MultiAddVector(obj->pos, data, &count);
 
   // Send velocity
-  // memcpy (&data[count],&obj->mtype.phys_info.velocity,sizeof(vector));
-  // count+=sizeof(vector);
+  // memcpy (&data[count],&obj->mtype.phys_info.velocity,sizeof(simd::float3));
+  // count+=sizeof(simd::float3);
   MultiAddVector(obj->mtype.phys_info.velocity, data, &count);
 
   if (obj->type != OBJ_POWERUP && obj->type != OBJ_DUMMY) {
     // Send over orientation
-    angvec angs;
-    vm_ExtractAnglesFromMatrix(&angs, &obj->orient);
+    vec::angvec angs;
+    vec::vm_ExtractAnglesFromMatrix(&angs, &obj->orient);
 
     MultiAddShort(angs.p, data, &count);
     MultiAddShort(angs.h, data, &count);
@@ -5417,8 +5417,8 @@ void MultiDoGuidedInfo(uint8_t *data) {
 
   object *obj = Players[slot].guided_obj;
 
-  vector pos;
-  matrix orient;
+  simd::float3 pos;
+  vec::matrix orient;
   uint16_t short_roomnum;
   int roomnum;
 
@@ -5440,7 +5440,7 @@ void MultiDoGuidedInfo(uint8_t *data) {
     roomnum = MAKE_ROOMNUM(roomnum);
 
   // Get velocity
-  vector vel;
+  simd::float3 vel;
   vel.x = ((float)MultiGetShort(data, &count)) / 128.0;
   vel.y = ((float)MultiGetShort(data, &count)) / 128.0;
   vel.z = ((float)MultiGetShort(data, &count)) / 128.0;
@@ -5471,8 +5471,8 @@ int MultiStuffGuidedInfo(int slot, uint8_t *data) {
   MultiAddPositionData(&obj->pos, data, &count);
 
   // Do orientation
-  angvec angs;
-  vm_ExtractAnglesFromMatrix(&angs, &obj->orient);
+  vec::angvec angs;
+  vec::vm_ExtractAnglesFromMatrix(&angs, &obj->orient);
 
   MultiAddShort(angs.p, data, &count);
   MultiAddShort(angs.h, data, &count);
@@ -5488,8 +5488,8 @@ int MultiStuffGuidedInfo(int slot, uint8_t *data) {
     MultiAddByte(0, data, &count);
 
   // Do velocity
-  vector *vel = &obj->mtype.phys_info.velocity;
-  vector *rotvel = &obj->mtype.phys_info.rotvel;
+  simd::float3 *vel = &obj->mtype.phys_info.velocity;
+  simd::float3 *rotvel = &obj->mtype.phys_info.rotvel;
 
   MultiAddShort(vel->x * 128.0, data, &count);
   MultiAddShort(vel->y * 128.0, data, &count);
@@ -5747,10 +5747,10 @@ void MultiDoPowerupReposition(uint8_t *data) {
   }
   MULTI_ASSERT_NOMESSAGE(Objects[local_objnum].type == OBJ_POWERUP);
   object *obj = &Objects[local_objnum];
-  vector pos;
+  simd::float3 pos;
 
-  // memcpy (&pos,&data[count],sizeof(vector));
-  // count+=sizeof(vector);
+  // memcpy (&pos,&data[count],sizeof(simd::float3));
+  // count+=sizeof(simd::float3);
   pos = MultiGetVector(data, &count);
 
   uint16_t short_roomnum = MultiGetUshort(data, &count);
@@ -5760,7 +5760,7 @@ void MultiDoPowerupReposition(uint8_t *data) {
   if (terrain)
     roomnum = MAKE_ROOMNUM(roomnum);
 
-  obj->mtype.phys_info.velocity = Zero_vector;
+  obj->mtype.phys_info.velocity = vec::Zero_vector;
 
   ObjSetPos(obj, &pos, roomnum, &obj->orient, true);
 }
@@ -8530,11 +8530,11 @@ void MultiDoPermissionToFire(uint8_t *data) {
   Player_fire_packet[pnum].damage_scalar = MultiGetByte(data, &count);
 
   // Get positional info
-  vector pos;
-  matrix orient;
+  simd::float3 pos;
+  vec::matrix orient;
 
-  // memcpy (&pos,&data[count],sizeof(vector));
-  // count+=sizeof(vector);
+  // memcpy (&pos,&data[count],sizeof(simd::float3));
+  // count+=sizeof(simd::float3);
   pos = MultiGetVector(data, &count);
 
   // Get orientation
@@ -8567,8 +8567,8 @@ void MultiDoPermissionToFire(uint8_t *data) {
   int save_mask = obj->dynamic_wb[wb_index].cur_firing_mask;
   int save_flags = obj->dynamic_wb[wb_index].flags;
   int save_roomnum = obj->roomnum;
-  matrix save_orient = obj->orient;
-  vector save_pos = obj->pos;
+  vec::matrix save_orient = obj->orient;
+  simd::float3 save_pos = obj->pos;
 
   obj->dynamic_wb[wb_index].cur_firing_mask = Player_fire_packet[pnum].fire_mask;
 
@@ -8608,13 +8608,13 @@ void MultiSendPermissionToFire(int pnum) {
   MultiAddUbyte(Player_fire_packet[pnum].damage_scalar, data, &count);
 
   // Do position
-  // memcpy (&data[count],&obj->pos,sizeof(vector));
-  // count+=sizeof(vector);
+  // memcpy (&data[count],&obj->pos,sizeof(simd::float3));
+  // count+=sizeof(simd::float3);
   MultiAddVector(obj->pos, data, &count);
 
   // Do orientation
-  angvec angs;
-  vm_ExtractAnglesFromMatrix(&angs, &obj->orient);
+  vec::angvec angs;
+  vec::vm_ExtractAnglesFromMatrix(&angs, &obj->orient);
 
   MultiAddShort(angs.p, data, &count);
   MultiAddShort(angs.h, data, &count);
@@ -8783,13 +8783,13 @@ void MultiDoAdjustPosition(uint8_t *data) {
 
   float timestamp = MultiGetFloat(data, &count);
 
-  vector newpos, newvel;
+  simd::float3 newpos, newvel;
 
-  // memcpy (&newpos,&data[count],sizeof(vector));
-  // count+=sizeof(vector);
+  // memcpy (&newpos,&data[count],sizeof(simd::float3));
+  // count+=sizeof(simd::float3);
   newpos = MultiGetVector(data, &count);
-  // memcpy (&newvel,&data[count],sizeof(vector));
-  // count+=sizeof(vector);
+  // memcpy (&newvel,&data[count],sizeof(simd::float3));
+  // count+=sizeof(simd::float3);
   newvel = MultiGetVector(data, &count);
 
   int roomnum = MultiGetInt(data, &count);
@@ -8824,7 +8824,7 @@ void MultiDoAdjustPosition(uint8_t *data) {
   int cur_move = start_move;
   int done = 0;
 
-  vector save_thrust, save_rotthrust;
+  simd::float3 save_thrust, save_rotthrust;
   save_thrust = obj->mtype.phys_info.thrust;
   save_rotthrust = obj->mtype.phys_info.rotthrust;
 
@@ -8899,8 +8899,8 @@ void MultiDoRequestToMove(uint8_t *data) {
   int count = 0;
   SKIP_HEADER(data, &count);
 
-  vector thrust, rotthrust, pos;
-  matrix orient;
+  simd::float3 thrust, rotthrust, pos;
+  vec::matrix orient;
 
   int slot = MultiGetByte(data, &count);
   object *obj = &Objects[Players[slot].objnum];
@@ -8914,18 +8914,18 @@ void MultiDoRequestToMove(uint8_t *data) {
     return;
 
   // Get pos
-  // memcpy (&pos,&data[count],sizeof(vector));
-  // count+=sizeof(vector);
+  // memcpy (&pos,&data[count],sizeof(simd::float3));
+  // count+=sizeof(simd::float3);
   pos = MultiGetVector(data, &count);
 
   // Get thrust
-  // memcpy (&thrust,&data[count],sizeof(vector));
-  // count+=sizeof(vector);
+  // memcpy (&thrust,&data[count],sizeof(simd::float3));
+  // count+=sizeof(simd::float3);
   thrust = MultiGetVector(data, &count);
 
   // Get rotational thrust
-  // memcpy (&rotthrust,&data[count],sizeof(vector));
-  // count+=sizeof(vector);
+  // memcpy (&rotthrust,&data[count],sizeof(simd::float3));
+  // count+=sizeof(simd::float3);
   rotthrust = MultiGetVector(data, &count);
 
   // Get orientation
@@ -8954,12 +8954,12 @@ void MultiDoRequestToMove(uint8_t *data) {
 
   do_physics_sim(obj);
 
-  obj->mtype.phys_info.thrust = Zero_vector;
-  obj->mtype.phys_info.rotthrust = Zero_vector;
+  obj->mtype.phys_info.thrust = vec::Zero_vector;
+  obj->mtype.phys_info.rotthrust = vec::Zero_vector;
   obj->orient = orient;
 
   bool client_error = 0;
-  if (vm_VectorDistance(&pos, &obj->pos) > 5)
+  if (simd::distance(pos, obj->pos) > 5)
     client_error = true;
 
   if (Gametime - Last_update_time[slot] > .15)
@@ -8967,7 +8967,7 @@ void MultiDoRequestToMove(uint8_t *data) {
 
   // If there is too much client error then adjust
   if (client_error) {
-    LOG_DEBUG.printf("Correcting, deltatime=%f dist=%f", delta_time, vm_VectorDistance(&pos, &obj->pos));
+    LOG_DEBUG.printf("Correcting, deltatime=%f dist=%f", delta_time, vec::vm_VectorDistance(&pos, &obj->pos));
     MultiSendAdjustPosition(slot, timestamp);
     Last_update_time[slot] = Gametime;
   }
@@ -9003,8 +9003,8 @@ int MultiStuffRequestToMove(uint8_t *data) {
   MultiAddFloat(obj->mtype.phys_info.rotthrust.z, data, &count);
 
   // Do orientation
-  angvec angs;
-  vm_ExtractAnglesFromMatrix(&angs, &obj->orient);
+  vec::angvec angs;
+  vec::vm_ExtractAnglesFromMatrix(&angs, &obj->orient);
 
   MultiAddShort(angs.p, data, &count);
   MultiAddShort(angs.h, data, &count);

@@ -1346,8 +1346,7 @@ int GetBillboardCorners(g3Point *pnts, g3Point *top_point, g3Point *bot_point, f
   vec::vm_NormalizeVector(&top);
 
   // calculate the vector out from the 'rod' that is facing the camera
-  simd::float3 rodNorm;
-  vec::vm_CrossProduct(&rodNorm, &deltaVec, &top);
+  simd::float3 rodNorm = simd::cross(deltaVec, top);
   vec::vm_NormalizeVector(&rodNorm);
 
   // get the offset vector

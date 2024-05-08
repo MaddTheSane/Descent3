@@ -614,7 +614,7 @@
 static object *CreateSubobjectDebris(object *parent, int subobj_num, float explosion_mag, int death_flags);
 static void DrawSmolderingObject(object *obj);
 static int GetRandomExplosion(float size);
-static void CreateBlueBlastRing(vector *pos, int index, float lifetime, float max_size, int roomnum, int objnum,
+static void CreateBlueBlastRing(simd::float3 *pos, int index, float lifetime, float max_size, int roomnum, int objnum,
                                 int force_up);
 
 // If an objects size is bigger than this, we create size/threshold extra explosions

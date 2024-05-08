@@ -671,9 +671,9 @@ struct old_vis_effect {
   uint8_t type;
   uint8_t id;
 
-  vector pos;
+  simd::float3 pos;
 
-  vector velocity;
+  simd::float3 velocity;
   float mass;
   float drag;
   float size;
@@ -691,7 +691,7 @@ struct old_vis_effect {
   vis_attach_info attach_info;
   axis_billboard_info billboard_info;
 
-  vector end_pos;
+  simd::float3 end_pos;
 
   int16_t next;
   int16_t prev;
@@ -833,12 +833,12 @@ int LGSObjects(CFILE *fp, int version) {
 
   inreadobj = 1;
   int retval = LGS_OK;
-  vector pos, last_pos;
+  simd::float3 pos, last_pos;
   int roomnum;
   int i, j, highest_index;
   int max_terr;
 
-  matrix *objmat = (matrix *)mem_malloc(sizeof(*objmat) * MAX_OBJECTS);
+  vec::matrix *objmat = (vec::matrix *)mem_malloc(sizeof(*objmat) * MAX_OBJECTS);
 
   Osiris_DisableCreateEvents();
   // we must reset some data before continuing.
@@ -1520,7 +1520,7 @@ int LGSObjEffects(CFILE *fp, object *op) {
 //@@		delete[] parms;
 //@@
 //@@// write out thread data if necessary
-//@@	vector *mem = NULL;
+//@@	simd::float3 *mem = NULL;
 //@@	*memsize = 0;
 //@@	if (*is_scripted) {
 //@@		int mem_size=0,j;
@@ -1529,7 +1529,7 @@ int LGSObjEffects(CFILE *fp, object *op) {
 //@@		*memsize = mem_size;
 //@@
 //@@		if (mem_size) {
-//@@			mem = new vector[mem_size];
+//@@			mem = new simd::float3[mem_size];
 //@@			for (j = 0; j < mem_size; j++)
 //@@				gs_ReadVector(fp, mem[j]);
 //@@		}

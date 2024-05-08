@@ -85,8 +85,8 @@ uint8_t Room_clips[MAX_VERTS_PER_ROOM]; // used for face culling
 // default face reflectivity
 float Face_reflectivity = 0.5;
 // the position of the viewer - valid while a frame is being rendered
-static vector Viewer_eye;
-static matrix Viewer_orient;
+static simd::float3 Viewer_eye;
+static vec::matrix Viewer_orient;
 int Viewer_roomnum;
 int Flag_automap, Called_from_terrain;
 // Fog zone variables
@@ -169,11 +169,11 @@ float Room_light_val = 0;
 int Room_fog_plane_check = 0;
 float Room_fog_distance = 0;
 float Room_fog_eye_distance = 0;
-vector Room_fog_plane, Room_fog_portal_vert;
+simd::float3 Room_fog_plane, Room_fog_portal_vert;
 int16_t Fog_faces[MAX_FACES_PER_ROOM];
 int Num_fog_faces_to_render = 0;
 #define MAX_EXTERNAL_ROOMS 100
-vector External_room_corners[MAX_EXTERNAL_ROOMS][8];
+simd::float3 External_room_corners[MAX_EXTERNAL_ROOMS][8];
 uint8_t External_room_codes[MAX_EXTERNAL_ROOMS];
 uint8_t External_room_project_net[MAX_EXTERNAL_ROOMS];
 // For light glows
@@ -185,7 +185,7 @@ struct light_glow {
   int16_t roomnum;
   int16_t facenum;
   float size;
-  vector center;
+  simd::float3 center;
   float scalar;
   uint8_t flags;
 };
@@ -198,7 +198,7 @@ state_limited_element State_elements[MAX_STATE_ELEMENTS];
 // For terrain portals
 int Terrain_portal_left, Terrain_portal_right, Terrain_portal_top, Terrain_portal_bottom;
 // For deformation effect
-vector Global_alter_vec = {19, -19, 19};
+simd::float3 Global_alter_vec = {19, -19, 19};
 // For detail stuff (mirrors, specular,etc)
 bool Render_mirror_for_room = false;
 int Mirror_room;
@@ -329,14 +329,15 @@ void OutlineCurrentFace(room *rp, int facenum, int edgenum, int vertnum, ddgr_co
 }
 
 //	Draw a room rotated and placed in space
-static void DrawPlacedRoomFace(room *rp, vector *rotpoint, matrix *rotmat, vector *placepoint, int facenum, int color) {
+static void DrawPlacedRoomFace(room *rp, simd::float3 *rotpoint, matrix *rotmat, simd::float3 *placepoint, int facenum,
+                               int color) {
   face *fp = &rp->faces[facenum];
 
   g3Point p0, p1;
   uint8_t c0, c1;
   int v;
   for (v = 0; v < fp->num_verts; v++) {
-    vector tv;
+    simd::float3 tv;
 
     tv = (rp->verts[fp->face_verts[v]] - *rotpoint) * *rotmat + *placepoint;
     c0 = g3_RotatePoint(&p0, &tv);
@@ -417,7 +418,7 @@ static inline bool FaceIntersectsPortal(room *rp, face *fp, clip_wnd *wnd) {
   return false;
 }
 // Sets the status of a glow light
-void SetGlowStatus(int roomnum, int facenum, vector *center, float size, int fast) {
+void SetGlowStatus(int roomnum, int facenum, simd::float3 *center, float size, int fast) {
   int i;
   int first = 1;
   int first_free = -1;
@@ -461,7 +462,7 @@ void SetGlowStatus(int roomnum, int facenum, vector *center, float size, int fas
   }
 }
 // Takes a min,max vector and makes a surrounding cube from it
-void MakePointsFromMinMax(vector *corners, vector *minp, vector *maxp) {
+void MakePointsFromMinMax(simd::float3 *corners, simd::float3 *minp, simd::float3 *maxp) {
   corners[0].x = minp->x;
   corners[0].y = maxp->y;
   corners[0].z = minp->z;
@@ -538,17 +539,17 @@ void MarkFacingFaces(int roomnum, simd::float3 *world_verts) {
     room *mirror_rp = &Rooms[Mirror_room];
     face *mirror_fp = &mirror_rp->faces[mirror_rp->mirror_face];
     for (int t = 0; t < rp->num_faces; t++, fp++) {
-      vector incident_norm;
+      simd::float3 incident_norm;
       ReflectRay(&incident_norm, &fp->normal, &mirror_fp->normal);
 
       tvec = Viewer_eye - world_verts[fp->face_verts[0]];
-      if ((tvec * incident_norm) <= 0)
+      if (simd::dot(tvec, incident_norm) <= 0)
         fp->flags |= FF_NOT_FACING;
     }
   } else {
     for (int i = 0; i < rp->num_faces; i++, fp++) {
       tvec = Viewer_eye - world_verts[fp->face_verts[0]];
-      if ((tvec * fp->normal) <= 0)
+      if (simd::dot(tvec, fp->normal) <= 0)
         fp->flags |= FF_NOT_FACING;
     }
   }
@@ -657,7 +658,7 @@ void MarkFacesForRendering(int roomnum, clip_wnd *wnd) {
     object *obj = &Objects[objnum];
     uint8_t anded = 0xff;
     g3Point pnts[8];
-    vector vecs[8];
+    simd::float3 vecs[8];
     uint8_t code;
     if (rp->flags & RF_DOOR) // Render all objects in a door room
     {
@@ -703,7 +704,7 @@ void RotateAllExternalRooms() {
     }
     ASSERT(N_external_rooms < MAX_EXTERNAL_ROOMS); // Get Jason if hit this
     // Rotate all the points
-    vector corners[8];
+    simd::float3 corners[8];
     for (i = 0; i < N_external_rooms; i++) {
       int roomnum = External_room_list[i];
       room *rp = &Rooms[roomnum];
@@ -770,11 +771,11 @@ void CheckFogPortalExtents(int roomnum, int portalnum) {
   face *fp = &rp->faces[fn];
 
   // calculate the plane equation for the portal
-  vector *vec = &rp->verts[fp->face_verts[0]];
-  float distance = -vm_DotProduct(&fp->normal, vec);
+  simd::float3 *vec = &rp->verts[fp->face_verts[0]];
+  float distance = -simd::dot(fp->normal, *vec);
 
   // calculate the distance from the camera to the portal
-  distance = vm_DotProduct(&fp->normal, &Viewer_eye) + distance;
+  distance = simd::dot(fp->normal, Viewer_eye) + distance;
   if (distance < Fog_portal_data[found_room].close_dist) {
     // this portal is closer to the camera than the previous
     Fog_portal_data[found_room].close_dist = distance;
@@ -842,8 +843,8 @@ void BuildRoomListSub(int start_room_num, clip_wnd *wnd, int depth) {
 
     // See if portal is facing toward us
     if (!external_door_hack && !(pp->flags & PF_COMBINED)) {
-      vector check_v = Viewer_eye - rp->verts[fp->face_verts[0]];
-      if (check_v * fp->normal <= 0) {
+      simd::float3 check_v = Viewer_eye - rp->verts[fp->face_verts[0]];
+      if (simd::dot(check_v, fp->normal) <= 0) {
         // not facing us
         continue;
       }
@@ -868,9 +869,9 @@ void BuildRoomListSub(int start_room_num, clip_wnd *wnd, int depth) {
         int k;
 
         face *this_fp = &rp->faces[rp->portals[i].portal_face];
-        vector check_v;
+        simd::float3 check_v;
         check_v = Viewer_eye - rp->verts[this_fp->face_verts[0]];
-        if (check_v * this_fp->normal <= 0) // not facing us
+        if (simd::dot(check_v, this_fp->normal) <= 0) // not facing us
           continue;
 
         g3Codes combine_cc;
@@ -1200,9 +1201,9 @@ void CheckFace(room *rp,int facenum, int nv, int bm,g3Point **pointlist)
 void RenderFloatingTrig(room *rp, face *fp) {
   if (!Render_floating_triggers)
     return;
-  vector leftvec, rightvec;
-  vector left, right;
-  vector left_step, right_step;
+  simd::float3 leftvec, rightvec;
+  simd::float3 left, right;
+  simd::float3 left_step, right_step;
   int n_steps, i, j;
   g3Point p3;
   float stepsize;
@@ -1218,9 +1219,9 @@ void RenderFloatingTrig(room *rp, face *fp) {
   left_step = leftvec / n_steps;
   right_step = rightvec / n_steps;
   for (i = 0; i < n_steps; i++) {
-    vector p;
+    simd::float3 p;
     g3Point p3;
-    vector crossvec, cross_step;
+    simd::float3 crossvec, cross_step;
     int n_crosssteps;
 
     crossvec = right - left;
@@ -1369,8 +1370,8 @@ void RenderSpecularFacesFlat(room *rp) {
       vg = lm_green[g];
       vb = lm_blue[b];
 
-      vector subvec = Viewer_eye - rp->verts[fp->face_verts[vn]];
-      vm_NormalizeVectorFast(&subvec);
+      simd::float3 subvec = Viewer_eye - rp->verts[fp->face_verts[vn]];
+      vec::vm_NormalizeVectorFast(&subvec);
       if (!(rp->flags & RF_EXTERNAL)) {
         int limit = SpecialFaces[fp->special_handle].num;
         int spec_index = limit - 1;
@@ -1381,7 +1382,7 @@ void RenderSpecularFacesFlat(room *rp) {
 
         for (t = 0; t < limit; t++) {
           uint16_t color;
-          vector incident_norm;
+          simd::float3 incident_norm;
           float spec_scalar;
 
           // Use regular static lighting
@@ -1392,19 +1393,19 @@ void RenderSpecularFacesFlat(room *rp) {
               rp->verts[fp->face_verts[vn]] - SpecialFaces[fp->special_handle].spec_instance[t].bright_center;
           spec_scalar = Specular_scalars[spec_index][t];
 
-          vm_NormalizeVectorFast(&incident_norm);
+          vec::vm_NormalizeVectorFast(&incident_norm);
           float d;
-          vector upvec;
+          simd::float3 upvec;
           if ((GameTextures[fp->tmap].flags & TF_SMOOTH_SPECULAR) &&
               (SpecialFaces[fp->special_handle].flags & SFF_SPEC_SMOOTH)) {
-            d = incident_norm * SpecialFaces[fp->special_handle].vertnorms[vn];
+            d = simd::dot(incident_norm, SpecialFaces[fp->special_handle].vertnorms[vn]);
             upvec = d * SpecialFaces[fp->special_handle].vertnorms[vn];
           } else {
-            d = incident_norm * fp->normal;
+            d = simd::dot(incident_norm, fp->normal);
             upvec = d * fp->normal;
           }
           incident_norm -= (2 * upvec);
-          float dotp = subvec * incident_norm;
+          float dotp = simd::dot(subvec, incident_norm);
           if (dotp > 1)
             dotp = 1;
 
@@ -1421,13 +1422,13 @@ void RenderSpecularFacesFlat(room *rp) {
           }
         }
       } else {
-        vector incident_norm = rp->verts[fp->face_verts[vn]] - Terrain_sky.satellite_vectors[0];
-        vm_NormalizeVectorFast(&incident_norm);
+        simd::float3 incident_norm = rp->verts[fp->face_verts[vn]] - Terrain_sky.satellite_vectors[0];
+        vec::vm_NormalizeVectorFast(&incident_norm);
 
-        float d = incident_norm * fp->normal;
-        vector upvec = d * fp->normal;
+        float d = simd::dot(incident_norm, fp->normal);
+        simd::float3 upvec = d * fp->normal;
         incident_norm -= (2 * upvec);
-        float dotp = subvec * incident_norm;
+        float dotp = simd::dot(subvec, incident_norm);
         if (dotp > 1)
           dotp = 1;
 
@@ -1583,22 +1584,22 @@ void RenderFogFaces(room *rp) {
 
       if (Room_fog_plane_check == 0) {
         // Outside of the room
-        vector *vec = &rp->verts[fp->face_verts[vn]];
+        simd::float3 *vec = &rp->verts[fp->face_verts[vn]];
         // Now we must generate the split point. This is simply
         // an equation in the form Origin + t*Direction
 
-        float dist = (*vec * Room_fog_plane) + Room_fog_distance;
+        float dist = simd::dot(*vec, Room_fog_plane) + Room_fog_distance;
 
-        vector subvec = *vec - Viewer_eye;
+        simd::float3 subvec = *vec - Viewer_eye;
         float t = Room_fog_eye_distance / (Room_fog_eye_distance - dist);
-        vector portal_point = Viewer_eye + (t * subvec);
+        simd::float3 portal_point = Viewer_eye + (t * subvec);
 
-        eye_distance = -(vm_DotProduct(&Viewer_orient.fvec, &portal_point));
-        mag = vm_DotProduct(&Viewer_orient.fvec, vec) + eye_distance;
+        eye_distance = -(simd::dot(Viewer_orient.fvec, portal_point));
+        mag = simd::dot(Viewer_orient.fvec, *vec) + eye_distance;
       } else if (Room_fog_plane_check == 1) {
         // In the room, distance from
-        vector *vec = &rp->verts[fp->face_verts[vn]];
-        mag = vm_DotProduct(&Room_fog_plane, vec) + Room_fog_distance;
+        simd::float3 *vec = &rp->verts[fp->face_verts[vn]];
+        mag = simd::dot(Room_fog_plane, *vec) + Room_fog_distance;
       }
       float scalar = mag / rp->fog_depth;
       if (scalar > 1)
@@ -2026,12 +2027,12 @@ draw_fog:
     }
     if (fp->special_handle != BAD_SPECIAL_FACE_INDEX) {
       g3Point p1, p2;
-      vector verts[MAX_VERTS_PER_FACE];
-      vector center, end;
+      simd::float3 verts[MAX_VERTS_PER_FACE];
+      simd::float3 center, end;
       for (int t = 0; t < fp->num_verts; t++)
         verts[t] = rp->verts[fp->face_verts[t]];
       vm_GetCentroid(&center, verts, fp->num_verts);
-      vector subvec = SpecialFaces[fp->special_handle].spec_instance[0].bright_center - center;
+      simd::float3 subvec = SpecialFaces[fp->special_handle].spec_instance[0].bright_center - center;
       vm_NormalizeVectorFast(&subvec);
       end = center + subvec;
       g3_RotatePoint(&p1, &center);
@@ -2055,17 +2056,17 @@ draw_fog:
       lightmap_info *lmi = &LightmapInfo[fp->lmi_handle];
       uint16_t *src_data = (uint16_t *)lm_data(lmi->lm_handle);
       matrix facematrix;
-      vector fvec = -lmi->normal;
+      simd::float3 fvec = -lmi->normal;
       vm_VectorToMatrix(&facematrix, &fvec, NULL, NULL);
-      vector rvec = facematrix.rvec * lmi->xspacing;
-      vector uvec = facematrix.uvec * lmi->yspacing;
+      simd::float3 rvec = facematrix.rvec * lmi->xspacing;
+      simd::float3 uvec = facematrix.uvec * lmi->yspacing;
       vm_TransposeMatrix(&facematrix);
       int w = lm_w(lmi->lm_handle);
       int h = lm_h(lmi->lm_handle);
       for (int i = 0; i < w * h; i++) {
         int t;
         g3Point epoints[20];
-        vector evec[20];
+        simd::float3 evec[20];
         int y = i / w;
         int x = i % w;
         evec[0] = lmi->upper_left - (y * uvec) + (x * rvec);
@@ -2091,7 +2092,7 @@ draw_fog:
         // Draw interpolated normals
         /*if (fp->special_handle!=BAD_SPECIAL_FACE_INDEX && SpecialFaces[fp->special_handle].normal_map!=NULL)
         {
-                vector norm,from,to,temp;
+                simd::float3 norm,from,to,temp;
                 g3Point p1,p2;
                 vm_MakeZero (&from);
                 norm.x=Normal_table[SpecialFaces[fp->special_handle].normal_map[i*3+0]];
@@ -2194,7 +2195,7 @@ void RenderRoomSorted(room *rp) {
 }
 
 // Sets up fog if this room is fogged
-void SetupRoomFog(room *rp, vector *eye, matrix *orient, int viewer_room) {
+void SetupRoomFog(room *rp, simd::float3 *eye, vec::matrix *orient, int viewer_room) {
   if ((rp->flags & RF_FOG) == 0)
     return;
 
@@ -2206,9 +2207,9 @@ void SetupRoomFog(room *rp, vector *eye, matrix *orient, int viewer_room) {
 
   if (viewer_room == (rp - Rooms)) {
     // viewer is in the room
-    vector *vec = eye;
+    simd::float3 *vec = eye;
     Room_fog_plane_check = 1;
-    Room_fog_distance = -vm_DotProduct(&orient->fvec, vec);
+    Room_fog_distance = -simd::dot(orient->fvec, *vec);
     Room_fog_plane = orient->fvec;
     return;
   }
@@ -2233,8 +2234,8 @@ void SetupRoomFog(room *rp, vector *eye, matrix *orient, int viewer_room) {
   Room_fog_plane_check = 0;
   Room_fog_plane = close_face->normal;
   Room_fog_portal_vert = rp->verts[close_face->face_verts[0]];
-  Room_fog_distance = -vm_DotProduct(&Room_fog_plane, &Room_fog_portal_vert);
-  Room_fog_eye_distance = (*eye * Room_fog_plane) + Room_fog_distance;
+  Room_fog_distance = -simd::dot(Room_fog_plane, Room_fog_portal_vert);
+  Room_fog_eye_distance = simd::dot(*eye, Room_fog_plane) + Room_fog_distance;
 }
 
 // Renders the faces in a room without worrying about sorting.  Used in the game when Z-buffering is active
@@ -2392,17 +2393,17 @@ void RenderSingleLightGlow(int index) {
 
   // Get size of light
   float size = LightGlows[index].size;
-  vector center = LightGlows[index].center;
+  simd::float3 center = LightGlows[index].center;
 
   // Get alpha of light
-  vector tvec = Viewer_eye - rp->verts[fp->face_verts[0]];
-  vm_NormalizeVectorFast(&tvec);
-  float facing_scalar = (tvec * fp->normal) * 2;
+  simd::float3 tvec = Viewer_eye - rp->verts[fp->face_verts[0]];
+  vec::vm_NormalizeVectorFast(&tvec);
+  float facing_scalar = simd::dot(tvec, fp->normal) * 2;
   if (facing_scalar < 0)
     return;
   tvec = center - Viewer_eye;
 
-  float dist = vm_GetMagnitudeFast(&tvec);
+  float dist = vec::vm_GetMagnitudeFast(&tvec);
   if (dist < (size * CORONA_DIST_CUTOFF))
     return;
   if (dist < (size * (CORONA_DIST_CUTOFF + 15))) {
@@ -2476,36 +2477,36 @@ void RenderSingleLightGlow2(int index) {
 
   // Get size of light
   float size = LightGlows[index].size;
-  vector center = LightGlows[index].center;
-  vector corona_pos = center + (fp->normal * size);
+  simd::float3 center = LightGlows[index].center;
+  simd::float3 corona_pos = center + (fp->normal * size);
   bm_handle = star_handle;
-  matrix mat, rot_mat;
-  vector fvec, uvec, temp_vec, rvec;
+  vec::matrix mat, rot_mat;
+  simd::float3 fvec, uvec, temp_vec, rvec;
   temp_vec = -fp->normal;
 
   vm_VectorToMatrix(&mat, NULL, &temp_vec, NULL);
 
   // Rotate view vector into billboard space
   fvec = Viewer_eye - corona_pos;
-  vm_NormalizeVectorFast(&fvec);
+  vec::vm_NormalizeVectorFast(&fvec);
   temp_vec = fvec * mat;
   fvec = temp_vec;
-  vm_NormalizeVectorFast(&fvec);
+  vec::vm_NormalizeVectorFast(&fvec);
   rvec.x = fvec.z;
   rvec.y = 0;
   rvec.z = -fvec.x;
   uvec.y = 1;
   uvec.x = 0;
   uvec.z = 0;
-  vm_VectorToMatrix(&rot_mat, NULL, &uvec, &rvec);
-  vm_TransposeMatrix(&mat);
+  vec::vm_VectorToMatrix(&rot_mat, NULL, &uvec, &rvec);
+  vec::vm_TransposeMatrix(&mat);
   temp_vec = rot_mat.rvec * mat;
   rot_mat.rvec = temp_vec;
   temp_vec = rot_mat.uvec * mat;
   rot_mat.uvec = temp_vec;
   temp_vec = rot_mat.fvec * mat;
   rot_mat.fvec = temp_vec;
-  vector world_vecs[4];
+  simd::float3 world_vecs[4];
   g3Point pnts[4], *pntlist[4];
   world_vecs[0] = corona_pos - (size * rot_mat.rvec);
   world_vecs[0] += (size * rot_mat.uvec);
@@ -2540,14 +2541,14 @@ void CheckLightGlowsForRoom(room *rp) {
   for (i = 0; i < Num_glows_this_frame; i++) {
     // For each light, see if we can cast a vector to it
     face *fp = &rp->faces[LightGlowsThisFrame[i].facenum];
-    vector verts[MAX_VERTS_PER_FACE];
-    vector center;
+    simd::float3 verts[MAX_VERTS_PER_FACE];
+    simd::float3 center;
     for (int t = 0; t < fp->num_verts; t++)
       verts[t] = rp->verts[fp->face_verts[t]];
-    float size = sqrt(vm_GetCentroid(&center, verts, fp->num_verts));
+    float size = sqrt(vec::vm_GetCentroid(&center, verts, fp->num_verts));
     size *= 2;
     center += (fp->normal / 4);
-    if (vm_VectorDistanceQuick(&center, &Viewer_eye) < (size * CORONA_DIST_CUTOFF))
+    if (vec::vm_VectorDistanceQuick(&center, &Viewer_eye) < (size * CORONA_DIST_CUTOFF))
       continue;
     // Check if we can see this light
     fvi_info hit_info;
@@ -2558,8 +2559,8 @@ void CheckLightGlowsForRoom(room *rp) {
         SetGlowStatus(rp - Rooms, LightGlowsThisFrame[i].facenum, &center, size, FastCoronas);
         continue;
       }
-      vector subvec = Viewer_eye - center;
-      vm_NormalizeVectorFast(&subvec);
+      simd::float3 subvec = Viewer_eye - center;
+      vec::vm_NormalizeVectorFast(&subvec);
       subvec *= size;
       subvec += center;
       fq.p0 = &center;
@@ -2631,9 +2632,9 @@ void BuildMirroredRoomListSub(int start_room_num, clip_wnd *wnd) {
       !(Doors[rp->doorway_data->doornum].flags & DF_SEETHROUGH))
     return;
   room *mirror_rp = &Rooms[Mirror_room];
-  vector *mirror_vec = &mirror_rp->verts[mirror_rp->faces[mirror_rp->mirror_face].face_verts[0]];
+  simd::float3 *mirror_vec = &mirror_rp->verts[mirror_rp->faces[mirror_rp->mirror_face].face_verts[0]];
   face *mirror_fp = &mirror_rp->faces[mirror_rp->mirror_face];
-  vector *mirror_norm = &mirror_fp->normal;
+  simd::float3 *mirror_norm = &mirror_fp->normal;
   // This is how far the mirror face is from the normalized plane
   float mirror_dist =
       -(mirror_vec->x * mirror_norm->x + mirror_vec->y * mirror_norm->y + mirror_vec->z * mirror_norm->z);
@@ -2659,17 +2660,17 @@ void BuildMirroredRoomListSub(int start_room_num, clip_wnd *wnd) {
     face *fp = &rp->faces[pp->portal_face];
     // See if portal is facing toward us
     if (!external_door_hack) {
-      vector temp_vec;
-      vector *vec = &rp->verts[fp->face_verts[0]];
+      simd::float3 temp_vec;
+      simd::float3 *vec = &rp->verts[fp->face_verts[0]];
       float dist_from_mirror =
           vec->x * mirror_norm->x + vec->y * mirror_norm->y + vec->z * mirror_norm->z + mirror_dist;
       // dest_vecs contains the point on the other side of the mirror (ie the reflected point)
       temp_vec = *vec - (*mirror_norm * (dist_from_mirror * 2));
-      vector incident_norm;
+      simd::float3 incident_norm;
       ReflectRay(&incident_norm, &fp->normal, &mirror_fp->normal);
 
-      vector tvec = Viewer_eye - temp_vec;
-      if ((tvec * incident_norm) <= 0)
+      simd::float3 tvec = Viewer_eye - temp_vec;
+      if (simd::dot(tvec, incident_norm) <= 0)
         continue; // not facing
     }
 
@@ -2679,8 +2680,8 @@ void BuildMirroredRoomListSub(int start_room_num, clip_wnd *wnd) {
     int nv = fp->num_verts;
     // Code the face points
     for (i = 0; i < nv; i++) {
-      vector temp_vec;
-      vector *vec = &rp->verts[fp->face_verts[i]];
+      simd::float3 temp_vec;
+      simd::float3 *vec = &rp->verts[fp->face_verts[i]];
       float dist_from_mirror =
           vec->x * mirror_norm->x + vec->y * mirror_norm->y + vec->z * mirror_norm->z + mirror_dist;
       // dest_vecs contains the point on the other side of the mirror (ie the reflected point)
@@ -2758,9 +2759,9 @@ void BuildMirroredRoomList() {
   g3Point portal_points[MAX_VERTS_PER_FACE], temp_points[MAX_VERTS_PER_FACE * 2];
   g3Point *pointlist[MAX_VERTS_PER_FACE * 2], **pl = pointlist;
   room *mirror_rp = &Rooms[Mirror_room];
-  vector *mirror_vec = &mirror_rp->verts[mirror_rp->faces[mirror_rp->mirror_face].face_verts[0]];
+  simd::float3 *mirror_vec = &mirror_rp->verts[mirror_rp->faces[mirror_rp->mirror_face].face_verts[0]];
   face *mirror_fp = &mirror_rp->faces[mirror_rp->mirror_face];
-  vector *mirror_norm = &mirror_fp->normal;
+  simd::float3 *mirror_norm = &mirror_fp->normal;
   // This is how far the mirror face is from the normalized plane
   float mirror_dist =
       -(mirror_vec->x * mirror_norm->x + mirror_vec->y * mirror_norm->y + mirror_vec->z * mirror_norm->z);
@@ -2776,8 +2777,8 @@ void BuildMirroredRoomList() {
     int clipped = 0;
 
     for (i = 0; i < fp->num_verts; i++) {
-      vector temp_vec;
-      vector *vec = &rp->verts[fp->face_verts[i]];
+      simd::float3 temp_vec;
+      simd::float3 *vec = &rp->verts[fp->face_verts[i]];
       float dist_from_mirror =
           vec->x * mirror_norm->x + vec->y * mirror_norm->y + vec->z * mirror_norm->z + mirror_dist;
       // dest_vecs contains the point on the other side of the mirror (ie the reflected point)
@@ -2849,7 +2850,7 @@ void BuildMirroredRoomList() {
 
   BuildMirroredRoomListSub(Mirror_room, &new_wnd);
 }
-vector mirror_dest_vecs[MAX_VERTS_PER_ROOM];
+simd::float3 mirror_dest_vecs[MAX_VERTS_PER_ROOM];
 g3Point mirror_save_points[MAX_VERTS_PER_ROOM];
 // Renders a mirror flipped about the mirrored plane
 void RenderMirroredRoom(room *rp) {
@@ -2878,14 +2879,14 @@ void RenderMirroredRoom(room *rp) {
     fp->flags |= FF_VISIBLE;
   }
   room *mirror_rp = &Rooms[Mirror_room];
-  vector *mirror_vec = &mirror_rp->verts[mirror_rp->faces[mirror_rp->mirror_face].face_verts[0]];
+  simd::float3 *mirror_vec = &mirror_rp->verts[mirror_rp->faces[mirror_rp->mirror_face].face_verts[0]];
   face *mirror_fp = &mirror_rp->faces[mirror_rp->mirror_face];
-  vector *norm = &mirror_fp->normal;
+  simd::float3 *norm = &mirror_fp->normal;
   // This is how far the mirror face is from the normalized plane
   float mirror_dist = -(mirror_vec->x * norm->x + mirror_vec->y * norm->y + mirror_vec->z * norm->z);
 
   for (i = 0; i < rp->num_verts; i++) {
-    vector *vec = &rp->verts[i];
+    simd::float3 *vec = &rp->verts[i];
     float dist_from_mirror = vec->x * norm->x + vec->y * norm->y + vec->z * norm->z + mirror_dist;
     // dest_vecs contains the point on the other side of the mirror (ie the reflected point)
     mirror_dest_vecs[i] = *vec - (*norm * (dist_from_mirror * 2));
@@ -2898,7 +2899,7 @@ void RenderMirroredRoom(room *rp) {
 #endif
   }
   // Rotate our mirror points
-  vector revnorm = -*norm;
+  simd::float3 revnorm = -*norm;
   g3_SetCustomClipPlane(1, mirror_vec, &revnorm);
 
   // Katmai enhanced rotate only in a release build, because not
@@ -3010,7 +3011,7 @@ static inline void IsRoomDynamicValid(room *rp, int x, int y, int z, float *r, f
   *b = (float)((float)(color & 0x03) / 3.0);
 }
 // Gets the dynamic light value for this position
-void GetRoomDynamicScalar(vector *pos, room *rp, float *r, float *g, float *b) {
+void GetRoomDynamicScalar(simd::float3 *pos, room *rp, float *r, float *g, float *b) {
   float front_values_r[10];
   float back_values_r[10];
   float front_values_g[10];
@@ -3151,30 +3152,30 @@ void RenderRoomObjects(room *rp) {
   if (UseHardware && Render_mirror_for_room) {
     // Render the mirror stuff if present
     room *mirror_rp = &Rooms[Mirror_room];
-    vector *mirror_vec = &mirror_rp->verts[mirror_rp->faces[mirror_rp->mirror_face].face_verts[0]];
+    simd::float3 *mirror_vec = &mirror_rp->verts[mirror_rp->faces[mirror_rp->mirror_face].face_verts[0]];
     face *mirror_fp = &mirror_rp->faces[mirror_rp->mirror_face];
-    vector *norm = &mirror_fp->normal;
+    simd::float3 *norm = &mirror_fp->normal;
     // This is how far the mirror face is from the normalized plane
     float mirror_dist = -(mirror_vec->x * norm->x + mirror_vec->y * norm->y + mirror_vec->z * norm->z);
     // Setup mirror matrix
 
-    vector negz_vec = {0, 0, -1};
+    simd::float3 negz_vec = {0, 0, -1};
 
-    matrix mirror_matrix, inv_mirror_matrix, dest_matrix, negz_matrix;
-    vm_VectorToMatrix(&mirror_matrix, norm, NULL, NULL);
+    vec::matrix mirror_matrix, inv_mirror_matrix, dest_matrix, negz_matrix;
+    vec::vm_VectorToMatrix(&mirror_matrix, norm, NULL, NULL);
     inv_mirror_matrix = mirror_matrix;
-    vm_TransposeMatrix(&inv_mirror_matrix);
-    vm_VectorToMatrix(&negz_matrix, &negz_vec, NULL, NULL);
+    vec::vm_TransposeMatrix(&inv_mirror_matrix);
+    vec::vm_VectorToMatrix(&negz_matrix, &negz_vec, NULL, NULL);
     negz_matrix.rvec *= -1;
 
     for (i = n_objs - 1; i >= 0; i--) {
       objnum = obj_sort_list[i].objnum;
       if (obj_sort_list[i].vis_effect) {
         vis_effect *vis = &VisEffects[objnum];
-        vector save_vec = vis->pos;
-        vector save_end_vec = vis->end_pos;
-        vector *vec = &vis->pos;
-        vector *end_vec = &vis->end_pos;
+        simd::float3 save_vec = vis->pos;
+        simd::float3 save_end_vec = vis->end_pos;
+        simd::float3 *vec = &vis->pos;
+        simd::float3 *end_vec = &vis->end_pos;
         float dist_from_mirror = vec->x * norm->x + vec->y * norm->y + vec->z * norm->z + mirror_dist;
         // dest_vecs contains the point on the other side of the mirror (ie the reflected point)
         vis->pos = *vec - (*norm * (dist_from_mirror * 2));
@@ -3188,11 +3189,11 @@ void RenderRoomObjects(room *rp) {
       } else {
         object *objp = &Objects[objnum];
 
-        vector save_vec = objp->pos;
-        matrix save_orient = objp->orient;
-        matrix temp_mat;
+        simd::float3 save_vec = objp->pos;
+        vec::matrix save_orient = objp->orient;
+        vec::matrix temp_mat;
 
-        vector *vec = &objp->pos;
+        simd::float3 *vec = &objp->pos;
         float dist_from_mirror = vec->x * norm->x + vec->y * norm->y + vec->z * norm->z + mirror_dist;
         // dest_vecs contains the point on the other side of the mirror (ie the reflected point)
         objp->pos = *vec - (*norm * (dist_from_mirror * 2));

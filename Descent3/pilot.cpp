@@ -1834,7 +1834,7 @@ private:
 //
 //	contains information about the ship to be displayed in the ship configuration
 struct tShipPos {
-  matrix last_frame;
+  vec::matrix last_frame;
   float cam_dist;
   float last_time;
   bool texture_changed;
@@ -2886,8 +2886,8 @@ void UI3DWindow::OnDraw() {
 
   static polymodel_effect pefx;
 
-  vector viewer_eye = {0, 0, 0};
-  matrix viewer_orient = IDENTITY_MATRIX;
+  simd::float3 viewer_eye = {0, 0, 0};
+  vec::matrix viewer_orient = IDENTITY_MATRIX;
   viewer_eye.z = -ship_pos.cam_dist;
 
   //	3d start frame
@@ -2904,10 +2904,10 @@ void UI3DWindow::OnDraw() {
   float light_scalar, size;
   PageInPolymodel(ship_model, OBJ_PLAYER, &size);
   poly_model *pm = GetPolymodelPointer(ship_model);
-  vector view_pos{};
-  vector light_vec{};
-  matrix view_orient = IDENTITY_MATRIX;
-  matrix rot_mat = IDENTITY_MATRIX;
+  simd::float3 view_pos{};
+  simd::float3 light_vec{};
+  vec::matrix view_orient = IDENTITY_MATRIX;
+  vec::matrix rot_mat = IDENTITY_MATRIX;
 
   //	draw model.
   SetNormalizedTimeAnim(0, normalized_time, pm);
@@ -2926,7 +2926,7 @@ void UI3DWindow::OnDraw() {
   light_vec.y = -1.0f;
   light_vec.z = -1.0f;
   light_scalar = 0.8f;
-  vm_NormalizeVector(&light_vec);
+  vec::vm_NormalizeVector(&light_vec);
 
   rend_SetZBufferState(1);
   rend_SetAlphaType(AT_CONSTANT_TEXTURE);

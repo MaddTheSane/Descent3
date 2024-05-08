@@ -238,7 +238,7 @@ matcen::matcen() {
 
   m_status = 0;
 
-  m_create_pnt = Zero_vector;
+  m_create_pnt = vec::Zero_vector;
   m_create_room = MATCEN_ERROR;
 
   m_cached_prod_index = -1;
@@ -293,7 +293,7 @@ bool matcen::StartObjProd() {
 
   // Guarantees against designer error
   pos_state pos;
-  matrix idmat = Identity_matrix;
+  vec::matrix idmat = vec::Identity_matrix;
 
   int croom = m_create_room;
   if (!ROOMNUM_OUTSIDE(m_create_room) && (Rooms[m_create_room].flags & RF_EXTERNAL)) {
@@ -333,9 +333,9 @@ bool matcen::DoObjProd() {
   }
 
   ComputeCreatePnt();
-  matrix orient;
-  vector fvec = Player_object->pos - m_create_pnt;
-  vm_NormalizeVector(&fvec);
+  vec::matrix orient;
+  simd::float3 fvec = Player_object->pos - m_create_pnt;
+  vec::vm_NormalizeVector(&fvec);
 
   vm_VectorToMatrix(&orient, &fvec, NULL, NULL);
 
@@ -353,15 +353,15 @@ bool matcen::DoObjProd() {
 
     if (objnum >= 0 && (Object_info[m_prod_type[m_cached_prod_index]].flags & OIF_CONTROL_AI) &&
         (Object_info[m_prod_type[m_cached_prod_index]].ai_info->movement_type != MC_FLYING)) {
-      vector gp;
+      simd::float3 gp;
       object *obj = &Objects[objnum];
 
       if (PhysCalcGround(&gp, NULL, obj, 0)) {
         fvi_info hit_info;
         fvi_query fq;
         int fate;
-        vector start = obj->pos;
-        vector end = obj->pos - 2000.0f * obj->orient.uvec;
+        simd::float3 start = obj->pos;
+        simd::float3 end = obj->pos - 2000.0f * obj->orient.uvec;
 
         fq.p0 = &start;
         fq.p1 = &end;
@@ -379,8 +379,8 @@ bool matcen::DoObjProd() {
           float pr;
           float diff;
 
-          ps = (gp - obj->pos) * obj->orient.uvec;
-          pr = (hit_info.hit_pnt - obj->pos) * obj->orient.uvec;
+          ps = simd::dot(gp - obj->pos, obj->orient.uvec);
+          pr = simd::dot(hit_info.hit_pnt - obj->pos, obj->orient.uvec);
 
           if (ps != pr) {
             diff = ps - pr;
@@ -566,7 +566,7 @@ bool matcen::ComputeCreatePnt() {
         int num_valid_faces = 0;
         room *rp = &Rooms[m_roomnum];
 
-        m_create_pnt = Zero_vector;
+        m_create_pnt = vec::Zero_vector;
 
         for (i = 0; i < m_num_spawn_pnts; i++) {
           if (m_spawn_pnt[i] >= 0 && m_spawn_pnt[i] < rp->num_faces) {
@@ -592,8 +592,8 @@ bool matcen::ComputeCreatePnt() {
 
           for (i = 0; i < num_valid_faces; i++) {
             // Compute the vector to the m_create_pnt
-            vector to_dist = m_create_pnt - m_spawn_vec[i];
-            float dot = m_spawn_normal[i] * to_dist;
+            simd::float3 to_dist = m_create_pnt - m_spawn_vec[i];
+            float dot = simd::dot(m_spawn_normal[i], to_dist);
 
             if (dot < spawn_dist) {
               float add_dist = spawn_dist - dot;
@@ -622,7 +622,7 @@ bool matcen::ComputeCreatePnt() {
         int i;
         int num_valid_gps = 0;
 
-        m_create_pnt = Zero_vector;
+        m_create_pnt = vec::Zero_vector;
 
         for (i = 0; i < m_num_spawn_pnts; i++) {
           if (WeaponCalcGun(&m_spawn_vec[num_valid_gps], &m_spawn_normal[num_valid_gps], master_obj, m_spawn_pnt[i])) {
@@ -636,8 +636,8 @@ bool matcen::ComputeCreatePnt() {
 
           for (i = 0; i < num_valid_gps; i++) {
             // Compute the vector to the m_create_pnt
-            vector to_dist = m_create_pnt - m_spawn_vec[i];
-            float dot = m_spawn_normal[i] * to_dist;
+            simd::float3 to_dist = m_create_pnt - m_spawn_vec[i];
+            float dot = simd::dot(m_spawn_normal[i], to_dist);
 
             if (dot < spawn_dist) {
               float add_dist = spawn_dist - dot;
@@ -674,13 +674,13 @@ error:
   return false;
 }
 
-bool matcen::GetCreatePnt(vector *pnt) {
+bool matcen::GetCreatePnt(simd::float3 *pnt) {
   ComputeCreatePnt();
   *pnt = m_create_pnt;
   return true;
 }
 
-bool matcen::SetCreatePnt(vector *pnt) {
+bool matcen::SetCreatePnt(simd::float3 *pnt) {
   if (m_status & MSTAT_MANUAL_UPDATE_CREATE_PNT) {
     m_create_pnt = *pnt;
     return true;
@@ -1162,7 +1162,7 @@ bool matcen::SetStatus(int status, bool f_enable) // Not all flags are settable
         m_sound_active_handle = Sound_system.Play3dSound(m_sounds[MATCEN_ACTIVE_SOUND], SND_PRIORITY_NORMAL, obj);
     } else {
       pos_state pos;
-      matrix idmat = Identity_matrix;
+      vec::matrix idmat = vec::Identity_matrix;
 
       int croom = m_create_room;
       if (!ROOMNUM_OUTSIDE(m_create_room) && (Rooms[m_create_room].flags & RF_EXTERNAL)) {
@@ -1234,7 +1234,7 @@ void matcen::CheckActivateStatus() {
       if (m_create_room == -1) {
       } else if (ROOMNUM_OUTSIDE(m_create_room) || (m_create_room <= Highest_room_index && Rooms[m_create_room].used &&
                                                     (Rooms[m_create_room].flags & RF_EXTERNAL))) {
-        if (vm_VectorDistance(&Player_object->pos, &m_create_pnt) <= MATCEN_OUTSIDE_NEAR_DIST) {
+        if (simd::distance(Player_object->pos, m_create_pnt) <= MATCEN_OUTSIDE_NEAR_DIST) {
           m_status |= MSTAT_ACTIVE;
         }
       } else if (m_create_room >= 0 && m_create_room <= Highest_room_index && Rooms[m_create_room].used) {
@@ -1247,7 +1247,7 @@ void matcen::CheckActivateStatus() {
 
           for (x = 0; x < rp->num_portals; x++) {
             int c_room = rp->portals[x].croom;
-            if (c_room < 0 && (vm_VectorDistance(&Player_object->pos, &m_create_pnt) <= MATCEN_OUTSIDE_NEAR_DIST)) {
+            if (c_room < 0 && (simd::distance(Player_object->pos, m_create_pnt) <= MATCEN_OUTSIDE_NEAR_DIST)) {
               m_status |= MSTAT_ACTIVE;
             } else {
               if (c_room == Player_object->roomnum) {
@@ -1280,7 +1280,7 @@ void matcen::CheckActivateStatus() {
         m_sound_active_handle = Sound_system.Play3dSound(m_sounds[MATCEN_ACTIVE_SOUND], SND_PRIORITY_NORMAL, obj);
     } else {
       pos_state pos;
-      matrix idmat = Identity_matrix;
+      vec::matrix idmat = vec::Identity_matrix;
 
       int croom = m_create_room;
       if (!ROOMNUM_OUTSIDE(m_create_room) && (Rooms[m_create_room].flags & RF_EXTERNAL)) {
@@ -1398,8 +1398,8 @@ void matcen::DoThinkFrame() {
         if (croom != p->roomnum)
           continue;
 
-        vector dir = p->pos - m_create_pnt;
-        float dist = vm_NormalizeVector(&dir) - p->size;
+        simd::float3 dir = p->pos - m_create_pnt;
+        float dist = vec::vm_NormalizeVector(&dir) - p->size;
         if (dist >= MATCEN_DAMAGE_DIST)
           continue;
 
@@ -1410,7 +1410,7 @@ void matcen::DoThinkFrame() {
         if (p == Player_object) {
           dir *= MATCEN_FORCE;
 
-          vector movement_pos, movement_vec, pos;
+          simd::float3 movement_pos, movement_vec, pos;
           PhysicsDoSimLinear(*p, pos, dir, p->mtype.phys_info.velocity, movement_vec, movement_pos, Frametime, 1);
         }
       }
@@ -1423,15 +1423,15 @@ void matcen::DoThinkFrame() {
         }
 
         if (croom == p->roomnum) {
-          vector dir = p->pos - m_create_pnt;
+          simd::float3 dir = p->pos - m_create_pnt;
 
-          float dist = vm_NormalizeVector(&dir) - p->size;
+          float dist = vec::vm_NormalizeVector(&dir) - p->size;
           if (dist < MATCEN_DAMAGE_DIST) {
             ApplyDamageToPlayer(p, p, PD_ENERGY_WEAPON, damage);
 
             dir *= MATCEN_FORCE;
 
-            vector movement_pos, movement_vec, pos;
+            simd::float3 movement_pos, movement_vec, pos;
             PhysicsDoSimLinear(*p, pos, dir, p->mtype.phys_info.velocity, movement_vec, movement_pos, Frametime, 1);
           }
         }
@@ -1528,7 +1528,7 @@ void matcen::DoRenderFrame() {
         }
       }
 
-      vector center = m_create_pnt;
+      simd::float3 center = m_create_pnt;
       size = (m_prod_mode_time / m_preprod_time) * size;
 
       if (size > 0.0)
@@ -1594,7 +1594,7 @@ void matcen::DoRenderFrame() {
         }
       }
 
-      vector center = m_create_pnt;
+      simd::float3 center = m_create_pnt;
       size = (m_prod_mode_time / m_preprod_time) * size;
 
       if (size > 0.0)
@@ -1638,7 +1638,7 @@ void matcen::DoRenderFrame() {
             vis->lighting_color = GR_RGB16(255, 255, 255);
 
             vis->custom_handle = m_creation_texture;
-            vis->size = vm_VectorDistanceQuick(&vis->pos, &vis->end_pos);
+            vis->size = vec::vm_VectorDistanceQuick(&vis->pos, &vis->end_pos);
             m_spawn_vis_effects[m_cur_saturation_count][i] = visnum;
           }
         }
@@ -1661,7 +1661,7 @@ void matcen::DoRenderFrame() {
         }
       }
 
-      vector center = m_create_pnt;
+      simd::float3 center = m_create_pnt;
       size = (m_prod_mode_time / m_preprod_time) * size;
 
       if (size > 0.0)

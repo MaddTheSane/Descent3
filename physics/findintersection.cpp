@@ -966,18 +966,18 @@ static void do_fvi_rooms(int initial_room_index);
 /// - parameter p1: are the ends of the line.
 ///
 /// Assumes that the initial point is not intersecting the plane.
-static inline int find_plane_line_intersection(vector *intp, vector *colp, vector *plane_pnt, const vector *plane_norm,
-                                               const vector *p0, const vector *p1, float rad);
-static bool IsPointInCylinder(vector *normal, vector *cylinder_pnt, vector *edir, float elen, const float rad,
-                              const vector *pnt, vector *mdir, bool *f_collide);
+static inline int find_plane_line_intersection(simd::float3 *intp, simd::float3 *colp, simd::float3 *plane_pnt, const simd::float3 *plane_norm,
+                                               const simd::float3 *p0, const simd::float3 *p1, float rad);
+static bool IsPointInCylinder(simd::float3 *normal, simd::float3 *cylinder_pnt, simd::float3 *edir, float elen, const float rad,
+                              const simd::float3 *pnt, simd::float3 *mdir, bool *f_collide);
 
 //! check if a sphere intersects a face -- this can be optimized (only need 2d stuff after rotation)
-static int check_vector_to_cylinder(vector *colp, vector *intp, float *col_dist, vector *wall_norm, const vector *p0,
-                                    const vector *p1, float rad, vector *ep0, vector *ep1);
+static int check_vector_to_cylinder(simd::float3 *colp, simd::float3 *intp, float *col_dist, simd::float3 *wall_norm, const simd::float3 *p0,
+                                    const simd::float3 *p1, float rad, simd::float3 *ep0, simd::float3 *ep1);
 
 //! check if a sphere intersects a face.
-static int check_sphere_to_face(vector *colp, vector *intp, float *col_dist, vector *wall_norm, const vector *p0,
-                                const vector *p1, vector *face_normal, int nv, float rad, vector **vertex_ptr_list);
+static int check_sphere_to_face(simd::float3 *colp, simd::float3 *intp, float *col_dist, simd::float3 *wall_norm, const simd::float3 *p0,
+                                const simd::float3 *p1, simd::float3 *face_normal, int nv, float rad, simd::float3 **vertex_ptr_list);
 static void fvi_rooms_objs(void);
 static int obj_in_list(int objnum, int *obj_list);
 static void make_trigger_face_list(int last_sim_faces);

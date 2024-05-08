@@ -93,16 +93,16 @@ static int Destroyed_light_faces_this_frame[MAX_DESTROYED_LIGHTS_PER_FRAME];
 static void FreeLighting();
 static int GetFreeDynamicLightmap(int w, int h);
 static void BlendLightingEdges(lightmap_info *lmi_ptr);
-static void ApplyLightingToExternalRoom(vector *pos, int roomnum, float light_dist, float red_scale, float green_scale,
-                                        float blue_scale, vector *light_direction, float dot_range);
-static void StartLightingInstance(vector *pos, matrix *orient);
+static void ApplyLightingToExternalRoom(simd::float3 *pos, int roomnum, float light_dist, float red_scale, float green_scale,
+                                        float blue_scale, simd::float3 *light_direction, float dot_range);
+static void StartLightingInstance(simd::float3 *pos, vec::matrix *orient);
 static void DoneLightingInstance();
 static void ApplyLightingToSubmodel(object *obj, poly_model *pm, bsp_info *sm, float light_dist, float red_scale,
                                     float green_scale, float blue_scale, float dot_range);
-static void ApplyVolumeLightToObject(vector *pos, object *obj, float light_dist, float red_scale, float green_scale,
-                                     float blue_scale, vector *light_direction, float dot_range);
-static void ApplyLightingToObjects(vector *pos, int roomnum, float light_dist, float red_scale, float green_scale,
-                                   float blue_scale, vector *light_direction, float dot_range);
+static void ApplyVolumeLightToObject(simd::float3 *pos, object *obj, float light_dist, float red_scale, float green_scale,
+                                     float blue_scale, simd::float3 *light_direction, float dot_range);
+static void ApplyLightingToObjects(simd::float3 *pos, int roomnum, float light_dist, float red_scale, float green_scale,
+                                   float blue_scale, simd::float3 *light_direction, float dot_range);
 
 // Frees memory used by dynamic light structures
 void FreeLighting() {

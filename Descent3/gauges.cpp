@@ -243,10 +243,10 @@ static tStatMask Gauge_mask_modified;
 static tGauge Gauge_list[NUM_GAUGES];
 
 //	position of cockpit
-static vector *Render_gauge_pos;
+static simd::float3 *Render_gauge_pos;
 
 // matrix of cockpit
-static matrix *Render_gauge_matrix;
+static vec::matrix *Render_gauge_matrix;
 
 //	normalized times of cockpit
 static float *Render_normalized_times;
@@ -377,7 +377,7 @@ void CloseGauges() {
 }
 
 //	renders gauges
-void RenderGauges(vector *cockpit_pos, matrix *cockpit_mat, float *normalized_time, bool moving, bool reset) {
+void RenderGauges(simd::float3 *cockpit_pos, vec::matrix *cockpit_mat, float *normalized_time, bool moving, bool reset) {
   tGauge *gauge;
   float font_aspect_x;
   float font_aspect_y;
@@ -741,7 +741,7 @@ void RenderShipMonitor(tGauge *gauge, bool modified) {
 
   if (Players[Player_num].flags & PLAYER_FLAGS_INVULNERABLE) {
     // get to the view matrix so we have direction vectors to move along
-    matrix view_matrix;
+    vec::matrix view_matrix;
     g3_GetUnscaledMatrix(&view_matrix);
 
     float inv_time_frame = (Gametime - (int)Gametime);
@@ -786,8 +786,8 @@ void RotateMonitorPosition(tGauge *gauge) {
   for (int j = 0; j < gauge->monitor->faces[0].nverts; j++) {
     //	saved the view coordinates of the monitor if the gauge is moving and/or was just initialized.
     //	if gauge is not moving, then just use these saved points and make sure to mark them as NOT PROJECTED.
-    vector vpt;
-    vector vert;
+    simd::float3 vpt;
+    simd::float3 vert;
     vpt = gauge->monitor->verts[gauge->monitor->faces[0].vertnums[(gauge->first_vert + j) % 4]];
     // JEFFNOTE: Since we are using hardware transforms, we want to update the points all the time
     // if (Render_gauge_moving || gauge->just_init || Render_gauge_reset)

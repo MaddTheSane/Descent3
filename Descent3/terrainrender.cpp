@@ -1969,7 +1969,7 @@ void DrawStars(vec::matrix *vorient) {
     // Get streaking line from last frame
     if (Rendering_main_view) {
       streak_vec = Last_frame_stars[i] - starpnt.p3_vec;
-      mag = vm_GetMagnitudeFast(&streak_vec);
+      mag = vec::vm_GetMagnitudeFast(&streak_vec);
     } else {
       mag = 0.0f;
     }
@@ -2075,7 +2075,7 @@ void DrawSky(simd::float3 *veye, vec::matrix *vorient) {
       float size = Terrain_sky.satellite_size[i];
 
       // Get position, angle of satellite
-      vm_NormalizeVector(&subvec);
+      vec::vm_NormalizeVector(&subvec);
       tempvec = *veye + (subvec * (Terrain_sky.radius * 3));
 
 #ifndef NEWEDITOR
@@ -2129,7 +2129,7 @@ void DrawSky(simd::float3 *veye, vec::matrix *vorient) {
       // Draw atmosphere blend
       if (UseHardware) {
         if (Terrain_sky.satellite_flags[i] & TSF_ATMOSPHERE) {
-          angvec angs;
+          vec::angvec angs;
           vm_ExtractAnglesFromMatrix(&angs, vorient);
           DrawAtmosphereBlend(&tempvec, angs.b, size, (size * bm_h(bm_handle, 0)) / bm_w(bm_handle, 0), bm_handle, sr,
                               sg, sb);
@@ -2457,7 +2457,7 @@ void RotateTerrainList(int cellcount, bool from_automap) {
   int lod, simplemul, edgecount;
   int i, n[200], t, k, cx, cz;
   simd::float3 camlight = Terrain_sky.lightsource;
-  vm_NormalizeVector(&camlight);
+  vec::vm_NormalizeVector(&camlight);
   // Reset all modified y values for the corners of each cell
   for (i = 0; i < cellcount; i++) {
     int ax, az;
@@ -2547,15 +2547,15 @@ void TerrainCellVisible(int index, int *upper_left, int *lower_right) {
   corner[2] = &World_point_buffer[seg].p3_vec;
   corner[3] = &World_point_buffer[seg + smul_x].p3_vec;
 
-  vm_GetPerp(&tempv, corner[0], corner[1], corner[2]);
-  if ((tempv * *corner[1]) < 0)
+  vec::vm_GetPerp(&tempv, corner[0], corner[1], corner[2]);
+  if (simd::dot(tempv, *corner[1]) < 0)
     *upper_left = 1;
   else
     *upper_left = 0;
 
   // Now do lower right
-  vm_GetPerp(&tempv, corner[2], corner[1], corner[3]);
-  if ((tempv * *corner[1]) < 0)
+  vec::vm_GetPerp(&tempv, corner[2], corner[1], corner[3]);
+  if (simd::dot(tempv, *corner[1]) < 0)
     *lower_right = 1;
   else
     *lower_right = 0;

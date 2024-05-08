@@ -155,8 +155,8 @@
 #include "pserror.h"
 #include "psrand.h"
 
-const simd::float3 Zero_vector = {0.0, 0.0, 0.0};
-const vec::matrix Identity_matrix = IDENTITY_MATRIX;
+const simd::float3 vec::Zero_vector = {0.0, 0.0, 0.0};
+const vec::matrix vec::Identity_matrix = IDENTITY_MATRIX;
 
 void vec::vm_AverageVector(simd::float3 *a, int num) {
   // Averages a vector.  ie divides each component of vector a by num
@@ -452,7 +452,7 @@ float vec::vm_DistToPlane(simd::float3 *checkp, simd::float3 *norm, simd::float3
   return simd::dot(t, *norm);
 }
 
-float vm_GetSlope(float x1, float y1, float x2, float y2) {
+float vec::vm_GetSlope(float x1, float y1, float x2, float y2) {
   // returns the slope of a line
   float r;
 
@@ -649,7 +649,7 @@ void vec::vm_SinCos(uint16_t a, float *s, float *c) {
 #define IS_ZERO(x) (fabs(x) < EPSILON)
 
 // extract angles from a matrix
-vec::angvec *vm_ExtractAnglesFromMatrix(vec::angvec *a, vec::matrix *m) {
+vec::angvec *vec::vm_ExtractAnglesFromMatrix(vec::angvec *a, vec::matrix *m) {
   float sinh, cosh, cosp, sinb, cosb;
 
   // Deal with straight up or straight down
@@ -692,7 +692,7 @@ float vec::calc_det_value(vec::matrix *det) {
 // value of the angle in returned.  Otherwise the angle around that vector is
 // returned.
 
-vec::angle vm_DeltaAngVec(simd::float3 *v0, simd::float3 *v1, simd::float3 *fvec) {
+vec::angle vec::vm_DeltaAngVec(simd::float3 *v0, simd::float3 *v1, simd::float3 *fvec) {
   simd::float3 t0, t1;
 
   t0 = *v0;

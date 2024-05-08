@@ -111,7 +111,7 @@
 // Structure for storing scorch marks
 struct scorch {
   int roomface;       // room number & face number combined into an int
-  vector pos;         // the position of the center of the scorch mark
+  simd::float3 pos;         // the position of the center of the scorch mark
   uint8_t handle_index; // which mark?
   int8_t rx, ry, rz;   // right vector
   int8_t ux, uy, uz;   // up vector
@@ -175,7 +175,7 @@ void DeleteScorch(int index) {
 //					pos - where the scorch goes
 //					texture_handle - the texture for the scorch mark
 //					size - how big the scorch is
-void AddScorch(int roomnum, int facenum, vector *pos, int texture_handle, float size) {
+void AddScorch(int roomnum, int facenum, simd::float3 *pos, int texture_handle, float size) {
   // Bail if on terrain.  We should probably add support for this later.
   if (ROOMNUM_OUTSIDE(roomnum))
     return;
@@ -212,19 +212,19 @@ void AddScorch(int roomnum, int facenum, vector *pos, int texture_handle, float 
   }
 
   // Check for scorch going off the edge of the face, and bail if does
-  vector *v0, *v1 = &rp->verts[fp->face_verts[fp->num_verts - 1]];
+  simd::float3 *v0, *v1 = &rp->verts[fp->face_verts[fp->num_verts - 1]];
   for (int v = 0; v < fp->num_verts; v++) {
-    vector edgevec, checkvec, checkp;
+    simd::float3 edgevec, checkvec, checkp;
     float dot, dist;
 
     v0 = v1;
     v1 = &rp->verts[fp->face_verts[v]];
-    vm_GetNormalizedDir(&edgevec, v1, v0);
+    vec::vm_GetNormalizedDir(&edgevec, v1, v0);
 
     checkvec = *pos - *v0;
-    dot = checkvec * edgevec;
+    dot = simd::dot(checkvec, edgevec);
     checkp = *v0 + edgevec * dot;
-    dist = vm_VectorDistance(&checkp, pos);
+    dist = vec::vm_VectorDistance(&checkp, pos);
     if (dist < size)
       return;
   }
@@ -266,8 +266,8 @@ void AddScorch(int roomnum, int facenum, vector *pos, int texture_handle, float 
   sp->handle_index = handle_index;
 
   // Calculate the vectors
-  matrix m;
-  vm_VectorAngleToMatrix(&m, &fp->normal, ps_rand() * 2);
+  vec::matrix m;
+  vec::vm_VectorAngleToMatrix(&m, &fp->normal, ps_rand() * 2);
 
   // Store the vectors as signed 8-bit values
   sp->rx = -m.rvec.x * 127;
@@ -322,8 +322,8 @@ void DrawScorches(int roomnum, int facenum) {
     const auto sp = &Scorches[i];
 
     if (sp->roomface == roomface) { // Found one!
-      vector right, up;
-      vector corners[4];
+      simd::float3 right, up;
+      simd::float3 corners[4];
       g3Point points[4];
       g3Point *pointlist[4];
       float size = (float)sp->size / 16.0;

@@ -931,7 +931,7 @@ void FindHitpointUV(float *u, float *v, simd::float3 *point, room *rp, int facen
   face *fp = &rp->faces[facenum];
   int ii, jj;
   vec2d pnt[3], checkp, vec0, vec1;
-  float *t;
+  simd::float3 t;
   float k0, k1;
   int i;
 
@@ -943,11 +943,11 @@ void FindHitpointUV(float *u, float *v, simd::float3 *point, room *rp, int facen
 
   // Copy face points into 2d verts array
   for (i = 0; i < 3; i++) {
-    t = &rp->verts[fp->face_verts[i]].x;
+    t = rp->verts[fp->face_verts[i]];
     pnt[i].i = t[ii];
     pnt[i].j = t[jj];
   }
-  t = &point->x;
+  t = *point;
   checkp.i = t[ii];
   checkp.j = t[jj];
 

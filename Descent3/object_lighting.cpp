@@ -122,7 +122,7 @@
 #define FAST_HEADLIGHT_DOT .80f
 
 // returns true if this light point is visible
-bool IsLightPointVisible(vector *pos, float size, object *obj) {
+bool IsLightPointVisible(simd::float3 *pos, float size, object *obj) {
   if (obj != NULL) {
     if ((obj->flags & OF_RENDERED) || IsPointVisible(pos, size, NULL))
       return true;
@@ -165,7 +165,7 @@ void FindPlayerThrusterColor(int slot, float *r, float *g, float *b) {
 uint8_t EasterEgg = 0;
 #define EASTER_EGG_TIMER (3600 * 4)
 
-void ReflectRay(vector *, vector *, vector *);
+void ReflectRay(simd::float3 *, simd::float3 *, simd::float3 *);
 // Casts light from an object onto the rooms or terrain
 void DoObjectLight(object *obj) {
   light_info *li;
@@ -221,7 +221,7 @@ void DoObjectLight(object *obj) {
         fvi_query fq;
 
         // shoot a ray from the light position to the current vertex
-        vector end_pos = obj->pos + (obj->orient.fvec * HEADLIGHT_DISTANCE * 2);
+        simd::float3 end_pos = obj->pos + (obj->orient.fvec * HEADLIGHT_DISTANCE * 2);
         fq.p0 = &obj->pos;
         fq.p1 = &end_pos;
 
@@ -236,7 +236,7 @@ void DoObjectLight(object *obj) {
 
         hit_info.hit_pnt -= obj->orient.fvec / 4;
 
-        float dist = vm_VectorDistanceQuick(&hit_info.hit_pnt, &obj->pos);
+        float dist = vec::vm_VectorDistanceQuick(&hit_info.hit_pnt, &obj->pos);
 
         // Now light up the hit area
         if (ROOMNUM_OUTSIDE(hit_info.hit_room))
@@ -272,8 +272,8 @@ void DoObjectLight(object *obj) {
             lightsize+=Players[slot].afterburner_mag*40.0;
 
             float r,g,b;
-            vector negz=-obj->orient.fvec;
-            vector newpos=obj->pos-(obj->orient.fvec*(obj->size*.7));
+            simd::float3 negz=-obj->orient.fvec;
+            simd::float3 newpos=obj->pos-(obj->orient.fvec*(obj->size*.7));
 
             if (IsLightPointVisible (&newpos,lightsize,NULL))
             {
@@ -308,7 +308,7 @@ void DoObjectLight(object *obj) {
 
     // Do stupid ball glow
     if (Players[slot].num_balls > 0 && Detail_settings.Dynamic_lighting) {
-      vector ballpos;
+      simd::float3 ballpos;
       for (int i = 0; i < Players[slot].num_balls; i++) {
         float light_size = 25;
         PlayerGetBallPosition(&ballpos, slot, i);
@@ -364,7 +364,7 @@ void DoObjectLight(object *obj) {
   float scalar = 1.0;
   float red, green, blue;
   float light_distance = li->light_distance;
-  vector *direction = NULL;
+  simd::float3 *direction = NULL;
 
   // Make katmai lights bigger
   if (Katmai)

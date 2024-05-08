@@ -301,7 +301,7 @@ extern float vm_VectorDistanceQuick(vector *a, vector *b);
 /// Computes a normalized direction vector between two points
 /// - Parameter dest: Filled in with the normalized direction vector.
 /// - parameter start: the start points used to calculate the vector.
-/// - parameter end: - the end point used to calculate the vector.
+/// - parameter end: the end point used to calculate the vector.
 /// - Returns: the distance between the two input points.
 float vm_GetNormalizedDir(vector *dest, vector *end, vector *start);
 
@@ -312,10 +312,16 @@ float vm_GetNormalizedDirFast(vector *dest, vector *end, vector *start);
 /// extract angles from a matrix
 angvec *vm_ExtractAnglesFromMatrix(angvec *a, matrix *m);
 
-///	returns the angle between two vectors and a forward vector
+///	returns the angle between two vectors and a forward vector.
+///
+/// Computes the delta angle between two vectors.
+/// vectors need not be normalized. if they are, call \c vm_vec_delta_ang_norm()
+/// the forward vector (third parameter) can be NULL, in which case the absolute
+/// value of the angle in returned.  Otherwise the angle around that vector is
+/// returned.
 angle vm_DeltaAngVec(vector *v0, vector *v1, vector *fvec);
 
-///	returns the angle between two normalized vectors and a forward vector
+///	Returns the angle between two normalized vectors and a forward vector.
 angle vm_DeltaAngVecNorm(vector *v0, vector *v1, vector *fvec);
 
 /// Computes the distance from a point to a plane.

@@ -2504,7 +2504,7 @@ void MultiGetDestFireRooms() {
     fvi_info hit_data;
     int fate;
 
-    vector dest_vector = Objects[Players[i].objnum].pos + (Objects[Players[i].objnum].orient.fvec * 50000);
+    simd::float3 dest_vector = Objects[Players[i].objnum].pos + (Objects[Players[i].objnum].orient.fvec * 50000);
 
     fq.p0 = &Objects[Players[i].objnum].pos;
     fq.startroom = Objects[Players[i].objnum].roomnum;

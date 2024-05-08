@@ -1558,28 +1558,28 @@ int AI_unique_goal_id = 0;
 bool AI_debug_robot_do = false;
 int AI_debug_robot_index = -2;
 
-static bool compute_dodge_dir(vector *movement_dir, object *obj, object *dodge_obj);
+static bool compute_dodge_dir(simd::float3 *movement_dir, object *obj, object *dodge_obj);
 static float AIDetermineObjVisLevel(object *obj, object *target);
-static bool move_relative_object_vec(object *obj, vector *vec, object *target, float circle_dist, float scalar,
-                                     bool f_toward, vector *mdir, bool *f_moved);
-static void move_away_from_position(object *obj, vector *pos /*, bool random_evade*/, float scale, vector *mdir,
+static bool move_relative_object_vec(object *obj, simd::float3 *vec, object *target, float circle_dist, float scalar,
+                                     bool f_toward, simd::float3 *mdir, bool *f_moved);
+static void move_away_from_position(object *obj, simd::float3 *pos /*, bool random_evade*/, float scale, simd::float3 *mdir,
                                     bool *f_moved);
 static bool goal_do_dodge(object *obj, int goal_index);
-static bool goal_do_avoid_walls(object *obj, vector *mdir);
+static bool goal_do_avoid_walls(object *obj, simd::float3 *mdir);
 static bool MeleeHitOk(object *obj);
 static bool AiMelee(object *obj);
 static void do_ranged_attack(object *obj);
-static bool AIDetermineAimPoint(object *robot, object *target, vector *aim_pt, float weapon_speed = 0.0f);
-static vector *AIDetermineFovVec(object *obj, vector *fov);
+static bool AIDetermineAimPoint(object *robot, object *target, simd::float3 *aim_pt, float weapon_speed = 0.0f);
+static simd::float3 *AIDetermineFovVec(object *obj, simd::float3 *fov);
 static void AISeeTarget(object *obj, bool f_see);
 static void ai_do_animation(object *obj, float anim_time);
 static void ObjSetAIInfo(object *objp);
 static void AICheckTargetVis(object *obj);
 static void ai_update_registers(object *obj);
-static bool AiGoalAvoid(vector *adir, object *obj, object *a_obj, float dist);
-static void AIGoalDoRepulse(object *obj, float dist, vector *dir, goal *goal, vector *mdir);
-static void AIGoalDoCohesion(object *obj, object *g_obj, float dist, goal *goal, vector *mdir);
-static void AIGoalDoAlignment(object *obj, float dist, vector *fvec, goal *goal, vector *mdir);
+static bool AiGoalAvoid(simd::float3 *adir, object *obj, object *a_obj, float dist);
+static void AIGoalDoRepulse(object *obj, float dist, simd::float3 *dir, goal *goal, simd::float3 *mdir);
+static void AIGoalDoCohesion(object *obj, object *g_obj, float dist, goal *goal, simd::float3 *mdir);
+static void AIGoalDoAlignment(object *obj, float dist, simd::float3 *fvec, goal *goal, simd::float3 *mdir);
 static void AIDoTrackFrame(object *obj);
 static void AIDoOrientVelocity(object *obj);
 static void AIDoOrientDefault(object *obj);

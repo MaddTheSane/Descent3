@@ -974,7 +974,7 @@ void GenerateDefaultDeath(object *obj, int *death_flags, float *delay_time) {
   } else { // slow death
 
     int alternate_death = 0;
-    bool f_upsidedown_walker = (obj->movement_type == MT_WALKING) && (obj->orient.uvec.y < 0.0f);
+    bool f_upsidedown_walker = (obj->movement_type == MT_WALKING) && (obj->orient.columns[1].y < 0.0f);
 
     if (!f_upsidedown_walker && (ps_rand() % 2) == 1) {
       *death_flags = DF_DELAY_SPARKS;
@@ -1013,7 +1013,7 @@ void GenerateDefaultDeath(object *obj, int *death_flags, float *delay_time) {
       }
     } else { // If building, make it shoot up
       *death_flags |= DF_DELAY_FLYING;
-      if (obj->orient.uvec.y == 1.0f)
+      if (obj->orient.columns[1].y == 1.0f)
         *delay_time = 2.0f;
       else
         *delay_time = 0.7f;
@@ -1093,11 +1093,11 @@ void SetFallingPhysics(object *objp) {
   if (objp->movement_type == MT_WALKING) {
     objp->mtype.phys_info.rotvel = vec::Zero_vector;
     objp->mtype.phys_info.flags |= PF_POINT_COLLIDE_WALLS;
-    float proj = simd::dot(objp->mtype.phys_info.velocity, objp->orient.uvec);
+    float proj = simd::dot(objp->mtype.phys_info.velocity, objp->orient.columns[1]);
     if (proj < 0.0f)
-      objp->mtype.phys_info.velocity -= proj * objp->orient.uvec;
+      objp->mtype.phys_info.velocity -= proj * objp->orient.columns[1];
 
-    objp->mtype.phys_info.velocity += objp->orient.uvec * (3.0f + ((float)ps_rand() / D3_RAND_MAX) * 5.0);
+    objp->mtype.phys_info.velocity += objp->orient.columns[1] * (3.0f + ((float)ps_rand() / D3_RAND_MAX) * 5.0);
     objp->movement_type = MT_PHYSICS;
   } else { // not a walker
 
@@ -1128,7 +1128,7 @@ void SetFlyingPhysics(object *objp, bool tumbles) {
     objp->mtype.phys_info.rotvel.z = (float)((40000.0f * (float)(D3_RAND_MAX / 2 - ps_rand())) / (float)(D3_RAND_MAX / 2));
   }
 
-  if (objp->orient.uvec.y == 1.0f) {
+  if (objp->orient.columns[1].y == 1.0f) {
     objp->mtype.phys_info.velocity.y = (float)(3 * (ps_rand() % 15)) + 20.0;
     objp->mtype.phys_info.velocity.x = 0;
     objp->mtype.phys_info.velocity.z = 0;
@@ -1136,7 +1136,7 @@ void SetFlyingPhysics(object *objp, bool tumbles) {
     // Doubled the velocity on 4/30/99 to make Josh's pop machines cooler. -MT
     objp->mtype.phys_info.velocity.y *= 2.0;
   } else {
-    objp->mtype.phys_info.velocity = objp->orient.uvec * ((float)(2.0f * (ps_rand() % 15)) + 7.0f);
+    objp->mtype.phys_info.velocity = objp->orient.columns[1] * ((float)(2.0f * (ps_rand() % 15)) + 7.0f);
   }
 }
 
@@ -1224,7 +1224,7 @@ void KillObject(object *objp, object *killer, float damage, int death_flags, flo
   } else { // Some sort of delayed death
 
     // For upside-down walkers, force simple delay
-    bool f_upsidedown_walker = (objp->movement_type == MT_WALKING) && (objp->orient.uvec.y < 0.0f);
+    bool f_upsidedown_walker = (objp->movement_type == MT_WALKING) && (objp->orient.columns[1].y < 0.0f);
     if (f_upsidedown_walker)
       death_flags |= DF_DELAY_LOSES_ANTIGRAV;
 
@@ -1450,7 +1450,7 @@ void ShakePlayer() {
   if (Shake_magnitude < .00001)
     return;
 
-  vm_AnglesToMatrix(&m, pitch_adjust, heading_adjust, bank_adjust);
+  vec::vm_AnglesToMatrix(&m, pitch_adjust, heading_adjust, bank_adjust);
 
   DoForceForShake(Shake_magnitude);
   Shake_magnitude -= (Frametime * (MAX_SHAKE_MAGNITUDE / 3));

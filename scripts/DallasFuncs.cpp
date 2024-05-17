@@ -1005,15 +1005,15 @@ void dfSave(void *fileptr) {
   File_WriteFloat(PositionClipboard.pos.x, fileptr);
   File_WriteFloat(PositionClipboard.pos.y, fileptr);
   File_WriteFloat(PositionClipboard.pos.z, fileptr);
-  File_WriteFloat(PositionClipboard.orient.fvec.x, fileptr);
-  File_WriteFloat(PositionClipboard.orient.fvec.y, fileptr);
-  File_WriteFloat(PositionClipboard.orient.fvec.z, fileptr);
-  File_WriteFloat(PositionClipboard.orient.uvec.x, fileptr);
-  File_WriteFloat(PositionClipboard.orient.uvec.y, fileptr);
-  File_WriteFloat(PositionClipboard.orient.uvec.z, fileptr);
-  File_WriteFloat(PositionClipboard.orient.rvec.x, fileptr);
-  File_WriteFloat(PositionClipboard.orient.rvec.y, fileptr);
-  File_WriteFloat(PositionClipboard.orient.rvec.z, fileptr);
+  File_WriteFloat(PositionClipboard.orient.columns[2].x, fileptr);
+  File_WriteFloat(PositionClipboard.orient.columns[2].y, fileptr);
+  File_WriteFloat(PositionClipboard.orient.columns[2].z, fileptr);
+  File_WriteFloat(PositionClipboard.orient.columns[1].x, fileptr);
+  File_WriteFloat(PositionClipboard.orient.columns[1].y, fileptr);
+  File_WriteFloat(PositionClipboard.orient.columns[1].z, fileptr);
+  File_WriteFloat(PositionClipboard.orient.columns[0].x, fileptr);
+  File_WriteFloat(PositionClipboard.orient.columns[0].y, fileptr);
+  File_WriteFloat(PositionClipboard.orient.columns[0].z, fileptr);
 }
 
 // Restore vars
@@ -1042,15 +1042,15 @@ void dfRestore(void *fileptr) {
   PositionClipboard.pos.x = File_ReadFloat(fileptr);
   PositionClipboard.pos.y = File_ReadFloat(fileptr);
   PositionClipboard.pos.z = File_ReadFloat(fileptr);
-  PositionClipboard.orient.fvec.x = File_ReadFloat(fileptr);
-  PositionClipboard.orient.fvec.y = File_ReadFloat(fileptr);
-  PositionClipboard.orient.fvec.z = File_ReadFloat(fileptr);
-  PositionClipboard.orient.uvec.x = File_ReadFloat(fileptr);
-  PositionClipboard.orient.uvec.y = File_ReadFloat(fileptr);
-  PositionClipboard.orient.uvec.z = File_ReadFloat(fileptr);
-  PositionClipboard.orient.rvec.x = File_ReadFloat(fileptr);
-  PositionClipboard.orient.rvec.y = File_ReadFloat(fileptr);
-  PositionClipboard.orient.rvec.z = File_ReadFloat(fileptr);
+  PositionClipboard.orient.columns[2].x = File_ReadFloat(fileptr);
+  PositionClipboard.orient.columns[2].y = File_ReadFloat(fileptr);
+  PositionClipboard.orient.columns[2].z = File_ReadFloat(fileptr);
+  PositionClipboard.orient.columns[1].x = File_ReadFloat(fileptr);
+  PositionClipboard.orient.columns[1].y = File_ReadFloat(fileptr);
+  PositionClipboard.orient.columns[1].z = File_ReadFloat(fileptr);
+  PositionClipboard.orient.columns[0].x = File_ReadFloat(fileptr);
+  PositionClipboard.orient.columns[0].y = File_ReadFloat(fileptr);
+  PositionClipboard.orient.columns[0].z = File_ReadFloat(fileptr);
 }
 
 int dfGetPlayer(int objhandle) {
@@ -5336,7 +5336,7 @@ bool qObjCanSeeObj(int handletarget, int cone, int handlesrc) {
 
   simd::float3 subvec = vtarget - vsource;
   vm_VectorNormalizeFast(&subvec);
-  float dotp = vm_DotProduct(&subvec, &mstruct.orient.fvec);
+  float dotp = vm_DotProduct(&subvec, &mstruct.orient.columns[2]);
 
   if (dotp > testangle) {
     return true;
@@ -5387,7 +5387,7 @@ bool qObjCanSeeObjAdvanced(int handletarget, int cone, int handlesrc, int fvi_fl
 
   simd::float3 subvec = vtarget - vsource;
   vm_VectorNormalizeFast(&subvec);
-  float dotp = vm_DotProduct(&subvec, &mstruct.orient.fvec);
+  float dotp = vm_DotProduct(&subvec, &mstruct.orient.columns[2]);
 
   if (dotp > testangle) {
     // see if we can cast a ray to the object
@@ -6180,7 +6180,7 @@ bool qObjCanSeePlayer(int cone, int handlesrc, float max_distance) {
     float dist = vm_GetNormalizedDirFast(&viewvec, &vtarget, &vsource);
 
     // Get the angle between the objects
-    float dot = vm_DotProduct(&viewvec, &mstruct.orient.fvec);
+    float dot = vm_DotProduct(&viewvec, &mstruct.orient.columns[2]);
 
     // Check angle and distance
     if ((dot > testangle) && (dist < max_distance))
@@ -6248,7 +6248,7 @@ bool qObjCanSeePlayerAdvanced(int cone, int handlesrc, float max_distance, int f
     float dist = vm_GetNormalizedDirFast(&viewvec, &vtarget, &vsource);
 
     // Get the angle between the objects
-    float dot = vm_DotProduct(&viewvec, &orient.fvec);
+    float dot = vm_DotProduct(&viewvec, &orient.columns[2]);
 
     // Check angle and distance
     if ((dot > testangle) && (dist < max_distance)) {
@@ -6335,7 +6335,7 @@ bool qObjCanSeePlayerAdvancedWithStore(int slot, int cone, int handlesrc, float 
     float dist = vm_GetNormalizedDirFast(&viewvec, &vtarget, &vsource);
 
     // Get the angle between the objects
-    float dot = vm_DotProduct(&viewvec, &orient.fvec);
+    float dot = simd::dot(viewvec, orient.columns[2]);
 
     // Check angle and distance
     if ((dot > testangle) && (dist < max_distance)) {

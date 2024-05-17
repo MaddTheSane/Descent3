@@ -82,17 +82,17 @@ static void BuildModelAngleMatrix(vec::matrix *mat, angle ang, simd::float3 *axi
   c = (float)FixCos(ang);
   t = 1.0f - c;
 
-  mat->rvec.x = t * x * x + c;
-  mat->rvec.y = t * x * y + s * z;
-  mat->rvec.z = t * x * z - s * y;
+  mat->columns[0].x = t * x * x + c;
+  mat->columns[0].y = t * x * y + s * z;
+  mat->columns[0].z = t * x * z - s * y;
 
-  mat->uvec.x = t * x * y - s * z;
-  mat->uvec.y = t * y * y + c;
-  mat->uvec.z = t * y * z + s * x;
+  mat->columns[1].x = t * x * y - s * z;
+  mat->columns[1].y = t * y * y + c;
+  mat->columns[1].z = t * y * z + s * x;
 
-  mat->fvec.x = t * x * z + s * y;
-  mat->fvec.y = t * y * z - s * x;
-  mat->fvec.z = t * z * z + c;
+  mat->columns[2].x = t * x * z + s * y;
+  mat->columns[2].y = t * y * z - s * x;
+  mat->columns[2].z = t * z * z + c;
 }
 
 float fvi_hit_param;
@@ -264,7 +264,7 @@ void newstyle_StartInstanceMatrix(simd::float3 *pos, vec::matrix *orient) {
 
     // step 3: rotate object matrix through view_matrix (vm = ob * vm)
 
-    tempm2 = ~*orient;
+    tempm2 = simd::transpose(*orient);
 
     tempm = tempm2 * View_matrix;
 
@@ -387,8 +387,8 @@ bool PolyCollideObject(object *obj) {
 #endif
 
   if (fvi_do_orient && fvi_moveobj >= 0) {
-    fvi_move_fvec = Objects[fvi_moveobj].orient.fvec;
-    fvi_move_uvec = Objects[fvi_moveobj].orient.uvec;
+    fvi_move_fvec = Objects[fvi_moveobj].orient.columns[2];
+    fvi_move_uvec = Objects[fvi_moveobj].orient.columns[1];
   }
 
   Fvi_f_normal = false;
@@ -425,8 +425,8 @@ bool PolyCollideObject(object *obj) {
     while (mn != -1) {
       simd::float3 tpnt;
 
-      vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
-      vm_TransposeMatrix(&m);
+      vec::vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
+      vec::vm_TransposeMatrix(&m);
 
       tpnt = pnt * m;
       fvi_hit_data_ptr->hit_wallnorm[0] = fvi_hit_data_ptr->hit_wallnorm[0] * m;
@@ -439,7 +439,7 @@ bool PolyCollideObject(object *obj) {
     fvi_hit_data_ptr->hit_face_pnt[0] = pnt;
 
     m = obj->orient;
-    vm_TransposeMatrix(&m);
+    vec::vm_TransposeMatrix(&m);
 
     fvi_hit_data_ptr->hit_wallnorm[0] = fvi_hit_data_ptr->hit_wallnorm[0] * m;
 

@@ -73,7 +73,7 @@
  * 13    2/06/98 10:57a Matt
  * Made vm_VectorToMatrix() take any one or two vectors, & not require
  * forward vec.
- * Also, made the uvec and rvec parameters default to NULL if not
+ * Also, made the columns[1] and columns[0] parameters default to NULL if not
  * specified.
  *
  * 12    2/02/98 8:17p Chris
@@ -156,7 +156,7 @@
 #include "psrand.h"
 
 const simd::float3 vec::Zero_vector = {0.0, 0.0, 0.0};
-const vec::matrix vec::Identity_matrix = IDENTITY_MATRIX;
+const vec::matrix vec::Identity_matrix = simd_matrix(simd_make_float3(1, 0, 0), simd_make_float3(0, 1, 0), simd_make_float3(0, 0, 1));
 
 void vec::vm_AverageVector(simd::float3 *a, int num) {
   // Averages a vector.  ie divides each component of vector a by num
@@ -275,27 +275,28 @@ void vec::vm_ClearMatrix(vec::matrix *dest) { memset(dest, 0, sizeof(matrix)); }
 
 void vec::vm_MakeIdentity(vec::matrix *dest) {
   memset(dest, 0, sizeof(vec::matrix));
-  dest->rvec.x = dest->uvec.y = dest->fvec.z = 1.0;
+  dest->columns[0].x = dest->columns[1].y = dest->columns[2].z = 1.0;
 }
 void vec::vm_MakeInverseMatrix(vec::matrix *dest) {
   memset((void *)dest, 0, sizeof(vec::matrix));
-  dest->rvec.x = dest->uvec.y = dest->fvec.z = -1.0;
+  dest->columns[0].x = dest->columns[1].y = dest->columns[2].z = -1.0;
 }
 
 void vec::vm_TransposeMatrix(vec::matrix *m) {
+  *m = simd::transpose(*m);
   // Transposes a matrix in place
 
-  float t;
-
-  t = m->uvec.x;
-  m->uvec.x = m->rvec.y;
-  m->rvec.y = t;
-  t = m->fvec.x;
-  m->fvec.x = m->rvec.z;
-  m->rvec.z = t;
-  t = m->fvec.y;
-  m->fvec.y = m->uvec.z;
-  m->uvec.z = t;
+//  float t;
+//
+//  t = m->columns[1].x;
+//  m->columns[1].x = m->columns[0].y;
+//  m->columns[0].y = t;
+//  t = m->columns[2].x;
+//  m->columns[2].x = m->columns[0].z;
+//  m->columns[0].z = t;
+//  t = m->columns[2].y;
+//  m->columns[2].y = m->columns[1].z;
+//  m->columns[1].z = t;
 }
 
 void vec::vm_MatrixMulVector(simd::float3 *result, simd::float3 *v, vec::matrix *m) {
@@ -303,36 +304,37 @@ void vec::vm_MatrixMulVector(simd::float3 *result, simd::float3 *v, vec::matrix 
 
   assert(result != v);
 
-  result->x = simd::dot(*v, m->rvec);
-  result->y = simd::dot(*v, m->uvec);
-  result->z = simd::dot(*v, m->fvec);
+  result->x = simd::dot(*v, m->columns[0]);
+  result->y = simd::dot(*v, m->columns[1]);
+  result->z = simd::dot(*v, m->columns[2]);
 }
 
 // Multiply a vector times the transpose of a matrix
 void vec::vm_VectorMulTMatrix(simd::float3 *result, simd::float3 *v, vec::matrix *m) {
   assert(result != v);
 
-  result->x = vec::vm_Dot3Vector(m->rvec.x, m->uvec.x, m->fvec.x, v);
-  result->y = vec::vm_Dot3Vector(m->rvec.y, m->uvec.y, m->fvec.y, v);
-  result->z = vec::vm_Dot3Vector(m->rvec.z, m->uvec.z, m->fvec.z, v);
+  result->x = vec::vm_Dot3Vector(m->columns[0].x, m->columns[1].x, m->columns[2].x, v);
+  result->y = vec::vm_Dot3Vector(m->columns[2].y, m->columns[1].y, m->columns[2].y, v);
+  result->z = vec::vm_Dot3Vector(m->columns[2].z, m->columns[1].z, m->columns[2].z, v);
 }
 
 void vec::vm_MatrixMul(vec::matrix *dest, vec::matrix *src0, vec::matrix *src1) {
-  // For multiplying two 3x3 matrices together
-
-  assert((dest != src0) && (dest != src1));
-
-  dest->rvec.x = vec::vm_Dot3Vector(src0->rvec.x, src0->uvec.x, src0->fvec.x, &src1->rvec);
-  dest->uvec.x = vec::vm_Dot3Vector(src0->rvec.x, src0->uvec.x, src0->fvec.x, &src1->uvec);
-  dest->fvec.x = vec::vm_Dot3Vector(src0->rvec.x, src0->uvec.x, src0->fvec.x, &src1->fvec);
-
-  dest->rvec.y = vec::vm_Dot3Vector(src0->rvec.y, src0->uvec.y, src0->fvec.y, &src1->rvec);
-  dest->uvec.y = vec::vm_Dot3Vector(src0->rvec.y, src0->uvec.y, src0->fvec.y, &src1->uvec);
-  dest->fvec.y = vec::vm_Dot3Vector(src0->rvec.y, src0->uvec.y, src0->fvec.y, &src1->fvec);
-
-  dest->rvec.z = vec::vm_Dot3Vector(src0->rvec.z, src0->uvec.z, src0->fvec.z, &src1->rvec);
-  dest->uvec.z = vec::vm_Dot3Vector(src0->rvec.z, src0->uvec.z, src0->fvec.z, &src1->uvec);
-  dest->fvec.z = vec::vm_Dot3Vector(src0->rvec.z, src0->uvec.z, src0->fvec.z, &src1->fvec);
+  *dest = (*src0) * (*src1);
+//  // For multiplying two 3x3 matrices together
+//
+//  assert((dest != src0) && (dest != src1));
+//
+//  dest->columns[0].x = vec::vm_Dot3Vector(src0->columns[0].x, src0->columns[1].x, src0->columns[2].x, &src1->columns[0]);
+//  dest->columns[1].x = vec::vm_Dot3Vector(src0->columns[0].x, src0->columns[1].x, src0->columns[2].x, &src1->columns[1]);
+//  dest->columns[2].x = vec::vm_Dot3Vector(src0->columns[0].x, src0->columns[1].x, src0->columns[2].x, &src1->columns[2]);
+//
+//  dest->columns[0].y = vec::vm_Dot3Vector(src0->columns[0].y, src0->columns[1].y, src0->columns[2].y, &src1->columns[0]);
+//  dest->columns[1].y = vec::vm_Dot3Vector(src0->columns[0].y, src0->columns[1].y, src0->columns[2].y, &src1->columns[1]);
+//  dest->columns[2].y = vec::vm_Dot3Vector(src0->columns[0].y, src0->columns[1].y, src0->columns[2].y, &src1->columns[2]);
+//
+//  dest->columns[0].z = vec::vm_Dot3Vector(src0->columns[0].z, src0->columns[1].z, src0->columns[2].z, &src1->columns[0]);
+//  dest->columns[1].z = vec::vm_Dot3Vector(src0->columns[0].z, src0->columns[1].z, src0->columns[2].z, &src1->columns[1]);
+//  dest->columns[2].z = vec::vm_Dot3Vector(src0->columns[0].z, src0->columns[1].z, src0->columns[2].z, &src1->columns[2]);
 }
 
 // Multiply a matrix times the transpose of a matrix
@@ -341,39 +343,40 @@ void vec::vm_MatrixMulTMatrix(matrix *dest, matrix *src0, matrix *src1) {
 
   assert((dest != src0) && (dest != src1));
 
-  dest->rvec.x = src0->rvec.x * src1->rvec.x + src0->uvec.x * src1->uvec.x + src0->fvec.x * src1->fvec.x;
-  dest->uvec.x = src0->rvec.x * src1->rvec.y + src0->uvec.x * src1->uvec.y + src0->fvec.x * src1->fvec.y;
-  dest->fvec.x = src0->rvec.x * src1->rvec.z + src0->uvec.x * src1->uvec.z + src0->fvec.x * src1->fvec.z;
+  dest->columns[0].x = src0->columns[0].x * src1->columns[0].x + src0->columns[1].x * src1->columns[1].x + src0->columns[2].x * src1->columns[2].x;
+  dest->columns[1].x = src0->columns[0].x * src1->columns[0].y + src0->columns[1].x * src1->columns[1].y + src0->columns[2].x * src1->columns[2].y;
+  dest->columns[2].x = src0->columns[0].x * src1->columns[0].z + src0->columns[1].x * src1->columns[1].z + src0->columns[2].x * src1->columns[2].z;
 
-  dest->rvec.y = src0->rvec.y * src1->rvec.x + src0->uvec.y * src1->uvec.x + src0->fvec.y * src1->fvec.x;
-  dest->uvec.y = src0->rvec.y * src1->rvec.y + src0->uvec.y * src1->uvec.y + src0->fvec.y * src1->fvec.y;
-  dest->fvec.y = src0->rvec.y * src1->rvec.z + src0->uvec.y * src1->uvec.z + src0->fvec.y * src1->fvec.z;
+  dest->columns[0].y = src0->columns[0].y * src1->columns[0].x + src0->columns[1].y * src1->columns[1].x + src0->columns[2].y * src1->columns[2].x;
+  dest->columns[1].y = src0->columns[0].y * src1->columns[0].y + src0->columns[1].y * src1->columns[1].y + src0->columns[2].y * src1->columns[2].y;
+  dest->columns[2].y = src0->columns[0].y * src1->columns[0].z + src0->columns[1].y * src1->columns[1].z + src0->columns[2].y * src1->columns[2].z;
 
-  dest->rvec.z = src0->rvec.z * src1->rvec.x + src0->uvec.z * src1->uvec.x + src0->fvec.z * src1->fvec.x;
-  dest->uvec.z = src0->rvec.z * src1->rvec.y + src0->uvec.z * src1->uvec.y + src0->fvec.z * src1->fvec.y;
-  dest->fvec.z = src0->rvec.z * src1->rvec.z + src0->uvec.z * src1->uvec.z + src0->fvec.z * src1->fvec.z;
+  dest->columns[0].z = src0->columns[0].z * src1->columns[0].x + src0->columns[1].z * src1->columns[1].x + src0->columns[2].z * src1->columns[2].x;
+  dest->columns[1].z = src0->columns[0].z * src1->columns[0].y + src0->columns[1].z * src1->columns[1].y + src0->columns[2].z * src1->columns[2].y;
+  dest->columns[2].z = src0->columns[0].z * src1->columns[0].z + src0->columns[1].z * src1->columns[1].z + src0->columns[2].z * src1->columns[2].z;
 }
-
+#if 0
 vec::matrix operator*(vec::matrix src0, vec::matrix src1) {
   // For multiplying two 3x3 matrices together
   vec::matrix dest;
 
-  dest.rvec.x = vec::vm_Dot3Vector(src0.rvec.x, src0.uvec.x, src0.fvec.x, &src1.rvec);
-  dest.uvec.x = vec::vm_Dot3Vector(src0.rvec.x, src0.uvec.x, src0.fvec.x, &src1.uvec);
-  dest.fvec.x = vec::vm_Dot3Vector(src0.rvec.x, src0.uvec.x, src0.fvec.x, &src1.fvec);
+  dest.columns[0].x = vec::vm_Dot3Vector(src0.columns[0].x, src0.columns[1].x, src0.columns[2].x, &src1.columns[0]);
+  dest.columns[1].x = vec::vm_Dot3Vector(src0.columns[0].x, src0.columns[1].x, src0.columns[2].x, &src1.columns[1]);
+  dest.columns[2].x = vec::vm_Dot3Vector(src0.columns[0].x, src0.columns[1].x, src0.columns[2].x, &src1.columns[2]);
 
-  dest.rvec.y = vec::vm_Dot3Vector(src0.rvec.y, src0.uvec.y, src0.fvec.y, &src1.rvec);
-  dest.uvec.y = vec::vm_Dot3Vector(src0.rvec.y, src0.uvec.y, src0.fvec.y, &src1.uvec);
-  dest.fvec.y = vec::vm_Dot3Vector(src0.rvec.y, src0.uvec.y, src0.fvec.y, &src1.fvec);
+  dest.columns[0].y = vec::vm_Dot3Vector(src0.columns[0].y, src0.columns[1].y, src0.columns[2].y, &src1.columns[0]);
+  dest.columns[1].y = vec::vm_Dot3Vector(src0.columns[0].y, src0.columns[1].y, src0.columns[2].y, &src1.columns[1]);
+  dest.columns[2].y = vec::vm_Dot3Vector(src0.columns[0].y, src0.columns[1].y, src0.columns[2].y, &src1.columns[2]);
 
-  dest.rvec.z = vec::vm_Dot3Vector(src0.rvec.z, src0.uvec.z, src0.fvec.z, &src1.rvec);
-  dest.uvec.z = vec::vm_Dot3Vector(src0.rvec.z, src0.uvec.z, src0.fvec.z, &src1.uvec);
-  dest.fvec.z = vec::vm_Dot3Vector(src0.rvec.z, src0.uvec.z, src0.fvec.z, &src1.fvec);
+  dest.columns[0].z = vec::vm_Dot3Vector(src0.columns[0].z, src0.columns[1].z, src0.columns[2].z, &src1.columns[0]);
+  dest.columns[1].z = vec::vm_Dot3Vector(src0.columns[0].z, src0.columns[1].z, src0.columns[2].z, &src1.columns[1]);
+  dest.columns[2].z = vec::vm_Dot3Vector(src0.columns[0].z, src0.columns[1].z, src0.columns[2].z, &src1.columns[2]);
 
   return dest;
 }
 
 vec::matrix operator*=(vec::matrix &src0, vec::matrix src1) { return (src0 = src0 * src1); }
+#endif
 
 // Computes a normalized direction vector between two points
 // Parameters:	dest - filled in with the normalized direction vector
@@ -471,18 +474,18 @@ void vec::vm_SinCosToMatrix(vec::matrix *m, float sinp, float cosp, float sinb, 
   cbsh = (cosb * sinh);
   sbch = (sinb * cosh);
 
-  m->rvec.x = cbch + (sinp * sbsh); // m1
-  m->uvec.z = sbsh + (sinp * cbch); // m8
+  m->columns[0].x = cbch + (sinp * sbsh); // m1
+  m->columns[1].z = sbsh + (sinp * cbch); // m8
 
-  m->uvec.x = (sinp * cbsh) - sbch; // m2
-  m->rvec.z = (sinp * sbch) - cbsh; // m7
+  m->columns[1].x = (sinp * cbsh) - sbch; // m2
+  m->columns[0].z = (sinp * sbch) - cbsh; // m7
 
-  m->fvec.x = (sinh * cosp); // m3
-  m->rvec.y = (sinb * cosp); // m4
-  m->uvec.y = (cosb * cosp); // m5
-  m->fvec.z = (cosh * cosp); // m9
+  m->columns[2].x = (sinh * cosp); // m3
+  m->columns[0].y = (sinb * cosp); // m4
+  m->columns[1].y = (cosb * cosp); // m5
+  m->columns[2].z = (cosh * cosp); // m9
 
-  m->fvec.y = -sinp; // m6
+  m->columns[2].y = -sinp; // m6
 }
 
 void vec::vm_AnglesToMatrix(vec::matrix *m, vec::angle p, vec::angle h, vec::angle b) {
@@ -525,27 +528,27 @@ void vec::vm_VectorAngleToMatrix(vec::matrix *m, simd::float3 *v, angle a) {
 // Ensure that a matrix is orthogonal
 void vec::vm_Orthogonalize(vec::matrix *m) {
   // Normalize forward vector
-  if (vec::vm_NormalizeVector(&m->fvec) == 0) {
+  if (vec::vm_NormalizeVector(&m->columns[2]) == 0) {
     Int3(); // forward vec should not be zero-length
     return;
   }
 
   // Generate right vector from forward and up vectors
-  m->rvec = simd::cross(m->uvec, m->fvec);
+  m->columns[0] = simd::cross(m->columns[1], m->columns[2]);
 
   // Normaize new right vector
-  if (vec::vm_NormalizeVector(&m->rvec) == 0) {
-    vm_VectorToMatrix(m, &m->fvec, NULL, NULL); // error, so generate from forward vector only
+  if (vec::vm_NormalizeVector(&m->columns[0]) == 0) {
+    vm_VectorToMatrix(m, &m->columns[2], NULL, NULL); // error, so generate from forward vector only
     return;
   }
 
   // Recompute up vector, in case it wasn't entirely perpendiclar
-  m->uvec = simd::cross(m->fvec, m->rvec);
+  m->columns[1] = simd::cross(m->columns[2], m->columns[0]);
 }
 
 // do the math for vm_VectorToMatrix()
 void DoVectorToMatrix(vec::matrix *m, simd::float3 *fvec, simd::float3 *uvec, simd::float3 *rvec) {
-  simd::float3 *xvec = &m->rvec, *yvec = &m->uvec, *zvec = &m->fvec;
+  simd::float3 *xvec = &m->columns[0], *yvec = &m->columns[1], *zvec = &m->columns[2];
 
   ASSERT(fvec != NULL);
 
@@ -563,10 +566,10 @@ void DoVectorToMatrix(vec::matrix *m, simd::float3 *fvec, simd::float3 *uvec, si
 
       if (zvec->x == 0 && zvec->z == 0) { // forward vec is straight up or down
 
-        m->rvec.x = 1.0;
-        m->uvec.z = (zvec->y < 0) ? 1.0 : -1.0;
+        m->columns[0].x = 1.0;
+        m->columns[1].z = (zvec->y < 0) ? 1.0 : -1.0;
 
-        m->rvec.y = m->rvec.z = m->uvec.x = m->uvec.y = 0;
+        m->columns[0].y = m->columns[0].z = m->columns[1].x = m->columns[1].y = 0;
       } else { // not straight up or down
 
         xvec->x = zvec->z;
@@ -612,7 +615,7 @@ void DoVectorToMatrix(vec::matrix *m, simd::float3 *fvec, simd::float3 *uvec, si
 
 // Compute a matrix from one or two vectors.  At least one and at most two vectors must/can be specified.
 // Parameters:	m - filled in with the orienation matrix
-//					fvec,uvec,rvec - pointers to vectors that determine the matrix.
+//					columns[2],columns[1],columns[0] - pointers to vectors that determine the matrix.
 //						One or two of these must be specified, with the other(s) set to NULL.
 void vec::vm_VectorToMatrix(vec::matrix *m, simd::float3 *fvec, simd::float3 *uvec, simd::float3 *rvec) {
   if (!fvec) { // no forward vector.  Use up and/or right vectors.
@@ -620,16 +623,16 @@ void vec::vm_VectorToMatrix(vec::matrix *m, simd::float3 *fvec, simd::float3 *uv
 
     if (uvec) { // got up vector. use up and, if specified, right vectors.
       DoVectorToMatrix(&tmatrix, uvec, NULL, rvec);
-      m->fvec = -tmatrix.uvec;
-      m->uvec = tmatrix.fvec;
-      m->rvec = tmatrix.rvec;
+      m->columns[2] = -tmatrix.columns[1];
+      m->columns[1] = tmatrix.columns[2];
+      m->columns[0] = tmatrix.columns[0];
       return;
     } else { // no up vector.  Use right vector only.
       ASSERT(rvec);
       DoVectorToMatrix(&tmatrix, rvec, NULL, NULL);
-      m->fvec = -tmatrix.rvec;
-      m->uvec = tmatrix.uvec;
-      m->rvec = tmatrix.fvec;
+      m->columns[2] = -tmatrix.columns[0];
+      m->columns[1] = tmatrix.columns[1];
+      m->columns[0] = tmatrix.columns[2];
       return;
     }
   } else {
@@ -653,26 +656,26 @@ vec::angvec *vec::vm_ExtractAnglesFromMatrix(vec::angvec *a, vec::matrix *m) {
   float sinh, cosh, cosp, sinb, cosb;
 
   // Deal with straight up or straight down
-  if (IS_ZERO(m->fvec.x) && IS_ZERO(m->fvec.z)) {
-    a->p = (m->fvec.y > 0) ? 0xc000 : 0x4000;
+  if (IS_ZERO(m->columns[2].x) && IS_ZERO(m->columns[2].z)) {
+    a->p = (m->columns[2].y > 0) ? 0xc000 : 0x4000;
     a->b = 0.0;
-    a->h = FixAtan2(m->rvec.x, -m->rvec.z);
+    a->h = FixAtan2(m->columns[0].x, -m->columns[0].z);
     return a;
   }
 
-  a->h = FixAtan2(m->fvec.z, m->fvec.x);
+  a->h = FixAtan2(m->columns[2].z, m->columns[2].x);
 
   sinh = FixSin(a->h);
   cosh = FixCos(a->h);
 
   if (fabs(sinh) > fabs(cosh)) // sine is larger, so use it
-    cosp = (m->fvec.x / sinh);
+    cosp = (m->columns[2].x / sinh);
   else // cosine is larger, so use it
-    cosp = (m->fvec.z / cosh);
-  a->p = FixAtan2(cosp, -m->fvec.y);
+    cosp = (m->columns[2].z / cosh);
+  a->p = FixAtan2(cosp, -m->columns[2].y);
 
-  sinb = (m->rvec.y / cosp);
-  cosb = (m->uvec.y / cosp);
+  sinb = (m->columns[0].y / cosp);
+  cosb = (m->columns[1].y / cosp);
   a->b = FixAtan2(cosb, sinb);
 
   return a;
@@ -681,9 +684,9 @@ vec::angvec *vec::vm_ExtractAnglesFromMatrix(vec::angvec *a, vec::matrix *m) {
 // returns the value of a determinant
 float vec::calc_det_value(vec::matrix *det) {
   //  simd::determinant(const float3x3 x)
-  return det->rvec.x * det->uvec.y * det->fvec.z - det->rvec.x * det->uvec.z * det->fvec.y -
-         det->rvec.y * det->uvec.x * det->fvec.z + det->rvec.y * det->uvec.z * det->fvec.x +
-         det->rvec.z * det->uvec.x * det->fvec.y - det->rvec.z * det->uvec.y * det->fvec.x;
+  return det->columns[0].x * det->columns[1].y * det->columns[2].z - det->columns[0].x * det->columns[1].z * det->columns[2].y -
+         det->columns[0].y * det->columns[1].x * det->columns[2].z + det->columns[0].y * det->columns[1].z * det->columns[2].x +
+         det->columns[0].z * det->columns[1].x * det->columns[2].y - det->columns[0].z * det->columns[1].y * det->columns[2].x;
 }
 
 // computes the delta angle between two vectors.

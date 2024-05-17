@@ -1476,23 +1476,23 @@ void CollideAnglesToMatrix(vec::matrix *m, float p, float h, float b) {
   sinh = sin(h);
   cosh = cos(h);
 
-  m->rvec.x = cosb * cosh;
-  m->rvec.y = cosb * sinp * sinh - cosp * sinb;
-  m->rvec.z = cosb * cosp * sinh + sinb * sinp;
+  m->columns[0].x = cosb * cosh;
+  m->columns[0].y = cosb * sinp * sinh - cosp * sinb;
+  m->columns[0].z = cosb * cosp * sinh + sinb * sinp;
 
-  m->uvec.x = cosh * sinb;
-  m->uvec.y = sinb * sinp * sinh + cosp * cosb;
-  m->uvec.z = sinb * cosp * sinh - cosb * sinp;
+  m->columns[1].x = cosh * sinb;
+  m->columns[1].y = sinb * sinp * sinh + cosp * cosb;
+  m->columns[1].z = sinb * cosp * sinh - cosb * sinp;
 
-  m->fvec.x = -sinh;
-  m->fvec.y = sinp * cosh;
-  m->fvec.z = cosp * cosh;
+  m->columns[2].x = -sinh;
+  m->columns[2].y = sinp * cosh;
+  m->columns[2].z = cosp * cosh;
 }
 
 simd::float3 *CollideExtractAnglesFromMatrix(simd::float3 *a, vec::matrix *m) {
   float sinh, cosh, sinp, sinb;
 
-  sinh = -m->fvec.x;
+  sinh = -m->columns[2].x;
   if (sinh < -1.0f)
     sinh = -1.0f;
   else if (sinh > 1.0f)
@@ -1502,13 +1502,13 @@ simd::float3 *CollideExtractAnglesFromMatrix(simd::float3 *a, vec::matrix *m) {
   cosh = cos(a->y);
   ASSERT(cosh != 0.0);
 
-  sinp = m->fvec.y / cosh;
+  sinp = m->columns[2].y / cosh;
   if (sinp < -1.0f)
     sinp = -1.0f;
   else if (sinp > 1.0f)
     sinp = 1.0f;
 
-  sinb = m->uvec.x / cosh;
+  sinb = m->columns[1].x / cosh;
   if (sinb < -1.0f)
     sinb = -1.0f;
   else if (sinb > 1.0f)
@@ -1542,14 +1542,14 @@ void ConvertEulerToAxisAmount(simd::float3 *e, simd::float3 *n, float *w) {
   // This is from Graphics Gems 1 p.467  I am converting from a angle vector
   // to the normal of that rotation (you can also get the angle about that normal, but
   // we don't need it)
-  n->x = rotmat.uvec.z - rotmat.fvec.y;
-  n->y = rotmat.fvec.x - rotmat.rvec.z;
-  n->z = rotmat.rvec.y - rotmat.uvec.x;
+  n->x = rotmat.columns[1].z - rotmat.columns[2].y;
+  n->y = rotmat.columns[2].x - rotmat.columns[0].z;
+  n->z = rotmat.columns[0].y - rotmat.columns[1].x;
 
   if (simd::all(*n != vec::Zero_vector)) {
     vec::vm_NormalizeVector(n);
 
-    float ct = (rotmat.rvec.x + rotmat.uvec.y + rotmat.fvec.z - 1.0f) / 2.0f;
+    float ct = (rotmat.columns[0].x + rotmat.columns[1].y + rotmat.columns[2].z - 1.0f) / 2.0f;
     if (ct < -1.0f)
       ct = -1.0f;
     else if (ct > 1.0f)
@@ -1596,15 +1596,15 @@ void ConvertAxisAmountToEuler(simd::float3 *n, float *w, simd::float3 *e) {
   const float tyy = t * n->y * n->y;
   const float tzz = t * n->z * n->z;
 
-  rotmat.rvec.x = txx + c;
-  rotmat.rvec.y = txy - sz;
-  rotmat.rvec.z = txz + sy;
-  rotmat.uvec.x = txy + sz;
-  rotmat.uvec.y = tyy + c;
-  rotmat.uvec.z = tyz - sx;
-  rotmat.fvec.x = txz - sy;
-  rotmat.fvec.y = tyz + sx;
-  rotmat.fvec.z = tzz + c;
+  rotmat.columns[0].x = txx + c;
+  rotmat.columns[0].y = txy - sz;
+  rotmat.columns[0].z = txz + sy;
+  rotmat.columns[1].x = txy + sz;
+  rotmat.columns[1].y = tyy + c;
+  rotmat.columns[1].z = tyz - sx;
+  rotmat.columns[2].x = txz - sy;
+  rotmat.columns[2].y = tyz + sx;
+  rotmat.columns[2].z = tzz + c;
 
   CollideExtractAnglesFromMatrix(&s_result, &rotmat);
 
@@ -1632,7 +1632,7 @@ void bump_obj_against_fixed(object *obj, simd::float3 *collision_point, simd::fl
   float j;
 
   vec::matrix o_t1 = obj->orient;
-  vm_TransposeMatrix(&o_t1);
+  vec::vm_TransposeMatrix(&o_t1);
 
   simd::float3 cmp1 = obj->mtype.phys_info.rotvel * o_t1;
 
@@ -1791,7 +1791,7 @@ void bump_two_objects(object *object0, object *object1, simd::float3 *collision_
 
       // Weapons should face their new heading.  This is so missiles are pointing in the correct direct.
       if (t->type == OBJ_WEAPON && (t->mtype.phys_info.flags & (PF_BOUNCE | PF_GRAVITY | PF_WIND)))
-        vec::vm_VectorToMatrix(&t->orient, &t->mtype.phys_info.velocity, &t->orient.uvec, nullptr);
+        vec::vm_VectorToMatrix(&t->orient, &t->mtype.phys_info.velocity, &t->orient.columns[1], nullptr);
     }
 
     // Return it to the original direction

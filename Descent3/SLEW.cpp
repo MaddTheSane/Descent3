@@ -359,14 +359,14 @@ int SlewFrame(object *obj, int movement_limitations) {
   }
 #endif
 
-  vm_AnglesToMatrix(&rotmat, rotang.p, rotang.h, rotang.b);
+  vec::vm_AnglesToMatrix(&rotmat, rotang.p, rotang.h, rotang.b);
 
   new_pm = obj->orient * rotmat;
-  vm_Orthogonalize(&new_pm);
+  vec::vm_Orthogonalize(&new_pm);
 
   ObjSetOrient(obj, &new_pm);
 
-  vm_TransposeMatrix(&new_pm); // make those columns rows
+  vec::vm_TransposeMatrix(&new_pm); // make those columns rows
 
   svel = obj->mtype.phys_info.velocity * Frametime;
   movement = svel * new_pm;

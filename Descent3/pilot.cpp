@@ -1842,7 +1842,7 @@ struct tShipPos {
   int texture_id;
   int bm_handle;
   void Init() {
-    vm_AnglesToMatrix(&last_frame, 0, (65535 / 2), 0);
+    vec::vm_AnglesToMatrix(&last_frame, 0, (65535 / 2), 0);
     last_time = timer_GetTime();
     texture_id = Players[0].custom_texture_handle;
     bm_handle = -1;
@@ -2917,9 +2917,9 @@ void UI3DWindow::OnDraw() {
   // move 30 degrees a sec
   float new_time = timer_GetTime();
 
-  vm_AnglesToMatrix(&rot_mat, 0, (new_time - ship_pos.last_time) * (65535 / 360) * 30, 0);
-  vm_MatrixMul(&view_orient, &rot_mat, &ship_pos.last_frame);
-  vm_Orthogonalize(&view_orient);
+  vec::vm_AnglesToMatrix(&rot_mat, 0, (new_time - ship_pos.last_time) * (65535 / 360) * 30, 0);
+  vec::vm_MatrixMul(&view_orient, &rot_mat, &ship_pos.last_frame);
+  vec::vm_Orthogonalize(&view_orient);
   ship_pos.last_frame = view_orient;
 
   light_vec.x = 0.0f;

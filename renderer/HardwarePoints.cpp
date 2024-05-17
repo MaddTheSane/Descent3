@@ -97,32 +97,32 @@ void g3_Point2Vec(simd::float3 *v, int16_t sx, int16_t sy) {
 
   vec::vm_NormalizeVector(&tempv);
 
-  tempm = ~Unscaled_matrix;
+  tempm = simd::transpose(Unscaled_matrix);
 
   *v = tempv * tempm;
 }
 
 // delta rotation functions
 simd::float3 *g3_RotateDeltaX(simd::float3 *dest, float dx) {
-  dest->x = View_matrix.rvec.x * dx;
-  dest->y = View_matrix.uvec.x * dx;
-  dest->z = View_matrix.fvec.x * dx;
+  dest->x = View_matrix.columns[0].x * dx;
+  dest->y = View_matrix.columns[1].x * dx;
+  dest->z = View_matrix.columns[2].x * dx;
 
   return dest;
 }
 
 simd::float3 *g3_RotateDeltaY(simd::float3 *dest, float dy) {
-  dest->x = View_matrix.rvec.y * dy;
-  dest->y = View_matrix.uvec.y * dy;
-  dest->z = View_matrix.fvec.y * dy;
+  dest->x = View_matrix.columns[0].y * dy;
+  dest->y = View_matrix.columns[1].y * dy;
+  dest->z = View_matrix.columns[2].y * dy;
 
   return dest;
 }
 
 simd::float3 *g3_RotateDeltaZ(simd::float3 *dest, float dz) {
-  dest->x = View_matrix.rvec.z * dz;
-  dest->y = View_matrix.uvec.z * dz;
-  dest->z = View_matrix.fvec.z * dz;
+  dest->x = View_matrix.columns[0].z * dz;
+  dest->y = View_matrix.columns[1].z * dz;
+  dest->z = View_matrix.columns[2].z * dz;
 
   return dest;
 }
@@ -143,6 +143,6 @@ uint8_t g3_AddDeltaVec(g3Point *dest, g3Point *src, simd::float3 *deltav) {
 
 // calculate the depth of a point - returns the z coord of the rotated point
 float g3_CalcPointDepth(simd::float3 *pnt) {
-  return ((pnt->x - View_position.x) * View_matrix.fvec.x) + ((pnt->y - View_position.y) * View_matrix.fvec.y) +
-         ((pnt->z - View_position.z) * View_matrix.fvec.z);
+  return ((pnt->x - View_position.x) * View_matrix.columns[2].x) + ((pnt->y - View_position.y) * View_matrix.columns[2].y) +
+         ((pnt->z - View_position.z) * View_matrix.columns[2].z);
 }

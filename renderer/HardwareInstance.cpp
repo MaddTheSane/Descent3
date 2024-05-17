@@ -49,7 +49,7 @@ void g3_StartInstanceMatrix(vec::vector *pos, vec::matrix *orient) {
   View_position = tempv * *orient;
 
   // step 3: rotate object matrix through view_matrix (vm = ob * vm)
-  vec::matrix tempm, tempm2 = ~*orient;
+  vec::matrix tempm, tempm2 = simd::transpose(*orient);
 
   tempm = tempm2 * View_matrix;
   View_matrix = tempm;
@@ -66,13 +66,13 @@ void g3_StartInstanceMatrix(vec::vector *pos, vec::matrix *orient) {
 void g3_StartInstanceAngles(simd::float3 *pos, vec::angvec *angles) {
   if (angles == NULL) {
     vec::matrix ident;
-    vm_MakeIdentity(&ident);
+    vec::vm_MakeIdentity(&ident);
     g3_StartInstanceMatrix(pos, &ident);
     return;
   }
 
   vec::matrix tm;
-  vm_AnglesToMatrix(&tm, angles->p, angles->h, angles->b);
+  vec::vm_AnglesToMatrix(&tm, angles->p, angles->h, angles->b);
 
   g3_StartInstanceMatrix(pos, &tm);
 }

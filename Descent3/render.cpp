@@ -1594,8 +1594,8 @@ void RenderFogFaces(room *rp) {
         float t = Room_fog_eye_distance / (Room_fog_eye_distance - dist);
         simd::float3 portal_point = Viewer_eye + (t * subvec);
 
-        eye_distance = -(simd::dot(Viewer_orient.fvec, portal_point));
-        mag = simd::dot(Viewer_orient.fvec, *vec) + eye_distance;
+        eye_distance = -(simd::dot(Viewer_orient.columns[2], portal_point));
+        mag = simd::dot(Viewer_orient.columns[2], *vec) + eye_distance;
       } else if (Room_fog_plane_check == 1) {
         // In the room, distance from
         simd::float3 *vec = &rp->verts[fp->face_verts[vn]];
@@ -2058,8 +2058,8 @@ draw_fog:
       matrix facematrix;
       simd::float3 fvec = -lmi->normal;
       vm_VectorToMatrix(&facematrix, &fvec, NULL, NULL);
-      simd::float3 rvec = facematrix.rvec * lmi->xspacing;
-      simd::float3 uvec = facematrix.uvec * lmi->yspacing;
+      simd::float3 rvec = facematrix.columns[0] * lmi->xspacing;
+      simd::float3 uvec = facematrix.columns[1] * lmi->yspacing;
       vm_TransposeMatrix(&facematrix);
       int w = lm_w(lmi->lm_handle);
       int h = lm_h(lmi->lm_handle);
@@ -2209,8 +2209,8 @@ void SetupRoomFog(room *rp, simd::float3 *eye, vec::matrix *orient, int viewer_r
     // viewer is in the room
     simd::float3 *vec = eye;
     Room_fog_plane_check = 1;
-    Room_fog_distance = -simd::dot(orient->fvec, *vec);
-    Room_fog_plane = orient->fvec;
+    Room_fog_distance = -simd::dot(orient->columns[2], *vec);
+    Room_fog_plane = orient->columns[2];
     return;
   }
 
@@ -2484,7 +2484,7 @@ void RenderSingleLightGlow2(int index) {
   simd::float3 fvec, uvec, temp_vec, rvec;
   temp_vec = -fp->normal;
 
-  vm_VectorToMatrix(&mat, NULL, &temp_vec, NULL);
+  vec::vm_VectorToMatrix(&mat, NULL, &temp_vec, NULL);
 
   // Rotate view vector into billboard space
   fvec = Viewer_eye - corona_pos;
@@ -2500,22 +2500,22 @@ void RenderSingleLightGlow2(int index) {
   uvec.z = 0;
   vec::vm_VectorToMatrix(&rot_mat, NULL, &uvec, &rvec);
   vec::vm_TransposeMatrix(&mat);
-  temp_vec = rot_mat.rvec * mat;
-  rot_mat.rvec = temp_vec;
-  temp_vec = rot_mat.uvec * mat;
-  rot_mat.uvec = temp_vec;
-  temp_vec = rot_mat.fvec * mat;
-  rot_mat.fvec = temp_vec;
+  temp_vec = rot_mat.columns[0] * mat;
+  rot_mat.columns[0] = temp_vec;
+  temp_vec = rot_mat.columns[1] * mat;
+  rot_mat.columns[1] = temp_vec;
+  temp_vec = rot_mat.columns[2] * mat;
+  rot_mat.columns[2] = temp_vec;
   simd::float3 world_vecs[4];
   g3Point pnts[4], *pntlist[4];
-  world_vecs[0] = corona_pos - (size * rot_mat.rvec);
-  world_vecs[0] += (size * rot_mat.uvec);
-  world_vecs[1] = corona_pos + (size * rot_mat.rvec);
-  world_vecs[1] += (size * rot_mat.uvec);
-  world_vecs[2] = corona_pos + (size * rot_mat.rvec);
-  world_vecs[2] -= (size * rot_mat.uvec);
-  world_vecs[3] = corona_pos - (size * rot_mat.rvec);
-  world_vecs[3] -= (size * rot_mat.uvec);
+  world_vecs[0] = corona_pos - (size * rot_mat.columns[0]);
+  world_vecs[0] += (size * rot_mat.columns[1]);
+  world_vecs[1] = corona_pos + (size * rot_mat.columns[0]);
+  world_vecs[1] += (size * rot_mat.columns[1]);
+  world_vecs[2] = corona_pos + (size * rot_mat.columns[0]);
+  world_vecs[2] -= (size * rot_mat.columns[1]);
+  world_vecs[3] = corona_pos - (size * rot_mat.columns[0]);
+  world_vecs[3] -= (size * rot_mat.columns[1]);
   for (int i = 0; i < 4; i++) {
     g3_RotatePoint(&pnts[i], &world_vecs[i]);
     pnts[i].p3_flags |= PF_UV | PF_RGBA;
@@ -3166,7 +3166,7 @@ void RenderRoomObjects(room *rp) {
     inv_mirror_matrix = mirror_matrix;
     vec::vm_TransposeMatrix(&inv_mirror_matrix);
     vec::vm_VectorToMatrix(&negz_matrix, &negz_vec, NULL, NULL);
-    negz_matrix.rvec *= -1;
+    negz_matrix.columns[0] *= -1;
 
     for (i = n_objs - 1; i >= 0; i--) {
       objnum = obj_sort_list[i].objnum;
@@ -3200,14 +3200,14 @@ void RenderRoomObjects(room *rp) {
         // Check for rear view
         if (objp == Viewer_object && Viewer_object == Player_object &&
             (Players[Player_num].flags & PLAYER_FLAGS_REARVIEW)) {
-          objp->orient.fvec = -objp->orient.fvec;
-          objp->orient.rvec = -objp->orient.rvec;
+          objp->orient.columns[2] = -objp->orient.columns[2];
+          objp->orient.columns[0] = -objp->orient.columns[0];
         }
         // Get new orientation
         temp_mat = mirror_matrix * negz_matrix * inv_mirror_matrix;
-        dest_matrix.rvec = objp->orient.rvec * temp_mat;
-        dest_matrix.uvec = objp->orient.uvec * temp_mat;
-        dest_matrix.fvec = objp->orient.fvec * temp_mat;
+        dest_matrix.columns[0] = objp->orient.columns[0] * temp_mat;
+        dest_matrix.columns[1] = objp->orient.columns[1] * temp_mat;
+        dest_matrix.columns[2] = objp->orient.columns[2] * temp_mat;
         objp->orient = dest_matrix;
         bool save_render = false;
         if (objp->flags & OF_SAFE_TO_RENDER)

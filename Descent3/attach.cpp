@@ -251,15 +251,15 @@ static void ConvertAxisAmountMatrix(simd::float3 *n, float w, vec::matrix *rotma
   const float tyy = t * n->y * n->y;
   const float tzz = t * n->z * n->z;
 
-  rotmat->rvec.x = txx + c;
-  rotmat->rvec.y = txy - sz;
-  rotmat->rvec.z = txz + sy;
-  rotmat->uvec.x = txy + sz;
-  rotmat->uvec.y = tyy + c;
-  rotmat->uvec.z = tyz - sx;
-  rotmat->fvec.x = txz - sy;
-  rotmat->fvec.y = tyz + sx;
-  rotmat->fvec.z = tzz + c;
+  rotmat->columns[0].x = txx + c;
+  rotmat->columns[0].y = txy - sz;
+  rotmat->columns[0].z = txz + sy;
+  rotmat->columns[1].x = txy + sz;
+  rotmat->columns[1].y = tyy + c;
+  rotmat->columns[1].z = tyz - sx;
+  rotmat->columns[2].x = txz - sy;
+  rotmat->columns[2].y = tyz + sx;
+  rotmat->columns[2].z = tzz + c;
 }
 
 bool AttachDoPosOrientRad(object *parent, char p_ap, object *child, float rad_percent, simd::float3 *pos) {

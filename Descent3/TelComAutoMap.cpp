@@ -250,7 +250,7 @@ void TCAMCenterOnPlayer() {
 
   vec::matrix newmat;
   vec::angvec heading;
-  AM_view_pos = Viewer_object->pos - (Viewer_object->orient.fvec * 10);
+  AM_view_pos = Viewer_object->pos - (Viewer_object->orient.columns[2] * 10);
   vec::vm_ExtractAnglesFromMatrix(&heading, &Player_object->orient);
 
   vec::vm_AnglesToMatrix(&newmat, 0, heading.h, 0);
@@ -581,9 +581,9 @@ void TCAMReadControls() {
   DoMovement(&controls);
 
   // Do translational movement
-  AM_view_pos += (controls.forward_thrust * last_frametime * AM_TRANSLATION_SCALAR) * AM_view_orient.fvec;
-  AM_view_pos += (controls.vertical_thrust * last_frametime * AM_TRANSLATION_SCALAR) * AM_view_orient.uvec;
-  AM_view_pos += (controls.sideways_thrust * last_frametime * AM_TRANSLATION_SCALAR) * AM_view_orient.rvec;
+  AM_view_pos += (controls.forward_thrust * last_frametime * AM_TRANSLATION_SCALAR) * AM_view_orient.columns[2];
+  AM_view_pos += (controls.vertical_thrust * last_frametime * AM_TRANSLATION_SCALAR) * AM_view_orient.columns[1];
+  AM_view_pos += (controls.sideways_thrust * last_frametime * AM_TRANSLATION_SCALAR) * AM_view_orient.columns[0];
 
   // Do rotational movement
 

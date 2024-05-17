@@ -1666,7 +1666,7 @@ static tThiefItems ThiefableItems[] = {
     {6, THIEFABLEITEM_ACCESSORY, 1.00f, 0.60f, 1.00f, TXT_WEAP_RAPIDFIRE},       // RapidFire
     {7, THIEFABLEITEM_ACCESSORY, 1.00f, 0.60f, 1.00f, TXT_WEAP_QUADLASERS},      // Quads
 };
-static int numThiefableItems = sizeof(ThiefableItems) / sizeof(tThiefItems);
+static constexpr int numThiefableItems = sizeof(ThiefableItems) / sizeof(tThiefItems);
 
 struct inv_item {
   uint16_t id;
@@ -2127,7 +2127,7 @@ void SuperThief::DoInterval(int me) {
 
     // Determine real start pos - room
     simd::float3 end_pos = pos;
-    end_pos += orient.fvec * 2000.0f;
+    end_pos += orient.columns[2] * 2000.0f;
 
     int fvi_flags = FQ_CHECK_OBJS | FQ_IGNORE_POWERUPS | FQ_IGNORE_WEAPONS;
     int fate = FVI_RayCast(me, &pos, &end_pos, room, 0.0f, fvi_flags, &ray);
@@ -3281,20 +3281,20 @@ bool Humonculous::SetMode(int me, uint16_t mode) {
     vec::matrix orient;
     Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
-    memory->land_fvec = orient.fvec;
+    memory->land_fvec = orient.columns[2];
     memory->land_fvec.y = 0.0f;
     vm_VectorNormalize(&memory->land_fvec);
-    orient.fvec = memory->land_fvec;
+    orient.columns[2] = memory->land_fvec;
 
-    vm_VectorNormalize(&orient.rvec);
+    vm_VectorNormalize(&orient.columns[0]);
 
     Obj_Value(me, VF_GET, OBJV_V_POS, &start_pos);
     Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &start_room);
 
     // Determine real start pos - room
     end_pos = start_pos;
-    end_pos += orient.rvec * 29.0f;
-    end_pos += orient.fvec * 33.215f;
+    end_pos += orient.columns[0] * 29.0f;
+    end_pos += orient.columns[2] * 33.215f;
 
     flags = FQ_CHECK_OBJS | FQ_IGNORE_POWERUPS | FQ_IGNORE_WEAPONS | FQ_IGNORE_MOVING_OBJECTS |
             FQ_IGNORE_NON_LIGHTMAP_OBJECTS;
@@ -3303,19 +3303,19 @@ bool Humonculous::SetMode(int me, uint16_t mode) {
     start_pos = end_pos = ray.hit_point;
     start_room = ray.hit_room;
 
-    end_pos += 5000.0f * orient.rvec;
+    end_pos += 5000.0f * orient.columns[0];
 
     flags = FQ_CHECK_OBJS | FQ_IGNORE_POWERUPS | FQ_IGNORE_WEAPONS | FQ_IGNORE_MOVING_OBJECTS |
             FQ_IGNORE_NON_LIGHTMAP_OBJECTS;
     fate = FVI_RayCast(me, &start_pos, &end_pos, start_room, 0.0f, flags, &ray);
 
-    if (simd::dot(ray.hit_wallnorm, orient.rvec) > -0.95) {
+    if (simd::dot(ray.hit_wallnorm, orient.columns[0]) > -0.95) {
       memory->mode = HM_WALL_HIT;
       SetMode(me, HM_MELEE);
       return false;
     }
 
-    memory->land_pos = ray.hit_point - (orient.fvec * 33.215f) - (orient.rvec * 29.0f);
+    memory->land_pos = ray.hit_point - (orient.columns[2] * 33.215f) - (orient.columns[0] * 29.0f);
 
     AI_AddGoal(me, AIG_GET_TO_POS, 1, 1.0, H_GUID_LANDED, GF_ORIENT_SCRIPTED | GF_USE_BLINE_IF_SEES_GOAL | GF_NOTIFIES,
                &memory->land_pos, ray.hit_room);
@@ -3457,7 +3457,7 @@ void Humonculous::DoInit(int me) {
   Obj_GetGroundPos(me, 0, &g_pos, &g_norm);
 
   simd::float3 from_ground = pos - g_pos;
-  memory->ground_pnt_offset = fabs(simd::dot(from_ground, orient.uvec));
+  memory->ground_pnt_offset = fabs(simd::dot(from_ground, orient.columns[1]));
 
   AI_Value(me, VF_GET, AIV_F_MAX_SPEED, &memory->max_speed);
   AI_Value(me, VF_GET, AIV_F_MAX_DELTA_SPEED, &memory->max_delta_speed);
@@ -3604,7 +3604,7 @@ void Humonculous::DoInterval(int me) {
         // Launch joshbots
         for (xxx = 0; xxx < 2; xxx++) {
           int flags = OF_DESTROYABLE;
-          simd::float3 vel = orient.fvec * 80.0f;
+          simd::float3 vel = orient.columns[2] * 80.0f;
 
           Obj_UnattachFromParent(memory->josh[xxx]);
           Obj_Value(memory->josh[xxx], VF_SET, OBJV_V_VELOCITY, &vel);
@@ -3699,7 +3699,7 @@ void Humonculous::DoInterval(int me) {
         vec::matrix orient;
         Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
-        memory->land_fvec = orient.fvec;
+        memory->land_fvec = orient.columns[2];
         memory->land_fvec.y = 0.0f;
         vm_VectorNormalize(&memory->land_fvec);
       }
@@ -3769,7 +3769,7 @@ void Humonculous::DoInterval(int me) {
         vec::matrix orient;
         Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
-        memory->land_fvec = orient.fvec;
+        memory->land_fvec = orient.columns[2];
         memory->land_fvec.y = 0.0f;
         vm_VectorNormalize(&memory->land_fvec);
       }
@@ -4756,7 +4756,7 @@ bool GuideBot::SetMode(int me, char mode) {
 
     Obj_Value(memory->my_player, VF_GET, OBJV_V_VELOCITY, &vel);
 
-    vel += orient.fvec * 40.0f;
+    vel += orient.columns[2] * 40.0f;
 
     Obj_Value(me, VF_SET, OBJV_V_VELOCITY, &vel);
 
@@ -4779,7 +4779,7 @@ bool GuideBot::SetMode(int me, char mode) {
     //			AI_AddGoal(me, AIG_MOVE_RELATIVE_OBJ_VEC, 0, 1.0f, -1, GF_KEEP_AT_COMPLETION, memory->my_player,
     // GST_FVEC); 			AI_SetGoalCircleDist(me, 0, 40.0f);
 
-    pos += orient.fvec * 200.0f;
+    pos += orient.columns[2] * 200.0f;
 
     AI_AddGoal(me, AIG_GET_TO_POS, 1, 1.0, -1, GF_USE_BLINE_IF_SEES_GOAL | GF_NOTIFIES, &pos, room);
     AI_SetGoalCircleDist(me, 1, 1.0f);
@@ -4841,8 +4841,8 @@ bool GuideBot::SetMode(int me, char mode) {
     Obj_Value(memory->my_player, VF_GET, OBJV_I_ROOMNUM, &room);
     Obj_Value(memory->my_player, VF_GET, OBJV_M_ORIENT, &orient);
 
-    pos += orient.fvec * 3.0f;
-    pos -= orient.uvec * 10.0f;
+    pos += orient.columns[2] * 3.0f;
+    pos -= orient.columns[1] * 10.0f;
 
     memory->camera_obj = Obj_Create(OBJ_POWERUP, Obj_FindID("Invisiblepowerup"), room, &pos, &orient, me);
     msafe_struct mstruct;
@@ -5721,7 +5721,7 @@ bool GuideBot::DoInit(int me, bool f_reinit) {
     Obj_Value(memory->my_player, VF_GET, OBJV_V_POS, &ppos);
     Obj_Value(memory->my_player, VF_GET, OBJV_M_ORIENT, &porient);
 
-    ppos += porient.fvec * 10.0f;
+    ppos += porient.columns[2] * 10.0f;
 
     memory->amb_camera_handle = Obj_Create(OBJ_POWERUP, Obj_FindID("Invisiblepowerup"), proom, &ppos, &porient, me);
     msafe_struct mstruct;
@@ -5832,7 +5832,7 @@ bool GuideBot::DoNotify(int me, tOSIRISEventInfo *data) {
     vec::matrix orient;
     Obj_Value(memory->my_player, VF_GET, OBJV_M_ORIENT, &orient);
 
-    AI_TurnTowardsVectors(me, &orient.fvec, &orient.uvec);
+    AI_TurnTowardsVectors(me, &orient.columns[2], &orient.columns[1]);
   }
 
   return true;
@@ -5898,8 +5898,8 @@ void GuideBot::DoFrame(int me) {
   Obj_Value(memory->my_player, VF_GET, OBJV_V_POS, &ppos);
   Obj_Value(memory->my_player, VF_GET, OBJV_M_ORIENT, &porient);
 
-  ppos += porient.fvec * 40.0f;
-  ppos -= porient.uvec * 10.0f;
+  ppos += porient.columns[2] * 40.0f;
+  ppos -= porient.columns[1] * 10.0f;
 
   Obj_Value(memory->amb_camera_handle, VF_SET, OBJV_I_ROOMNUM, &proom);
   Obj_Value(memory->amb_camera_handle, VF_SET, OBJV_V_POS, &ppos);
@@ -6033,7 +6033,7 @@ void GuideBot::DoFrame(int me) {
         simd::float3 dir_to_goal = it_pos - me_pos;
         vm_VectorNormalize(&dir_to_goal);
 
-        if ((flags & AISR_CIRCLE_DIST) && (simd::dot(dir_to_goal, orient.fvec) > 0.4717f) && anim >= 23 && anim <= 33)
+        if ((flags & AISR_CIRCLE_DIST) && (simd::dot(dir_to_goal, orient.columns[2]) > 0.4717f) && anim >= 23 && anim <= 33)
           memory->extinguish_obj_time += Game_GetFrameTime();
 
         if (memory->extinguish_obj_time > 1.5f) {
@@ -6065,8 +6065,8 @@ void GuideBot::DoFrame(int me) {
     Obj_Value(memory->my_player, VF_GET, OBJV_I_ROOMNUM, &room);
     Obj_Value(memory->my_player, VF_GET, OBJV_M_ORIENT, &orient);
 
-    pos += orient.fvec * 3.0f;
-    pos -= orient.uvec * 10.0f;
+    pos += orient.columns[2] * 3.0f;
+    pos -= orient.columns[1] * 10.0f;
 
     Obj_Value(memory->camera_obj, VF_SET, OBJV_I_ROOMNUM, &room);
     Obj_Value(memory->camera_obj, VF_SET, OBJV_V_POS, &pos);
@@ -6574,7 +6574,7 @@ void Thief::DoSubModeFrame(int me) {
     if (anim_frame > 45.0f && memory->last_frame <= 45.0f) {
       vec::matrix orient;
       Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
-      simd::float3 velocity = orient.fvec * 50.0f;
+      simd::float3 velocity = orient.columns[2] * 50.0f;
 
       Obj_UnattachFromParent(memory->bomb_handle);
 
@@ -7110,7 +7110,7 @@ void Sickle::DoInit(int me) {
 
   vec::matrix orient;
   Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
-  memory->home_fvec = orient.fvec;
+  memory->home_fvec = orient.columns[2];
   memory->home_fvec.y = 0.0f;
   vm_VectorNormalize(&memory->home_fvec);
 
@@ -7398,7 +7398,7 @@ void HatePTMC::DoFrame(int me) {
 
             Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
-            if (p_room == room || dist < 60.0f || simd::dot(orient.fvec, dir) >= fov) {
+            if (p_room == room || dist < 60.0f || simd::dot(orient.columns[2], dir) >= fov) {
               ray_info ray;
               int flags = FQ_CHECK_OBJS | FQ_IGNORE_POWERUPS | FQ_IGNORE_WEAPONS | FQ_IGNORE_MOVING_OBJECTS |
                           FQ_IGNORE_NON_LIGHTMAP_OBJECTS;
@@ -8525,7 +8525,7 @@ void Sparky::DoFrame(int me) {
     vec::matrix orient;
     Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
-    float dot = simd::dot(orient.rvec, memory->orient.rvec);
+    float dot = simd::dot(orient.columns[0], memory->orient.columns[0]);
     if (dot < -1.0f)
       dot = -1.0f;
     else if (dot > 1.0f)
@@ -8536,7 +8536,7 @@ void Sparky::DoFrame(int me) {
     float aps = (ang * 65535.0f) / (Game_GetFrameTime() * (2.0f * PI));
 
     if (aps >= MIN_MALF_SPEED) {
-      float tdot = simd::dot(memory->orient.rvec, orient.fvec);
+      float tdot = simd::dot(memory->orient.columns[0], orient.columns[2]);
       if (tdot < 0.0f)
         spin_dir = SPARKY_ROT_LEFT;
       else if (tdot > 0.0f)
@@ -8880,13 +8880,13 @@ void Hellion::DoFrame(int me) {
     Obj_Value(me, VF_GET, OBJV_I_ROOMNUM, &room);
     Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
 
-    pos += orient.uvec * 10.0f;
+    pos += orient.columns[1] * 10.0f;
 
     vec::matrix new_orient;
 
-    new_orient.fvec = -orient.uvec;
-    new_orient.rvec = orient.rvec;
-    new_orient.uvec = orient.fvec;
+    new_orient.columns[2] = -orient.columns[1];
+    new_orient.columns[0] = orient.columns[0];
+    new_orient.columns[1] = orient.columns[2];
 
     weapon_id = Wpn_FindID("HellionBShark");
     Obj_Create(OBJ_WEAPON, weapon_id, room, &pos, &new_orient, OBJECT_HANDLE_NONE);
@@ -9214,20 +9214,20 @@ bool MantaRay::ReceiveCommand(int me, int it, char command, void *ptr) {
 
         switch (i) {
         case 0:
-          goal_pos -= orient.fvec * MRO_FVEC;
-          goal_pos -= orient.rvec * MRO_RVEC;
+          goal_pos -= orient.columns[2] * MRO_FVEC;
+          goal_pos -= orient.columns[0] * MRO_RVEC;
           break;
         case 1:
-          goal_pos -= orient.fvec * MRO_FVEC;
-          goal_pos += orient.rvec * MRO_RVEC;
+          goal_pos -= orient.columns[2] * MRO_FVEC;
+          goal_pos += orient.columns[0] * MRO_RVEC;
           break;
         case 2:
-          goal_pos -= orient.fvec * MRO_FVEC * 2.0f;
-          goal_pos -= orient.rvec * MRO_RVEC * 2.0f;
+          goal_pos -= orient.columns[2] * MRO_FVEC * 2.0f;
+          goal_pos -= orient.columns[0] * MRO_RVEC * 2.0f;
           break;
         case 3:
-          goal_pos -= orient.fvec * MRO_FVEC * 2.0f;
-          goal_pos += orient.rvec * MRO_RVEC * 2.0f;
+          goal_pos -= orient.columns[2] * MRO_FVEC * 2.0f;
+          goal_pos += orient.columns[0] * MRO_RVEC * 2.0f;
           break;
         }
 
@@ -9635,20 +9635,20 @@ bool Skiff::ReceiveCommand(int me, int it, char command, void *ptr) {
 
         switch (i) {
         case 0:
-          goal_pos -= orient.fvec * MRO_FVEC;
-          goal_pos -= orient.rvec * MRO_RVEC;
+          goal_pos -= orient.columns[2] * MRO_FVEC;
+          goal_pos -= orient.columns[0] * MRO_RVEC;
           break;
         case 1:
-          goal_pos -= orient.fvec * MRO_FVEC;
-          goal_pos += orient.rvec * MRO_RVEC;
+          goal_pos -= orient.columns[2] * MRO_FVEC;
+          goal_pos += orient.columns[0] * MRO_RVEC;
           break;
         case 2:
-          goal_pos -= orient.fvec * MRO_FVEC * 2.0f;
-          goal_pos -= orient.rvec * MRO_RVEC * 2.0f;
+          goal_pos -= orient.columns[2] * MRO_FVEC * 2.0f;
+          goal_pos -= orient.columns[0] * MRO_RVEC * 2.0f;
           break;
         case 3:
-          goal_pos -= orient.fvec * MRO_FVEC * 2.0f;
-          goal_pos += orient.rvec * MRO_RVEC * 2.0f;
+          goal_pos -= orient.columns[2] * MRO_FVEC * 2.0f;
+          goal_pos += orient.columns[0] * MRO_RVEC * 2.0f;
           break;
         }
 
@@ -10734,7 +10734,7 @@ void Seeker::DoInit(int me) {
     Obj_Value(me, VF_GET, OBJV_V_VELOCITY, &velocity);
     Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
 
-    velocity += orient.fvec * 50.0f;
+    velocity += orient.columns[2] * 50.0f;
 
     Obj_Value(me, VF_SET, OBJV_V_VELOCITY, &velocity);
   }
@@ -10875,7 +10875,7 @@ int16_t BettyBomb::CallEvent(int event, tOSIRISEventInfo *data) {
       }
       */
 
-      v = -orient.fvec + orient.rvec - orient.uvec;
+      v = -orient.columns[2] + orient.columns[0] - orient.columns[1];
       vm_VectorNormalize(&v);
       v *= 30.0f;
 
@@ -10894,13 +10894,13 @@ int16_t BettyBomb::CallEvent(int event, tOSIRISEventInfo *data) {
       child_handle = Obj_Create(OBJ_ROBOT, child_id, room, &pos, &orient, parent, &v);
 
       // Now create left Betty
-      v = -orient.fvec + (0.3f * orient.rvec) - orient.uvec;
+      v = -orient.columns[2] + (0.3f * orient.columns[0]) - orient.columns[1];
       vm_VectorNormalize(&v);
       v *= 30.0f;
       child_handle = Obj_Create(OBJ_ROBOT, child_id, room, &pos, &orient, parent, &v);
 
       // Now create right Betty
-      v = -orient.fvec - (0.3f * orient.rvec) - orient.uvec;
+      v = -orient.columns[2] - (0.3f * orient.columns[0]) - orient.columns[1];
       vm_VectorNormalize(&v);
       v *= 30.0f;
       child_handle = Obj_Create(OBJ_ROBOT, child_id, room, &pos, &orient, parent, &v);

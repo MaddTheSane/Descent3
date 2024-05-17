@@ -326,9 +326,9 @@ int16_t NapalmBarrel::CallEvent(int event, tOSIRISEventInfo *data) {
     Obj_Value(data->me_handle, VF_GET, OBJV_I_ROOMNUM, &room);
     Obj_Value(data->me_handle, VF_GET, OBJV_V_POS, &pos);
 
-    orient.uvec = o.fvec;
-    orient.rvec = o.rvec;
-    orient.fvec = -o.uvec;
+    orient.columns[1] = o.columns[2];
+    orient.columns[0] = o.columns[0];
+    orient.columns[2] = -o.columns[1];
 
     weapon_id = Wpn_FindID("napalmbarrel");
     // weapon_id = Wpn_FindID("napalmrocket");
@@ -340,7 +340,7 @@ int16_t NapalmBarrel::CallEvent(int event, tOSIRISEventInfo *data) {
     float amount_r, amount_u;
     amount_r = (float(rand()) - float(RAND_MAX) / 2.0f) / float(RAND_MAX);
     amount_u = (float(rand()) - float(RAND_MAX) / 2.0f) / float(RAND_MAX);
-    v = amount_r * orient.rvec + amount_u * orient.uvec + orient.fvec;
+    v = amount_r * orient.columns[0] + amount_u * orient.columns[1] + orient.columns[2];
     vm_VectorNormalize(&v);
     v *= 30.0f;
     // v = orient.fvec*30.0f;

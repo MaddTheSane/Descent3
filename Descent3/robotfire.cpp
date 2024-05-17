@@ -154,7 +154,7 @@ void WBFireBattery(object *obj, otype_wb_info *static_wb, int poly_wb_index, int
         first = 0;
         if (obj->type == OBJ_PLAYER && obj->id == Player_num &&
             Weapons[static_wb->gp_weapon_index[cur_m_bit]].recoil_force > 0) {
-          simd::float3 force_vec = obj->orient.fvec * -Weapons[static_wb->gp_weapon_index[cur_m_bit]].recoil_force;
+          simd::float3 force_vec = obj->orient.columns[2] * -Weapons[static_wb->gp_weapon_index[cur_m_bit]].recoil_force;
           phys_apply_force(obj, &force_vec);
         }
       }

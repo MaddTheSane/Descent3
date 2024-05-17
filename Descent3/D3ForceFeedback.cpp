@@ -463,7 +463,7 @@ void DoForceForWall(object *playerobj, float hitspeed, int hitseg, int hitwall, 
   if (scale > 1.0f)
     scale = 1.0f;
 
-  vm_MatrixMulVector(&local_norm, wall_normal, &playerobj->orient);
+  vec::vm_MatrixMulVector(&local_norm, wall_normal, &playerobj->orient);
   local_norm *= -1.0f;
 
   ForceEffectsPlay(FORCE_WALLHIT, &scale, &local_norm);
@@ -482,7 +482,7 @@ void DoForceForRecoil(object *playerobj, object *weap) {
     return;
 
   simd::float3 offset = weap->pos - playerobj->pos;
-  vm_MatrixMulVector(&local_norm, &offset, &playerobj->orient);
+  vec::vm_MatrixMulVector(&local_norm, &offset, &playerobj->orient);
 
   if (weap->movement_type != MT_PHYSICS)
     return;

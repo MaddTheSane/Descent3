@@ -234,14 +234,25 @@ public:
 
   float volume_3d; // Used so that 3d sounds can have a base volume (for 2d this is in play_information)
 
-  union {
-    struct {
+  union Link_Info {
+    struct Pos_Info {
       int segnum; // Use physics' bit-bit stuff (inside/outside)
       simd::float3 pos;
       vec::matrix orient; // only need pitch and heading -- not roll (sound cones are symetrical)
+      
+      Pos_Info() {
+        segnum = 0;
+        pos = simd_make_float3(0, 0, 0);
+        orient = simd::float3x3(0);
+      }
     } pos_info;
 
     int object_handle;
+    
+    Link_Info() {
+      pos_info = Pos_Info();
+      object_handle = OBJECT_HANDLE_BAD;
+    }
   } m_link_info;
 };
 

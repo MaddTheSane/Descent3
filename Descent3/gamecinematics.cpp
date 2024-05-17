@@ -842,16 +842,16 @@ bool Cinematic_StartCine(tGameCinematic *info, const char *text_string, int came
         goto continue_start;
       }
 
-      goal_angle = vec::vm_DeltaAngVecNorm(&camera->orient.fvec, &turn_to, &u_axis);
+      goal_angle = vec::vm_DeltaAngVecNorm(&camera->orient.columns[2], &turn_to, &u_axis);
       if (goal_angle == 0) {
         LOG_WARNING << "Cine: Goal angle is zero";
         goto continue_start;
       }
 
-      camera->orient.fvec = turn_to;
+      camera->orient.columns[2] = turn_to;
 
-      camera->orient.uvec.x = camera->orient.uvec.z = 0.0f;
-      camera->orient.uvec.y = 1.0f;
+      camera->orient.columns[1].x = camera->orient.columns[1].z = 0.0f;
+      camera->orient.columns[1].y = 1.0f;
 
       vec::vm_Orthogonalize(&camera->orient);
       ObjSetOrient(camera, &camera->orient);
@@ -1119,16 +1119,16 @@ void Cinematic_Frame(void) {
       goto continue_frame;
     }
 
-    goal_angle = vec::vm_DeltaAngVecNorm(&camera->orient.fvec, &turn_to, &u_axis);
+    goal_angle = vec::vm_DeltaAngVecNorm(&camera->orient.columns[2], &turn_to, &u_axis);
     if (goal_angle == 0) {
       LOG_WARNING << "Cine: Goal angle is zero";
       goto continue_frame;
     }
 
-    camera->orient.fvec = turn_to;
+    camera->orient.columns[2] = turn_to;
 
-    camera->orient.uvec.x = camera->orient.uvec.z = 0.0f;
-    camera->orient.uvec.y = 1.0f;
+    camera->orient.columns[1].x = camera->orient.columns[1].z = 0.0f;
+    camera->orient.columns[1].y = 1.0f;
 
     vec::vm_Orthogonalize(&camera->orient);
     ObjSetOrient(camera, &camera->orient);
@@ -2237,15 +2237,15 @@ void Cinematic_DoDemoFileData(uint8_t *buffer) {
     cinematic_data.position.z = mf_ReadFloat(buffer, &count);
     cinematic_data.room = mf_ReadInt(buffer, &count);
     if (mf_ReadByte(buffer, &count)) {
-      fake_orient.fvec.x = mf_ReadFloat(buffer, &count);
-      fake_orient.fvec.y = mf_ReadFloat(buffer, &count);
-      fake_orient.fvec.z = mf_ReadFloat(buffer, &count);
-      fake_orient.uvec.x = mf_ReadFloat(buffer, &count);
-      fake_orient.uvec.y = mf_ReadFloat(buffer, &count);
-      fake_orient.uvec.z = mf_ReadFloat(buffer, &count);
-      fake_orient.rvec.x = mf_ReadFloat(buffer, &count);
-      fake_orient.rvec.y = mf_ReadFloat(buffer, &count);
-      fake_orient.rvec.z = mf_ReadFloat(buffer, &count);
+      fake_orient.columns[2].x = mf_ReadFloat(buffer, &count);
+      fake_orient.columns[2].y = mf_ReadFloat(buffer, &count);
+      fake_orient.columns[2].z = mf_ReadFloat(buffer, &count);
+      fake_orient.columns[1].x = mf_ReadFloat(buffer, &count);
+      fake_orient.columns[1].y = mf_ReadFloat(buffer, &count);
+      fake_orient.columns[1].z = mf_ReadFloat(buffer, &count);
+      fake_orient.columns[0].x = mf_ReadFloat(buffer, &count);
+      fake_orient.columns[0].y = mf_ReadFloat(buffer, &count);
+      fake_orient.columns[0].z = mf_ReadFloat(buffer, &count);
     }
 
     cinematic_data.max_time_play = mf_ReadFloat(buffer, &count);
@@ -2281,15 +2281,15 @@ void Cinematic_DoDemoFileData(uint8_t *buffer) {
     canned_data.pos.x = mf_ReadFloat(buffer, &count);
     canned_data.pos.y = mf_ReadFloat(buffer, &count);
     canned_data.pos.z = mf_ReadFloat(buffer, &count);
-    canned_data.orient.fvec.x = mf_ReadFloat(buffer, &count);
-    canned_data.orient.fvec.y = mf_ReadFloat(buffer, &count);
-    canned_data.orient.fvec.z = mf_ReadFloat(buffer, &count);
-    canned_data.orient.uvec.x = mf_ReadFloat(buffer, &count);
-    canned_data.orient.uvec.y = mf_ReadFloat(buffer, &count);
-    canned_data.orient.uvec.z = mf_ReadFloat(buffer, &count);
-    canned_data.orient.rvec.x = mf_ReadFloat(buffer, &count);
-    canned_data.orient.rvec.y = mf_ReadFloat(buffer, &count);
-    canned_data.orient.rvec.z = mf_ReadFloat(buffer, &count);
+    canned_data.orient.columns[2].x = mf_ReadFloat(buffer, &count);
+    canned_data.orient.columns[2].y = mf_ReadFloat(buffer, &count);
+    canned_data.orient.columns[2].z = mf_ReadFloat(buffer, &count);
+    canned_data.orient.columns[1].x = mf_ReadFloat(buffer, &count);
+    canned_data.orient.columns[1].y = mf_ReadFloat(buffer, &count);
+    canned_data.orient.columns[1].z = mf_ReadFloat(buffer, &count);
+    canned_data.orient.columns[0].x = mf_ReadFloat(buffer, &count);
+    canned_data.orient.columns[0].y = mf_ReadFloat(buffer, &count);
+    canned_data.orient.columns[0].z = mf_ReadFloat(buffer, &count);
 
     mf_ReadString(buffer, &count, text_string);
     canned_data.text_to_display = text_string;
@@ -2328,15 +2328,15 @@ void Cinematic_WriteDemoFileData(tCinematicDemoInfo *info) {
 
     if (info->cinematic_data->orient) {
       mf_WriteByte(buffer, &count, 1);
-      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->fvec.x);
-      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->fvec.y);
-      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->fvec.z);
-      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->uvec.x);
-      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->uvec.y);
-      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->uvec.z);
-      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->rvec.x);
-      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->rvec.y);
-      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->rvec.z);
+      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->columns[2].x);
+      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->columns[2].y);
+      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->columns[2].z);
+      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->columns[1].x);
+      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->columns[1].y);
+      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->columns[1].z);
+      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->columns[0].x);
+      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->columns[0].y);
+      mf_WriteFloat(buffer, &count, info->cinematic_data->orient->columns[0].z);
 
     } else {
       mf_WriteByte(buffer, &count, 0);
@@ -2376,15 +2376,15 @@ void Cinematic_WriteDemoFileData(tCinematicDemoInfo *info) {
     mf_WriteFloat(buffer, &count, info->canned_data->pos.x);
     mf_WriteFloat(buffer, &count, info->canned_data->pos.y);
     mf_WriteFloat(buffer, &count, info->canned_data->pos.z);
-    mf_WriteFloat(buffer, &count, info->canned_data->orient.fvec.x);
-    mf_WriteFloat(buffer, &count, info->canned_data->orient.fvec.y);
-    mf_WriteFloat(buffer, &count, info->canned_data->orient.fvec.z);
-    mf_WriteFloat(buffer, &count, info->canned_data->orient.uvec.x);
-    mf_WriteFloat(buffer, &count, info->canned_data->orient.uvec.y);
-    mf_WriteFloat(buffer, &count, info->canned_data->orient.uvec.z);
-    mf_WriteFloat(buffer, &count, info->canned_data->orient.rvec.x);
-    mf_WriteFloat(buffer, &count, info->canned_data->orient.rvec.y);
-    mf_WriteFloat(buffer, &count, info->canned_data->orient.rvec.z);
+    mf_WriteFloat(buffer, &count, info->canned_data->orient.columns[2].x);
+    mf_WriteFloat(buffer, &count, info->canned_data->orient.columns[2].y);
+    mf_WriteFloat(buffer, &count, info->canned_data->orient.columns[2].z);
+    mf_WriteFloat(buffer, &count, info->canned_data->orient.columns[1].x);
+    mf_WriteFloat(buffer, &count, info->canned_data->orient.columns[1].y);
+    mf_WriteFloat(buffer, &count, info->canned_data->orient.columns[1].z);
+    mf_WriteFloat(buffer, &count, info->canned_data->orient.columns[0].x);
+    mf_WriteFloat(buffer, &count, info->canned_data->orient.columns[0].y);
+    mf_WriteFloat(buffer, &count, info->canned_data->orient.columns[0].z);
 
     if (info->canned_data->text_to_display)
       mf_WriteString(buffer, &count, info->canned_data->text_to_display);

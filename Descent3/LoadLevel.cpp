@@ -1370,9 +1370,9 @@ char *GetFailedXLateItemName(int type, int id) {
   } while (0)
 #define cf_ReadMatrix(f, m)                                                                                            \
   do {                                                                                                                 \
-    cf_ReadVector((f), &(m)->rvec);                                                                                    \
-    cf_ReadVector((f), &(m)->uvec);                                                                                    \
-    cf_ReadVector((f), &(m)->fvec);                                                                                    \
+    cf_ReadVector((f), &(m)->columns[0]);                                                                                    \
+    cf_ReadVector((f), &(m)->columns[1]);                                                                                    \
+    cf_ReadVector((f), &(m)->columns[2]);                                                                                    \
   } while (0)
 
 //	Lets put some function prototypes here
@@ -1680,7 +1680,7 @@ int ReadObject(CFILE *ifile, object *objp, int handle, int fileversion) {
   // Load and set the orientation
   vec::matrix orient;
   cf_ReadMatrix(ifile, &orient);
-  vm_Orthogonalize(&orient);
+  vec::vm_Orthogonalize(&orient);
   ObjSetOrient(objp, &orient);
   ObjSetAABB(objp);
 
@@ -4169,9 +4169,9 @@ end_loadlevel:
   } while (0)
 #define cf_WriteMatrix(f, m)                                                                                           \
   do {                                                                                                                 \
-    cf_WriteVector((f), &(m)->rvec);                                                                                   \
-    cf_WriteVector((f), &(m)->uvec);                                                                                   \
-    cf_WriteVector((f), &(m)->fvec);                                                                                   \
+    cf_WriteVector((f), &(m)->columns[0]);                                                                                   \
+    cf_WriteVector((f), &(m)->columns[1]);                                                                                   \
+    cf_WriteVector((f), &(m)->columns[2]);                                                                                   \
   } while (0)
 
 // writes an object
@@ -4235,8 +4235,8 @@ int WriteObject(CFILE *ofile, object *objp) {
           ASSERT(LightmapInfoRemap[fp->lmi_handle] != BAD_LMI_INDEX);
           cf_WriteShort(ofile, (uint16_t)LightmapInfoRemap[fp->lmi_handle]);
 
-          cf_WriteVector(ofile, &fp->rvec);
-          cf_WriteVector(ofile, &fp->uvec);
+          cf_WriteVector(ofile, &fp->columns[0]);
+          cf_WriteVector(ofile, &fp->columns[1]);
 
           cf_WriteByte(ofile, fp->num_verts);
 

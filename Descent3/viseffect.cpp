@@ -1013,7 +1013,7 @@ void DrawVisBlastRing(vis_effect *vis) {
 
   if (vec::vm_GetMagnitudeFast(&fvec) < .5)
     return;
-  vm_VectorToMatrix(&orient, &fvec, NULL, NULL);
+  vec::vm_VectorToMatrix(&orient, &fvec, NULL, NULL);
 
   int num_segments = 20;
 
@@ -1036,12 +1036,12 @@ void DrawVisBlastRing(vis_effect *vis) {
     float ring_sin = FixSin(ring_angle);
     float ring_cos = FixCos(ring_angle);
 
-    inner_vecs[i] = orient.rvec * (ring_cos * (cur_size / 2));
-    inner_vecs[i] += orient.uvec * (ring_sin * (cur_size / 2));
+    inner_vecs[i] = orient.columns[0] * (ring_cos * (cur_size / 2));
+    inner_vecs[i] += orient.columns[1] * (ring_sin * (cur_size / 2));
     inner_vecs[i] += vis->pos;
 
-    outer_vecs[i] = orient.rvec * (ring_cos * cur_size);
-    outer_vecs[i] += orient.uvec * (ring_sin * cur_size);
+    outer_vecs[i] = orient.columns[0] * (ring_cos * cur_size);
+    outer_vecs[i] += orient.columns[1] * (ring_sin * cur_size);
     outer_vecs[i] += vis->pos;
 
     g3_RotatePoint(&inner_points[i], &inner_vecs[i]);
@@ -1121,9 +1121,9 @@ void DrawVisRainDrop(vis_effect *vis) {
     rend_SetAlphaValue(val * .4 * 255);
 
     pos = Viewer_object->pos;
-    pos += Viewer_object->orient.rvec * vis->pos.x;
-    pos += Viewer_object->orient.uvec * vis->pos.y;
-    pos += Viewer_object->orient.fvec * vis->pos.z;
+    pos += Viewer_object->orient.columns[0] * vis->pos.x;
+    pos += Viewer_object->orient.columns[1] * vis->pos.y;
+    pos += Viewer_object->orient.columns[2] * vis->pos.z;
     g3_DrawRotatedBitmap(&pos, 0, size, (size * bm_h(bm_handle, 0)) / bm_w(bm_handle, 0), bm_handle);
     rend_SetZBufferState(1);
   } else {
@@ -1287,9 +1287,9 @@ void DrawVisSineWave(vis_effect *vis) {
 
   alpha_norm = vis->lifeleft / vis->lifetime;
 
-  vm_VectorToMatrix(&mat, &line_norm, &vis->velocity, NULL);
-  rvec = mat.rvec * vis->velocity.y; // /4
-  uvec = mat.uvec * vis->velocity.y; // /4
+  vec::vm_VectorToMatrix(&mat, &line_norm, &vis->velocity, NULL);
+  rvec = mat.columns[0] * vis->velocity.y; // /4
+  uvec = mat.columns[1] * vis->velocity.y; // /4
 
   // Set some states
 
@@ -1699,8 +1699,8 @@ void DrawVisMassDriverEffect(vis_effect *vis, bool f_boss) {
       float norm = (float)t / (float)circle_pieces;
       simd::float3 arc_vec = center_vecs[i];
 
-      arc_vec += (orient.uvec * (size / 4) * FixSin(norm * 65536));
-      arc_vec -= (orient.rvec * (size / 4) * FixCos(norm * 65536));
+      arc_vec += (orient.columns[1] * (size / 4) * FixSin(norm * 65536));
+      arc_vec -= (orient.columns[0] * (size / 4) * FixCos(norm * 65536));
 
       g3_RotatePoint(&arc_points[i * circle_pieces + t], &arc_vec);
       arc_points[i * circle_pieces + t].p3_flags |= PF_UV | PF_RGBA;
@@ -1734,8 +1734,8 @@ void DrawVisMassDriverEffect(vis_effect *vis, bool f_boss) {
       float norm = (float)t / (float)circle_pieces;
       simd::float3 arc_vec = center_vecs[i];
 
-      arc_vec += (orient.uvec * (size)*FixSin(norm * 65536));
-      arc_vec -= (orient.rvec * (size)*FixCos(norm * 65536));
+      arc_vec += (orient.columns[1] * (size)*FixSin(norm * 65536));
+      arc_vec -= (orient.columns[0] * (size)*FixCos(norm * 65536));
 
       g3_RotatePoint(&arc_points[i * circle_pieces + t], &arc_vec);
       arc_points[i * circle_pieces + t].p3_flags |= PF_UV;
@@ -2083,11 +2083,11 @@ void VisEffectMoveOne(vis_effect *vis) {
           // If were are shooting to the exact center of the viewer object then move
           // the positions a little bit or it will look wrong:
           if (obj == Viewer_object) {
-            vis->pos -= (obj->orient.uvec * .1f);
+            vis->pos -= (obj->orient.columns[1] * .1f);
           }
 
           if (dest_obj == Viewer_object) {
-            vis->end_pos -= (dest_obj->orient.uvec * .1f);
+            vis->end_pos -= (dest_obj->orient.columns[1] * .1f);
           }
 
         } else {

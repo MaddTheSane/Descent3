@@ -3479,7 +3479,7 @@ bool osipf_PathGetInformation(int pathid, int point, simd::float3 *pos, int *roo
   }
 
   if (orient) {
-    vm_VectorToMatrix(orient, &GamePaths[pathid].pathnodes[point].fvec, &GamePaths[pathid].pathnodes[point].uvec, NULL);
+    vec::vm_VectorToMatrix(orient, &GamePaths[pathid].pathnodes[point].fvec, &GamePaths[pathid].pathnodes[point].uvec, NULL);
   }
 
   return true;

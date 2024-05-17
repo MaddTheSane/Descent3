@@ -702,7 +702,7 @@ void SetupSky(float radius, int flags, uint8_t randit) {
 
       vec::matrix tempm;
       vec::vm_AnglesToMatrix(&tempm, pitch, t * jump, 0);
-      vec::vm_ScaleVector(vec, &tempm.fvec, SKY_RADIUS / 2);
+      vec::vm_ScaleVector(vec, &tempm.columns[2], SKY_RADIUS / 2);
 
       vec->y -= MAX_TERRAIN_HEIGHT;
       vec->y += (rad_diff / 4);
@@ -746,7 +746,7 @@ void SetupSky(float radius, int flags, uint8_t randit) {
       highcount++;
 
     vec::vm_AnglesToMatrix(&tempm, (top + p) % 65336, (ps_rand() * ps_rand()) % 65536, 0);
-    vec::vm_ScaleVector(&starvec, &tempm.fvec, Terrain_sky.radius * 500);
+    vec::vm_ScaleVector(&starvec, &tempm.columns[2], Terrain_sky.radius * 500);
     Terrain_sky.star_vectors[i] = starvec;
 
     // Now figure out the color of this star.  The closer to horizon it is, the
@@ -791,7 +791,7 @@ void SetupSky(float radius, int flags, uint8_t randit) {
     top = ((65536 / 4) * 3) + (4096); // don't do satellites that are straight up
 
     vec::vm_AnglesToMatrix(&tempm, (top + p) % 65336, (ps_rand() * ps_rand()) % 65536, 0);
-    vec::vm_ScaleVector(&satellitevec, &tempm.fvec, Terrain_sky.radius * 3);
+    vec::vm_ScaleVector(&satellitevec, &tempm.columns[2], Terrain_sky.radius * 3);
     Terrain_sky.satellite_vectors[i] = satellitevec;
     Terrain_sky.satellite_size[i] = 500;
   }

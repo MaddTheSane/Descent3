@@ -352,8 +352,8 @@ void ApplyLightingToExternalRoom(simd::float3 *pos, int roomnum, float light_dis
     simd::float3 touch_vector = *pos - (lmi_ptr->normal * dist_from_plane);
 
     subvec = touch_vector - base_vector;
-    float rdist = simd::dot(subvec, facematrix.rvec);
-    float udist = -simd::dot(subvec, facematrix.uvec);
+    float rdist = simd::dot(subvec, facematrix.columns[0]);
+    float udist = -simd::dot(subvec, facematrix.columns[1]);
     int x_add = 1 + ((area_of_effect + (lmi_ptr->xspacing / 2)) / lmi_ptr->xspacing);
     int y_add = 1 + ((area_of_effect + (lmi_ptr->yspacing / 2)) / lmi_ptr->yspacing);
 
@@ -468,20 +468,20 @@ void ApplyLightingToExternalRoom(simd::float3 *pos, int roomnum, float light_dis
 
     simd::float3 element_vec;
 
-    base_vector -= (start_y * (facematrix.uvec * lmi_ptr->yspacing));
-    base_vector += (start_x * (facematrix.rvec * lmi_ptr->xspacing));
+    base_vector -= (start_y * (facematrix.columns[1] * lmi_ptr->yspacing));
+    base_vector += (start_x * (facematrix.columns[0] * lmi_ptr->xspacing));
 
-    base_vector -= ((facematrix.uvec / 2) * lmi_ptr->yspacing);
-    base_vector += ((facematrix.rvec / 2) * lmi_ptr->xspacing);
+    base_vector -= ((facematrix.columns[1] / 2) * lmi_ptr->yspacing);
+    base_vector += ((facematrix.columns[0] / 2) * lmi_ptr->xspacing);
 
     // Go through and change each element of this lightmap
     // SLOW!
 
     int texel_num = ((start_y + lmi_ptr->y1) * lmw) + start_x + lmi_ptr->x1;
-    for (int y = 0; y < height; y++, base_vector -= (facematrix.uvec * lmi_ptr->yspacing), texel_num += lmw) {
+    for (int y = 0; y < height; y++, base_vector -= (facematrix.columns[1] * lmi_ptr->yspacing), texel_num += lmw) {
       element_vec = base_vector;
 
-      for (int x = 0; x < width; x++, element_vec += (facematrix.rvec * lmi_ptr->xspacing)) {
+      for (int x = 0; x < width; x++, element_vec += (facematrix.columns[0] * lmi_ptr->xspacing)) {
         int lightmap_texel_num = texel_num + x;
 
         uint16_t lightmap_texel = dest_data[lightmap_texel_num];
@@ -699,8 +699,8 @@ void ApplyLightingToSubmodel(object *obj, poly_model *pm, bsp_info *sm, float li
     simd::float3 touch_vector = light_pos - (lmi_ptr->normal * dist_from_plane);
 
     subvec = touch_vector - base_vector;
-    float rdist = simd::dot(subvec, facematrix.rvec);
-    float udist = -simd::dot(subvec, facematrix.uvec);
+    float rdist = simd::dot(subvec, facematrix.columns[0]);
+    float udist = -simd::dot(subvec, facematrix.columns[1]);
     int x_add = 1 + ((area_of_effect + (lmi_ptr->xspacing / 2)) / lmi_ptr->xspacing);
     int y_add = 1 + ((area_of_effect + (lmi_ptr->yspacing / 2)) / lmi_ptr->yspacing);
 
@@ -817,20 +817,20 @@ void ApplyLightingToSubmodel(object *obj, poly_model *pm, bsp_info *sm, float li
 
     simd::float3 element_vec;
 
-    base_vector -= (start_y * (facematrix.uvec * lmi_ptr->yspacing));
-    base_vector += (start_x * (facematrix.rvec * lmi_ptr->xspacing));
+    base_vector -= (start_y * (facematrix.columns[1] * lmi_ptr->yspacing));
+    base_vector += (start_x * (facematrix.columns[0] * lmi_ptr->xspacing));
 
-    base_vector -= ((facematrix.uvec / 2) * lmi_ptr->yspacing);
-    base_vector += ((facematrix.rvec / 2) * lmi_ptr->xspacing);
+    base_vector -= ((facematrix.columns[1] / 2) * lmi_ptr->yspacing);
+    base_vector += ((facematrix.columns[0] / 2) * lmi_ptr->xspacing);
 
     // Go through and change each element of this lightmap
     // SLOW!
 
     int texel_num = ((start_y + lmi_ptr->y1) * lmw) + start_x + lmi_ptr->x1;
-    for (int y = 0; y < height; y++, base_vector -= (facematrix.uvec * lmi_ptr->yspacing), texel_num += lmw) {
+    for (int y = 0; y < height; y++, base_vector -= (facematrix.columns[1] * lmi_ptr->yspacing), texel_num += lmw) {
       element_vec = base_vector;
 
-      for (int x = 0; x < width; x++, element_vec += (facematrix.rvec * lmi_ptr->xspacing)) {
+      for (int x = 0; x < width; x++, element_vec += (facematrix.columns[0] * lmi_ptr->xspacing)) {
         int lightmap_texel_num = texel_num + x;
 
         uint16_t lightmap_texel = dest_data[lightmap_texel_num];
@@ -1152,8 +1152,8 @@ void ApplyLightingToRooms(simd::float3 *pos, int roomnum, float light_dist, floa
     simd::float3 touch_vector = *pos - (lmi_ptr->normal * dist_from_plane);
 
     subvec = touch_vector - base_vector;
-    float rdist = simd::dot(subvec, facematrix.rvec);
-    float udist = -simd::dot(subvec, facematrix.uvec);
+    float rdist = simd::dot(subvec, facematrix.columns[0]);
+    float udist = -simd::dot(subvec, facematrix.columns[1]);
     int x_add = 1 + ((area_of_effect + (lmi_ptr->xspacing / 2)) / lmi_ptr->xspacing);
     int y_add = 1 + ((area_of_effect + (lmi_ptr->yspacing / 2)) / lmi_ptr->yspacing);
 
@@ -1268,20 +1268,20 @@ void ApplyLightingToRooms(simd::float3 *pos, int roomnum, float light_dist, floa
 
     simd::float3 element_vec;
 
-    base_vector -= (start_y * (facematrix.uvec * lmi_ptr->yspacing));
-    base_vector += (start_x * (facematrix.rvec * lmi_ptr->xspacing));
+    base_vector -= (start_y * (facematrix.columns[1] * lmi_ptr->yspacing));
+    base_vector += (start_x * (facematrix.columns[0] * lmi_ptr->xspacing));
 
-    base_vector -= ((facematrix.uvec / 2) * lmi_ptr->yspacing);
-    base_vector += ((facematrix.rvec / 2) * lmi_ptr->xspacing);
+    base_vector -= ((facematrix.columns[1] / 2) * lmi_ptr->yspacing);
+    base_vector += ((facematrix.columns[0] / 2) * lmi_ptr->xspacing);
 
     // Go through and change each element of this lightmap
     // SLOW!
 
     int texel_num = ((start_y + lmi_ptr->y1) * lmw) + start_x + lmi_ptr->x1;
-    for (int y = 0; y < height; y++, base_vector -= (facematrix.uvec * lmi_ptr->yspacing), texel_num += lmw) {
+    for (int y = 0; y < height; y++, base_vector -= (facematrix.columns[1] * lmi_ptr->yspacing), texel_num += lmw) {
       element_vec = base_vector;
 
-      for (int x = 0; x < width; x++, element_vec += (facematrix.rvec * lmi_ptr->xspacing)) {
+      for (int x = 0; x < width; x++, element_vec += (facematrix.columns[0] * lmi_ptr->xspacing)) {
         int lightmap_texel_num = texel_num + x;
 
         uint16_t lightmap_texel = dest_data[lightmap_texel_num];
@@ -1700,11 +1700,11 @@ int GetSpecularLightmapForFace (simd::float3 *pos,room *rp,face *fp)
 
         int num=SpecialFaces[fp->special_handle].num;
 
-        for (int y=0;y<yres;y++,base_vector-=(facematrix.uvec*yspacing),texel_num+=xres)
+        for (int y=0;y<yres;y++,base_vector-=(facematrix.columns[1]*yspacing),texel_num+=xres)
         {
                 element_vec=base_vector;
 
-                for (int x=0;x<xres;x++,element_vec+=(facematrix.rvec*xspacing))
+                for (int x=0;x<xres;x++,element_vec+=(facematrix.columns[0]*xspacing))
                 {
                         int lightmap_texel_num=texel_num+x;
 
@@ -2085,8 +2085,8 @@ void DestroyLight(int roomnum, int facenum) {
     simd::float3 touch_vector = center - (lmi_ptr->normal * dist_from_plane);
 
     subvec = touch_vector - base_vector;
-    float rdist = simd::dot(subvec, facematrix.rvec);
-    float udist = -simd::dot(subvec, facematrix.uvec);
+    float rdist = simd::dot(subvec, facematrix.columns[0]);
+    float udist = -simd::dot(subvec, facematrix.columns[1]);
     int x_add = 1 + ((area_of_effect + (lmi_ptr->xspacing / 2)) / lmi_ptr->xspacing);
     int y_add = 1 + ((area_of_effect + (lmi_ptr->yspacing / 2)) / lmi_ptr->yspacing);
 
@@ -2158,20 +2158,20 @@ void DestroyLight(int roomnum, int facenum) {
 
     simd::float3 element_vec;
 
-    base_vector -= (start_y * (facematrix.uvec * lmi_ptr->yspacing));
-    base_vector += (start_x * (facematrix.rvec * lmi_ptr->xspacing));
+    base_vector -= (start_y * (facematrix.columns[1] * lmi_ptr->yspacing));
+    base_vector += (start_x * (facematrix.columns[0] * lmi_ptr->xspacing));
 
-    base_vector -= ((facematrix.uvec / 2) * lmi_ptr->yspacing);
-    base_vector += ((facematrix.rvec / 2) * lmi_ptr->xspacing);
+    base_vector -= ((facematrix.columns[1] / 2) * lmi_ptr->yspacing);
+    base_vector += ((facematrix.columns[0] / 2) * lmi_ptr->xspacing);
 
     // Go through and change each element of this lightmap
     // SLOW!
 
     int texel_num = ((start_y + lmi_ptr->y1) * lmw) + start_x + lmi_ptr->x1;
-    for (int y = 0; y < height; y++, base_vector -= (facematrix.uvec * lmi_ptr->yspacing), texel_num += lmw) {
+    for (int y = 0; y < height; y++, base_vector -= (facematrix.columns[1] * lmi_ptr->yspacing), texel_num += lmw) {
       element_vec = base_vector;
 
-      for (int x = 0; x < width; x++, element_vec += (facematrix.rvec * lmi_ptr->xspacing)) {
+      for (int x = 0; x < width; x++, element_vec += (facematrix.columns[0] * lmi_ptr->xspacing)) {
         int lightmap_texel_num = texel_num + x;
 
         uint16_t lightmap_texel = dest_data[lightmap_texel_num];

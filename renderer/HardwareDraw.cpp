@@ -272,7 +272,7 @@ void g3_DrawBitmap(simd::float3 *pos, float width, float height, int bm, int col
 
     // find the point (parallel to the view frame)
     simd::float3 cornerPos =
-        *pos + (viewOrient.uvec * (height * -cornerScaleV)) + (viewOrient.rvec * (width * cornerScaleU));
+        *pos + (viewOrient.columns[1] * (height * -cornerScaleV)) + (viewOrient.columns[0] * (width * cornerScaleU));
     corners[i].p3_codes = 0;
     g3_RotatePoint(pts[i], &cornerPos);
 
@@ -303,7 +303,7 @@ void g3_DrawRotatedBitmap(simd::float3 *pos, vec::angle rot_angle, float width, 
   g3_GetUnscaledMatrix(&viewOrient);
 
   vec::matrix rot_matrix;
-  vm_AnglesToMatrix(&rot_matrix, 0, 0, rot_angle);
+  vec::vm_AnglesToMatrix(&rot_matrix, 0, 0, rot_angle);
 
   float w = width;
   float h = height;
@@ -326,9 +326,9 @@ void g3_DrawRotatedBitmap(simd::float3 *pos, vec::angle rot_angle, float width, 
   for (i = 0; i < 4; ++i) {
     simd::float3 offset;
     rot_vectors[i].z = 0.0f;
-    vm_MatrixMulVector(&offset, &rot_vectors[i], &rot_matrix);
+    vec::vm_MatrixMulVector(&offset, &rot_vectors[i], &rot_matrix);
 
-    simd::float3 cornerPos = *pos + (viewOrient.uvec * offset.y) + (viewOrient.rvec * offset.x);
+    simd::float3 cornerPos = *pos + (viewOrient.columns[1] * offset.y) + (viewOrient.columns[0] * offset.x);
     rot_points[i].p3_codes = 0;
     g3_RotatePoint(&rot_points[i], &cornerPos);
 
@@ -355,32 +355,32 @@ void g3_DrawRotatedBitmap(simd::float3 *pos, vec::angle rot_angle, float width, 
 void g3_DrawPlanarRotatedBitmap(simd::float3 *pos, simd::float3 *norm, vec::angle rot_angle, float width, float height,
                                 int bm) {
   vec::matrix rot_matrix;
-  vm_VectorToMatrix(&rot_matrix, norm, NULL, NULL);
-  vm_TransposeMatrix(&rot_matrix);
+  vec::vm_VectorToMatrix(&rot_matrix, norm, NULL, NULL);
+  vec::vm_TransposeMatrix(&rot_matrix);
 
   vec::matrix twist_matrix;
-  vm_AnglesToMatrix(&twist_matrix, 0, 0, rot_angle);
+  vec::vm_AnglesToMatrix(&twist_matrix, 0, 0, rot_angle);
 
   float w = width;
   float h = height;
 
   simd::float3 rot_vectors[4];
-  rot_vectors[0] = (twist_matrix.rvec * -w);
-  rot_vectors[0] += (twist_matrix.uvec * h);
+  rot_vectors[0] = (twist_matrix.columns[0] * -w);
+  rot_vectors[0] += (twist_matrix.columns[1] * h);
 
-  rot_vectors[1] = (twist_matrix.rvec * w);
-  rot_vectors[1] += (twist_matrix.uvec * h);
+  rot_vectors[1] = (twist_matrix.columns[0] * w);
+  rot_vectors[1] += (twist_matrix.columns[1] * h);
 
-  rot_vectors[2] = (twist_matrix.rvec * w);
-  rot_vectors[2] -= (twist_matrix.uvec * h);
+  rot_vectors[2] = (twist_matrix.columns[0] * w);
+  rot_vectors[2] -= (twist_matrix.columns[1] * h);
 
-  rot_vectors[3] = (twist_matrix.rvec * -w);
-  rot_vectors[3] -= (twist_matrix.uvec * h);
+  rot_vectors[3] = (twist_matrix.columns[0] * -w);
+  rot_vectors[3] -= (twist_matrix.columns[1] * h);
 
   int i;
   for (i = 0; i < 4; ++i) {
     simd::float3 temp_vec = rot_vectors[i];
-    vm_MatrixMulVector(&rot_vectors[i], &temp_vec, &rot_matrix);
+    vec::vm_MatrixMulVector(&rot_vectors[i], &temp_vec, &rot_matrix);
   }
 
   g3Point rot_points[8], *pntlist[8];

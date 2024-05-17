@@ -987,17 +987,17 @@ void BuildModelAngleMatrix(vec::matrix *mat, vec::angle ang, simd::float3 *axis)
   c = (float)FixCos(ang);
   t = 1.0f - c;
 
-  mat->rvec.x = t * x * x + c;
-  mat->rvec.y = t * x * y + s * z;
-  mat->rvec.z = t * x * z - s * y;
+  mat->columns[0].x = t * x * x + c;
+  mat->columns[0].y = t * x * y + s * z;
+  mat->columns[0].z = t * x * z - s * y;
 
-  mat->uvec.x = t * x * y - s * z;
-  mat->uvec.y = t * y * y + c;
-  mat->uvec.z = t * y * z + s * x;
+  mat->columns[1].x = t * x * y - s * z;
+  mat->columns[1].y = t * y * y + c;
+  mat->columns[1].z = t * y * z + s * x;
 
-  mat->fvec.x = t * x * z + s * y;
-  mat->fvec.y = t * y * z - s * x;
-  mat->fvec.z = t * z * z + c;
+  mat->columns[2].x = t * x * z + s * y;
+  mat->columns[2].y = t * y * z - s * x;
+  mat->columns[2].z = t * z * z + c;
 }
 
 void SetPolymodelProperties(bsp_info *subobj, char *props) {
@@ -1929,14 +1929,14 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
   int parent;
 
   for (i = 0; i < pm->n_models; i++) {
-    vm_MakeIdentity(&base_matrix);
+    vec::vm_MakeIdentity(&base_matrix);
 
     bsp_info *sm = &pm->submodel[i];
 
     for (int newt = 0; newt < sm->num_key_angles; newt++) {
       cur_angle = sm->keyframe_angles[newt];
       BuildModelAngleMatrix(&temp_matrix, cur_angle, &sm->keyframe_axis[newt]);
-      vm_MakeIdentity(&dest_matrix);
+      vec::vm_MakeIdentity(&dest_matrix);
       dest_matrix = temp_matrix * base_matrix;
       base_matrix = dest_matrix;
       sm->keyframe_matrix[newt] = base_matrix;
@@ -2774,26 +2774,26 @@ void StartLightInstance(simd::float3 *pos, vec::matrix *orient) {
   simd::float3 temp_vec;
 
   if (gouraud) {
-    vm_MatrixMulVector(&temp_vec, Polymodel_light_direction, orient);
+    vec::vm_MatrixMulVector(&temp_vec, Polymodel_light_direction, orient);
     *Polymodel_light_direction = temp_vec;
   }
   if (fogged) {
     simd::float3 tempv = Polymodel_fog_portal_vert - *pos;
-    vm_MatrixMulVector(&temp_vec, &tempv, orient);
+    vec::vm_MatrixMulVector(&temp_vec, &tempv, orient);
     Polymodel_fog_portal_vert = temp_vec;
 
-    vm_MatrixMulVector(&temp_vec, &Polymodel_fog_plane, orient);
+    vec::vm_MatrixMulVector(&temp_vec, &Polymodel_fog_plane, orient);
     Polymodel_fog_plane = temp_vec;
   }
   if (specular) {
     simd::float3 tempv = Polymodel_specular_pos - *pos;
-    vm_MatrixMulVector(&temp_vec, &tempv, orient);
+    vec::vm_MatrixMulVector(&temp_vec, &tempv, orient);
     Polymodel_specular_pos = temp_vec;
   }
 
   if (bumped) {
     simd::float3 tempv = Polymodel_bump_pos - *pos;
-    vm_MatrixMulVector(&temp_vec, &tempv, orient);
+    vec::vm_MatrixMulVector(&temp_vec, &tempv, orient);
     Polymodel_bump_pos = temp_vec;
   }
 }

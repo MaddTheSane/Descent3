@@ -2024,7 +2024,7 @@ void MultiSendPositionalUpdates(int to_slot) {
             float mag=vm_GetMagnitudeFast (&subvec);
             subvec/=mag;
 
-            float dp=vm_DotProduct (&subvec,&Objects[Players[to_slot].objnum].orient.fvec);
+            float dp=vm_DotProduct (&subvec,&Objects[Players[to_slot].objnum].orient.columns[2]);
             dp=fabs(dp);
 
             pps_check_time=((float)pps_check_time/2.0)+((dp*((float)pps_check_time/2.0))+(dp*.9));
@@ -2504,7 +2504,7 @@ void MultiGetDestFireRooms() {
     fvi_info hit_data;
     int fate;
 
-    simd::float3 dest_vector = Objects[Players[i].objnum].pos + (Objects[Players[i].objnum].orient.fvec * 50000);
+    simd::float3 dest_vector = Objects[Players[i].objnum].pos + (Objects[Players[i].objnum].orient.columns[2] * 50000);
 
     fq.p0 = &Objects[Players[i].objnum].pos;
     fq.startroom = Objects[Players[i].objnum].roomnum;

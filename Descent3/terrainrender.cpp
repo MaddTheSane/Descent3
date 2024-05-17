@@ -1436,7 +1436,7 @@ void DrawLightningSegment(simd::float3 *from, simd::float3 *to) {
   g3_RotatePoint(&rot_src_pnts[1], &src_vecs[1]);
   if (rot_src_pnts[0].p3_codes & rot_src_pnts[1].p3_codes)
     return; // Don't draw because both points are off screen
-  simd::float3 rvec = Viewer_object->orient.rvec * 10;
+  simd::float3 rvec = Viewer_object->orient.columns[0] * 10;
 
   // Put all points so that they face the viewer
   world_vecs[0] = src_vecs[0] - rvec;
@@ -1492,10 +1492,10 @@ void DrawLightning(void) {
   scalar *= 15000;
   vm_ExtractAnglesFromMatrix(&player_angs, &Viewer_object->orient);
   new_heading = (player_angs.h + (int)scalar) % 65536;
-  vm_AnglesToMatrix(&mat, 0, new_heading, 0);
+  vec::vm_AnglesToMatrix(&mat, 0, new_heading, 0);
   // Put the starting point way up in the air
   float ylimit = (-(Viewer_object->pos.y * 2)) + (ps_rand() % 400);
-  simd::float3 cur_from = Viewer_object->pos + (mat.fvec * 4000);
+  simd::float3 cur_from = Viewer_object->pos + (mat.columns[2] * 4000);
   simd::float3 new_vec;
   cur_from.y += 800.0f;
   cur_from.y += (ps_rand() % 100);
@@ -1525,8 +1525,8 @@ void DrawLightning(void) {
     float y_adjust = .3 + ((ps_rand() % 100) / 100.0);
 
     new_vec = cur_from;
-    new_vec += x_adjust * (mat.rvec * 70);
-    new_vec -= y_adjust * (mat.uvec * 100);
+    new_vec += x_adjust * (mat.columns[0] * 70);
+    new_vec -= y_adjust * (mat.columns[1] * 100);
     DrawLightningSegment(&cur_from, &new_vec);
     if (cur_from.y < ylimit) // We're close to the ground, so just bail!
       continue;
@@ -1883,12 +1883,12 @@ void DrawAtmosphereBlend(simd::float3 *pos, angle rotAngle, float w, float h, in
 
   // create the rotation matrix
   vec::matrix rotMatrix;
-  vm_AnglesToMatrix(&rotMatrix, 0, 0, rotAngle);
+  vec::vm_AnglesToMatrix(&rotMatrix, 0, 0, rotAngle);
 
   // get the view matrix
   vec::matrix viewToWorld;
   g3_GetUnscaledMatrix(&viewToWorld);
-  viewToWorld = ~viewToWorld;
+  viewToWorld = simd::transpose(viewToWorld);
 
   // combine the matrices into one
   vec::matrix rotationToWorld = rotMatrix * viewToWorld;
@@ -1951,10 +1951,10 @@ void DrawStars(vec::matrix *vorient) {
   simd::float3 tempvec;
   if (Rendering_main_view && Terrain_sky.flags & TF_ROTATE_STARS && Terrain_sky.rotate_rate > 0) {
     vec::matrix mat;
-    vm_AnglesToMatrix(&mat, 0, Terrain_sky.rotate_rate * Frametime * (65536.0 / 360.0), 0);
-    vm_Orthogonalize(&mat);
+    vec::vm_AnglesToMatrix(&mat, 0, Terrain_sky.rotate_rate * Frametime * (65536.0 / 360.0), 0);
+    vec::vm_Orthogonalize(&mat);
     for (int i = 0; i < MAX_STARS; i++) {
-      vm_MatrixMulVector(&tempvec, &Terrain_sky.star_vectors[i], &mat);
+      vec::vm_MatrixMulVector(&tempvec, &Terrain_sky.star_vectors[i], &mat);
       Terrain_sky.star_vectors[i] = tempvec;
     }
   }
@@ -1964,7 +1964,7 @@ void DrawStars(vec::matrix *vorient) {
     float mag;
     // Rotate star
     tempvec = Terrain_sky.star_vectors[i];
-    vm_MatrixMulVector(&starpnt.p3_vec, &tempvec, vorient);
+    vec::vm_MatrixMulVector(&starpnt.p3_vec, &tempvec, vorient);
     starpnt.p3_flags = PF_RGBA;
     // Get streaking line from last frame
     if (Rendering_main_view) {
@@ -2026,13 +2026,13 @@ void DrawSky(simd::float3 *veye, vec::matrix *vorient) {
   // If the sky is rotating, update the horizon vectors accordingly
   if (Rendering_main_view && Terrain_sky.flags & TF_ROTATE_SKY && Terrain_sky.rotate_rate > 0) {
     vec::matrix mat;
-    vm_AnglesToMatrix(&mat, 0, Terrain_sky.rotate_rate * Frametime * (65536.0 / 360.0), 0);
-    vm_Orthogonalize(&mat);
+    vec::vm_AnglesToMatrix(&mat, 0, Terrain_sky.rotate_rate * Frametime * (65536.0 / 360.0), 0);
+    vec::vm_Orthogonalize(&mat);
     for (i = 0; i < 6; i++) {
       for (t = 0; t < MAX_HORIZON_PIECES; t++) {
         simd::float3 rot_vec;
         tempvec = Terrain_sky.horizon_vectors[t][i];
-        vm_MatrixMulVector(&rot_vec, &tempvec, &mat);
+        vec::vm_MatrixMulVector(&rot_vec, &tempvec, &mat);
         Terrain_sky.horizon_vectors[t][i] = rot_vec;
       }
     }
@@ -2042,7 +2042,7 @@ void DrawSky(simd::float3 *veye, vec::matrix *vorient) {
     for (t = 0; t < MAX_HORIZON_PIECES; t++) {
       tempvec = Terrain_sky.horizon_vectors[t][i];
       tempvec.y -= veye->y * 0.5f;
-      vm_MatrixMulVector(&Temp_sky_vectors[t][i], &tempvec, vorient);
+      vec::vm_MatrixMulVector(&Temp_sky_vectors[t][i], &tempvec, vorient);
 
       tempvec = Terrain_sky.horizon_vectors[t][i];
       tempvec.x += veye->x;

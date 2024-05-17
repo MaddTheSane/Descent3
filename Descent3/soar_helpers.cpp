@@ -161,9 +161,9 @@ bool DSSetControllerInfo(int n, game_controls *controls) {
     objp->mtype.phys_info.rotthrust.x = controls->pitch_thrust * objp->mtype.phys_info.full_rotthrust;
     objp->mtype.phys_info.rotthrust.z = controls->bank_thrust * objp->mtype.phys_info.full_rotthrust;
     objp->mtype.phys_info.rotthrust.y = controls->heading_thrust * objp->mtype.phys_info.full_rotthrust;
-    objp->mtype.phys_info.thrust = (objp->orient.fvec * controls->forward_thrust * objp->mtype.phys_info.full_thrust) +
-                                   (objp->orient.uvec * controls->vertical_thrust * objp->mtype.phys_info.full_thrust) +
-                                   (objp->orient.rvec * controls->sideways_thrust * objp->mtype.phys_info.full_thrust);
+    objp->mtype.phys_info.thrust = (objp->orient.columns[2] * controls->forward_thrust * objp->mtype.phys_info.full_thrust) +
+                                   (objp->orient.columns[1] * controls->vertical_thrust * objp->mtype.phys_info.full_thrust) +
+                                   (objp->orient.columns[0] * controls->sideways_thrust * objp->mtype.phys_info.full_thrust);
   }
 
   // Process weapon firing

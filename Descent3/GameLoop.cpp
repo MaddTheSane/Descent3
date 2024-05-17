@@ -2141,7 +2141,7 @@ void ProcessTestKeys(int key) {
     int fate;
     int this_key = key & ~KEY_DEBUGGED;
 
-    test_pos = Player_object->pos + Player_object->orient.fvec * 1000000.0f;
+    test_pos = Player_object->pos + Player_object->orient.columns[2] * 1000000.0f;
 
     fq.p0 = &Player_object->pos;
     fq.startroom = Player_object->roomnum;
@@ -2207,7 +2207,7 @@ void ProcessTestKeys(int key) {
     break;
 
   case KEY_F9: {
-    simd::float3 vec = Player_object->pos + (Player_object->orient.fvec * 20);
+    simd::float3 vec = Player_object->pos + (Player_object->orient.columns[2] * 20);
     if (BSPRayOccluded(&Player_object->pos, &vec, MineBSP.root))
       LOG_DEBUG << "Occluded!";
     else
@@ -2265,7 +2265,7 @@ void ProcessTestKeys(int key) {
 
         LOG_DEBUG << "Matcen alive!";
 
-        simd::float3 centerPt = Player_object->pos + (Player_object->orient.fvec * 2.0f);
+        simd::float3 centerPt = Player_object->pos + (Player_object->orient.columns[2] * 2.0f);
         Matcen[m_id]->SetAttachType(MT_ROOM);
         Matcen[m_id]->SetAttach(Player_object->roomnum);
         Matcen[m_id]->SetCreateRoom(Player_object->roomnum);
@@ -2439,9 +2439,9 @@ void GameRenderWorld(object *viewer, simd::float3 *viewer_eye, int viewer_roomnu
 
   // Get the viewer orientation
   if (rear_view) {
-    temp_orient.fvec = -viewer_orient->fvec;
-    temp_orient.rvec = -viewer_orient->rvec;
-    temp_orient.uvec = viewer_orient->uvec;
+    temp_orient.columns[2] = -viewer_orient->columns[2];
+    temp_orient.columns[0] = -viewer_orient->columns[0];
+    temp_orient.columns[1] = viewer_orient->columns[1];
     viewer_orient = &temp_orient;
     save_orient = viewer->orient;
     viewer->orient = temp_orient;

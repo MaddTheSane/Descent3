@@ -983,10 +983,10 @@ bool hlsSystem::ComputePlayInfo(int sound_obj_index, simd::float3 *virtual_pos, 
     return false;
   }
   if (dist == 0.0f) {
-    dir_to_sound = Viewer_object->orient.fvec;
+    dir_to_sound = Viewer_object->orient.columns[2];
   }
   if ((m_sound_objects[sound_obj_index].play_info.sample_skip_interval == 0) && (*adjusted_volume > 0.0f) &&
-      (simd::dot(dir_to_sound, Viewer_object->orient.fvec) < -.5))
+      (simd::dot(dir_to_sound, Viewer_object->orient.columns[2]) < -.5))
     m_sound_objects[sound_obj_index].play_info.sample_skip_interval = 1;
   *virtual_pos = Viewer_object->pos + (dir_to_sound * dist);
   return true;

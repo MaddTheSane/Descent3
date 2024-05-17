@@ -57,7 +57,7 @@ void DrawSplinterObject(object *obj) {
     // Scale a vert based on the life of the object
     temp_vec = obj->ctype.splinter_info.verts[i] * lifenorm;
 
-    vm_MatrixMulVector(&world_verts[i], &temp_vec, &obj->orient);
+    vec::vm_MatrixMulVector(&world_verts[i], &temp_vec, &obj->orient);
 
     world_verts[i] += obj->pos;
     g3_RotatePoint(&pnts[i], &world_verts[i]);

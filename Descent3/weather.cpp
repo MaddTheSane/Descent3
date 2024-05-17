@@ -56,7 +56,7 @@ void DoRainEffect() {
   float mag = vec::vm_GetMagnitudeFast(&vel);
   vel /= mag;
 
-  float scalar = simd::dot(vel, Viewer_object->orient.fvec);
+  float scalar = simd::dot(vel, Viewer_object->orient.columns[2]);
 
   simd::float3 upvec = {0, 1.0, 0};
 
@@ -69,7 +69,7 @@ void DoRainEffect() {
   else if (randval > 80)
     randval = 80;
 
-  if (simd::dot(upvec, Viewer_object->orient.uvec) < 0)
+  if (simd::dot(upvec, Viewer_object->orient.columns[1]) < 0)
     randval = 8000; // Make sure rain does fall upwards
 
   if (Viewer_object->type == OBJ_PLAYER && OBJECT_OUTSIDE(Viewer_object) && (ps_rand() % randval) == 0) {
@@ -105,7 +105,7 @@ void DoRainEffect() {
 
     vm_ExtractAnglesFromMatrix(&angs, &Viewer_object->orient);
     vec::matrix mat;
-    vm_AnglesToMatrix(&mat, 0, angs.h, 0);
+    vec::vm_AnglesToMatrix(&mat, 0, angs.h, 0);
 
     for (i = 0; i < num; i++) {
       simd::float3 pos = Viewer_object->pos;
@@ -114,9 +114,9 @@ void DoRainEffect() {
       float x = (((ps_rand() % 1000) - 500) / 500.0) * 300;
       float y = (((ps_rand() % 1000) - 500) / 500.0) * 200;
 
-      pos += x * mat.rvec;
-      pos += y * mat.uvec;
-      pos += z * mat.fvec;
+      pos += x * mat.columns[0];
+      pos += y * mat.columns[1];
+      pos += z * mat.columns[2];
 
       // Create falling rain
       int visnum = VisEffectCreate(VIS_FIREBALL, FADING_LINE_INDEX, Viewer_object->roomnum, &pos);
@@ -141,9 +141,9 @@ void DoRainEffect() {
       float x = (((ps_rand() % 1000) - 500) / 500.0) * 300;
       float y = (((ps_rand() % 1000) - 500) / 500.0) * 200;
 
-      pos += x * mat.rvec;
-      pos += y * mat.uvec;
-      pos += z * mat.fvec;
+      pos += x * mat.columns[0];
+      pos += y * mat.columns[1];
+      pos += z * mat.columns[2];
 
       if (pos.z < 0 || pos.z >= TERRAIN_DEPTH * TERRAIN_SIZE)
         continue;
@@ -197,9 +197,9 @@ void DoSnowEffect() {
       float x = (((ps_rand() % 1000) - 500) / 500.0) * 200;
       int y = (ps_rand() % 80);
 
-      pos += x * mat.rvec;
-      pos += y * mat.uvec;
-      pos += z * mat.fvec;
+      pos += x * mat.columns[0];
+      pos += y * mat.columns[1];
+      pos += z * mat.columns[2];
 
       if (pos.z < 0 || pos.z >= TERRAIN_DEPTH * TERRAIN_SIZE)
         continue;

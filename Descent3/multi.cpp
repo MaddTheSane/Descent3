@@ -3010,32 +3010,32 @@ void MultiDoDoneWorldStates(uint8_t *data) {
 
 // Makes an abbrievated version of a matrix
 void MultiMakeMatrix(multi_orientation *dest, vec::matrix *src) {
-  dest->multi_matrix[0] = (src->rvec.x * 32767.0);
-  dest->multi_matrix[1] = (src->rvec.y * 32767.0);
-  dest->multi_matrix[2] = (src->rvec.z * 32767.0);
+  dest->multi_matrix[0] = (src->columns[0].x * 32767.0);
+  dest->multi_matrix[1] = (src->columns[0].y * 32767.0);
+  dest->multi_matrix[2] = (src->columns[0].z * 32767.0);
 
-  dest->multi_matrix[3] = (src->uvec.x * 32767.0);
-  dest->multi_matrix[4] = (src->uvec.y * 32767.0);
-  dest->multi_matrix[5] = (src->uvec.z * 32767.0);
+  dest->multi_matrix[3] = (src->columns[1].x * 32767.0);
+  dest->multi_matrix[4] = (src->columns[1].y * 32767.0);
+  dest->multi_matrix[5] = (src->columns[1].z * 32767.0);
 
-  dest->multi_matrix[6] = (src->fvec.x * 32767.0);
-  dest->multi_matrix[7] = (src->fvec.y * 32767.0);
-  dest->multi_matrix[8] = (src->fvec.z * 32767.0);
+  dest->multi_matrix[6] = (src->columns[2].x * 32767.0);
+  dest->multi_matrix[7] = (src->columns[2].y * 32767.0);
+  dest->multi_matrix[8] = (src->columns[2].z * 32767.0);
 }
 
 // Extracts a matrix from an abbreviated matrix
 void MultiExtractMatrix(vec::matrix *dest, multi_orientation *src) {
-  dest->rvec.x = (float)src->multi_matrix[0] / 32767.0;
-  dest->rvec.y = (float)src->multi_matrix[1] / 32767.0;
-  dest->rvec.z = (float)src->multi_matrix[2] / 32767.0;
+  dest->columns[0].x = (float)src->multi_matrix[0] / 32767.0;
+  dest->columns[0].y = (float)src->multi_matrix[1] / 32767.0;
+  dest->columns[0].z = (float)src->multi_matrix[2] / 32767.0;
 
-  dest->uvec.x = (float)src->multi_matrix[3] / 32767.0;
-  dest->uvec.y = (float)src->multi_matrix[4] / 32767.0;
-  dest->uvec.z = (float)src->multi_matrix[5] / 32767.0;
+  dest->columns[1].x = (float)src->multi_matrix[3] / 32767.0;
+  dest->columns[1].y = (float)src->multi_matrix[4] / 32767.0;
+  dest->columns[1].z = (float)src->multi_matrix[5] / 32767.0;
 
-  dest->fvec.x = (float)src->multi_matrix[6] / 32767.0;
-  dest->fvec.y = (float)src->multi_matrix[7] / 32767.0;
-  dest->fvec.z = (float)src->multi_matrix[8] / 32767.0;
+  dest->columns[2].x = (float)src->multi_matrix[6] / 32767.0;
+  dest->columns[2].y = (float)src->multi_matrix[7] / 32767.0;
+  dest->columns[2].z = (float)src->multi_matrix[8] / 32767.0;
 }
 
 void MultiDoPlayerPos(uint8_t *data) {
@@ -3068,7 +3068,7 @@ void MultiDoPlayerPos(uint8_t *data) {
   uint16_t h = MultiGetShort(data, &count);
   uint16_t b = MultiGetShort(data, &count);
 
-  vm_AnglesToMatrix(&orient, p, h, b);
+  vec::vm_AnglesToMatrix(&orient, p, h, b);
 
   // Get room and terrain flag
   short_roomnum = MultiGetUshort(data, &count);
@@ -3243,7 +3243,7 @@ void MultiDoRobotPos(uint8_t *data) {
   uint16_t h = MultiGetShort(data, &count);
   uint16_t b = MultiGetShort(data, &count);
 
-  vm_AnglesToMatrix(&orient, p, h, b);
+  vec::vm_AnglesToMatrix(&orient, p, h, b);
 
   // Get room and terrain flag
   short_roomnum = MultiGetUshort(data, &count);
@@ -4580,7 +4580,7 @@ void MultiDoJoinObjects(uint8_t *data) {
     uint8_t name_len = 0;
     uint8_t num_persist_vars = 0;
 
-    vm_MakeIdentity(&orient);
+    vec::vm_MakeIdentity(&orient);
 
     if (type != OBJ_CAMERA && type != OBJ_DOOR) {
       // Get checksum
@@ -5212,7 +5212,7 @@ void MultiDoObject(uint8_t *data) {
     uint16_t h = MultiGetShort(data, &count);
     uint16_t b = MultiGetShort(data, &count);
 
-    vm_AnglesToMatrix(&orient, p, h, b);
+    vec::vm_AnglesToMatrix(&orient, p, h, b);
     orientp = &orient;
   }
 
@@ -5429,7 +5429,7 @@ void MultiDoGuidedInfo(uint8_t *data) {
   uint16_t h = MultiGetShort(data, &count);
   uint16_t b = MultiGetShort(data, &count);
 
-  vm_AnglesToMatrix(&orient, p, h, b);
+  vec::vm_AnglesToMatrix(&orient, p, h, b);
 
   // Get room and terrain flag
   short_roomnum = MultiGetUshort(data, &count);
@@ -8542,7 +8542,7 @@ void MultiDoPermissionToFire(uint8_t *data) {
   uint16_t h = MultiGetShort(data, &count);
   uint16_t b = MultiGetShort(data, &count);
 
-  vm_AnglesToMatrix(&orient, p, h, b);
+  vec::vm_AnglesToMatrix(&orient, p, h, b);
 
   // Get room and terrain flag
   uint16_t short_roomnum = MultiGetUshort(data, &count);
@@ -8933,7 +8933,7 @@ void MultiDoRequestToMove(uint8_t *data) {
   uint16_t h = MultiGetShort(data, &count);
   uint16_t b = MultiGetShort(data, &count);
 
-  vm_AnglesToMatrix(&orient, p, h, b);
+  vec::vm_AnglesToMatrix(&orient, p, h, b);
 
   float delta_time = Gametime - NetPlayers[slot].packet_time;
   NetPlayers[slot].packet_time = Gametime;

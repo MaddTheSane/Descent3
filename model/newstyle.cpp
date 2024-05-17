@@ -839,7 +839,7 @@ void RenderSubmodelFacesUnsorted(poly_model *pm, bsp_info *sm) {
 
     g3_GetUnscaledMatrix(&mat);
     g3_GetViewPosition(&Fog_view_pos);
-    Fog_plane = mat.fvec;
+    Fog_plane = mat.columns[2];
 
     if (Polymodel_effect.fog_plane_check == 1)
       Fog_distance = -(simd::dot(Fog_plane, Fog_view_pos));
@@ -1018,7 +1018,7 @@ void RenderSubmodel(poly_model *pm, bsp_info *sm, uint32_t f_render_sub) {
   simd::float3 temp_vec = sm->mod_pos + sm->offset;
   g3_StartInstanceAngles(&temp_vec, &sm->angs);
 
-  vm_AnglesToMatrix(&lightmatrix, sm->angs.p, sm->angs.h, sm->angs.b);
+  vec::vm_AnglesToMatrix(&lightmatrix, sm->angs.p, sm->angs.h, sm->angs.b);
   StartLightInstance(&temp_vec, &lightmatrix);
 
   // Check my bit to see if I get drawn
@@ -1185,8 +1185,8 @@ float ComputeDefaultSizeFunc(int handle, float *size_ptr, simd::float3 *offset_p
           while (mn != -1) {
             simd::float3 tpnt;
 
-            vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
-            vm_TransposeMatrix(&m);
+            vec::vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
+            vec::vm_TransposeMatrix(&m);
 
             tpnt = pnt * m;
 

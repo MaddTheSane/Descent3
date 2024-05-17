@@ -2130,15 +2130,15 @@ int AlienOrganism::CalcFormationPosition(int me, int tm_ID, simd::float3 *pos) {
   case ALIEN_HUNTING: {
     switch (tm_ID) {
     case 0:
-      goal_pos -= orient.fvec * ALIEN_FO_HUNT_FVEC;
-      goal_pos += orient.rvec * ALIEN_FO_HUNT_RVEC;
+      goal_pos -= orient.columns[2] * ALIEN_FO_HUNT_FVEC;
+      goal_pos += orient.columns[0] * ALIEN_FO_HUNT_RVEC;
       break;
     case 1:
-      goal_pos -= orient.fvec * ALIEN_FO_HUNT_FVEC;
-      goal_pos -= orient.rvec * ALIEN_FO_HUNT_RVEC;
+      goal_pos -= orient.columns[2] * ALIEN_FO_HUNT_FVEC;
+      goal_pos -= orient.columns[0] * ALIEN_FO_HUNT_RVEC;
       break;
     case 2:
-      goal_pos -= orient.fvec * ALIEN_FO_HUNT_FVEC * 2.0f;
+      goal_pos -= orient.columns[2] * ALIEN_FO_HUNT_FVEC * 2.0f;
       break;
     }
   } break;
@@ -2147,15 +2147,15 @@ int AlienOrganism::CalcFormationPosition(int me, int tm_ID, simd::float3 *pos) {
   case ALIEN_SCAVENGING: {
     switch (tm_ID) {
     case 0:
-      goal_pos -= orient.fvec * ALIEN_FO_SCAV_FVEC;
-      goal_pos -= orient.rvec * ALIEN_FO_SCAV_RVEC;
+      goal_pos -= orient.columns[2] * ALIEN_FO_SCAV_FVEC;
+      goal_pos -= orient.columns[0] * ALIEN_FO_SCAV_RVEC;
       break;
     case 1:
-      goal_pos -= orient.fvec * ALIEN_FO_SCAV_FVEC * 2.0f;
-      goal_pos += orient.rvec * ALIEN_FO_SCAV_RVEC;
+      goal_pos -= orient.columns[2] * ALIEN_FO_SCAV_FVEC * 2.0f;
+      goal_pos += orient.columns[0] * ALIEN_FO_SCAV_RVEC;
       break;
     case 2:
-      goal_pos -= orient.fvec * ALIEN_FO_SCAV_FVEC * 3.0f;
+      goal_pos -= orient.columns[2] * ALIEN_FO_SCAV_FVEC * 3.0f;
       break;
     }
   } break;
@@ -2165,18 +2165,18 @@ int AlienOrganism::CalcFormationPosition(int me, int tm_ID, simd::float3 *pos) {
   case ALIEN_ATTACKING_RANGED: {
     switch (tm_ID) {
     case 0:
-      goal_pos += orient.fvec * ALIEN_FO_ATTK_FVEC;
-      goal_pos -= orient.uvec * ALIEN_FO_ATTK_UVECN;
-      goal_pos += orient.rvec * ALIEN_FO_ATTK_RVEC;
+      goal_pos += orient.columns[2] * ALIEN_FO_ATTK_FVEC;
+      goal_pos -= orient.columns[1] * ALIEN_FO_ATTK_UVECN;
+      goal_pos += orient.columns[0] * ALIEN_FO_ATTK_RVEC;
       break;
     case 1:
-      goal_pos += orient.fvec * ALIEN_FO_ATTK_FVEC;
-      goal_pos -= orient.uvec * ALIEN_FO_ATTK_UVECN;
-      goal_pos -= orient.rvec * ALIEN_FO_ATTK_RVEC;
+      goal_pos += orient.columns[2] * ALIEN_FO_ATTK_FVEC;
+      goal_pos -= orient.columns[1] * ALIEN_FO_ATTK_UVECN;
+      goal_pos -= orient.columns[0] * ALIEN_FO_ATTK_RVEC;
       break;
     case 2:
-      goal_pos += orient.fvec * ALIEN_FO_ATTK_FVEC;
-      goal_pos += orient.uvec * ALIEN_FO_ATTK_UVECP;
+      goal_pos += orient.columns[2] * ALIEN_FO_ATTK_FVEC;
+      goal_pos += orient.columns[1] * ALIEN_FO_ATTK_UVECP;
       break;
     }
   } break;
@@ -2433,34 +2433,34 @@ void AlienOrganism::CalcEnergyBeamPositions(int me) {
 
   // If we're in a beam mode, get the appropriate beam directions
   if (memory->mode == ALIEN_LANDED_DEPOSITING) {
-    beam1_dir = -0.40f * orient.uvec - orient.fvec;
-    // beam1_dir += orient.rvec*(0.5f-((float)rand()/(float)D3_RAND_MAX)*1.0f);
+    beam1_dir = -0.40f * orient.columns[1] - orient.columns[2];
+    // beam1_dir += orient.columns[0]*(0.5f-((float)rand()/(float)D3_RAND_MAX)*1.0f);
     vm_VectorNormalize(&beam1_dir);
 
-    beam2_dir = -0.40f * orient.uvec + orient.fvec - orient.rvec;
-    // beam2_dir += orient.fvec*(0.5f-((float)rand()/(float)D3_RAND_MAX)*1.0f);
+    beam2_dir = -0.40f * orient.columns[1] + orient.columns[2] - orient.columns[0];
+    // beam2_dir += orient.columns[2]*(0.5f-((float)rand()/(float)D3_RAND_MAX)*1.0f);
     vm_VectorNormalize(&beam2_dir);
 
-    beam3_dir = -0.40f * orient.uvec + orient.fvec + orient.rvec;
-    // beam3_dir += orient.fvec*(0.5f-((float)rand()/(float)D3_RAND_MAX)*1.0f);
+    beam3_dir = -0.40f * orient.columns[1] + orient.columns[2] + orient.columns[0];
+    // beam3_dir += orient.columns[2]*(0.5f-((float)rand()/(float)D3_RAND_MAX)*1.0f);
     vm_VectorNormalize(&beam3_dir);
   } else if (memory->mode == ALIEN_LANDED_WITHDRAWING) {
-    beam1_dir = -0.3f * orient.uvec + orient.fvec;
-    // beam1_dir += orient.rvec*(0.5f-((float)rand()/(float)D3_RAND_MAX)*1.0f);
+    beam1_dir = -0.3f * orient.columns[1] + orient.columns[2];
+    // beam1_dir += orient.columns[0]*(0.5f-((float)rand()/(float)D3_RAND_MAX)*1.0f);
     vm_VectorNormalize(&beam1_dir);
 
-    beam2_dir = -0.3f * orient.uvec - orient.fvec - orient.rvec;
-    // beam2_dir -= orient.fvec*(0.5f-((float)rand()/(float)D3_RAND_MAX)*1.0f);
+    beam2_dir = -0.3f * orient.columns[1] - orient.columns[2] - orient.columns[0];
+    // beam2_dir -= orient.columns[2]*(0.5f-((float)rand()/(float)D3_RAND_MAX)*1.0f);
     vm_VectorNormalize(&beam2_dir);
 
-    beam3_dir = -0.3f * orient.uvec - orient.fvec + orient.rvec;
-    // beam3_dir -= orient.fvec*(0.5f-((float)rand()/(float)D3_RAND_MAX)*1.0f);
+    beam3_dir = -0.3f * orient.columns[1] - orient.columns[2] + orient.columns[0];
+    // beam3_dir -= orient.columns[2]*(0.5f-((float)rand()/(float)D3_RAND_MAX)*1.0f);
     vm_VectorNormalize(&beam3_dir);
   } else if (memory->mode == ALIEN_LANDED_HEALING) {
-    beam2_dir = -0.4f * orient.uvec + orient.rvec * 2.0f;
+    beam2_dir = -0.4f * orient.columns[1] + orient.columns[0] * 2.0f;
     vm_VectorNormalize(&beam2_dir);
 
-    beam3_dir = -0.4f * orient.uvec - orient.rvec * 2.0f;
+    beam3_dir = -0.4f * orient.columns[1] - orient.columns[0] * 2.0f;
     vm_VectorNormalize(&beam3_dir);
   } else {
     return;
@@ -3153,9 +3153,9 @@ void AlienOrganism::DoInit(int me) {
 
   vec::matrix orient;
   Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
-  memory->home_fvec = orient.fvec;
+  memory->home_fvec = orient.columns[2];
   vm_VectorNormalize(&memory->home_fvec);
-  memory->home_uvec = orient.uvec;
+  memory->home_uvec = orient.columns[1];
   vm_VectorNormalize(&memory->home_uvec);
 
   // Check and see whether we've been spawned from a matcen or not
@@ -3228,9 +3228,9 @@ bool AlienOrganism::FindHome(int me) {
   num_attempts = 0;
   while (!home_found && num_attempts < MAX_HOME_FINDING_ATTEMPTS) {
     // Determine ray angle
-    home_dir = start_orient.fvec;
-    home_dir += start_orient.uvec * (HOME_LOOK_OFFSET - ((float)rand() / (float)RAND_MAX) * 2.0f * HOME_LOOK_OFFSET);
-    home_dir += start_orient.rvec * (HOME_LOOK_OFFSET - ((float)rand() / (float)RAND_MAX) * 2.0f * HOME_LOOK_OFFSET);
+    home_dir = start_orient.columns[2];
+    home_dir += start_orient.columns[1] * (HOME_LOOK_OFFSET - ((float)rand() / (float)RAND_MAX) * 2.0f * HOME_LOOK_OFFSET);
+    home_dir += start_orient.columns[0] * (HOME_LOOK_OFFSET - ((float)rand() / (float)RAND_MAX) * 2.0f * HOME_LOOK_OFFSET);
 
     // Cast home-finding ray
     target_pos = start_pos + (home_dir * MAX_HOME_FINDING_DIST);
@@ -3248,9 +3248,9 @@ bool AlienOrganism::FindHome(int me) {
 
       vm_VectorToMatrix(&temp, &memory->home_uvec, NULL, NULL);
       if (rand() % 100 > 50) {
-        memory->home_fvec = temp.uvec;
+        memory->home_fvec = temp.columns[1];
       } else {
-        memory->home_fvec = temp.rvec;
+        memory->home_fvec = temp.columns[0];
       }
       if (rand() % 100 > 50)
         memory->home_fvec = -memory->home_fvec;
@@ -3318,7 +3318,7 @@ void AlienOrganism::DoSquadieFrame(int me) {
       dir = my_pos - memory->squad_goal_pos;
       vm_VectorNormalize(&dir);
       float dot_prod;
-      if ((dot_prod = simd::dot(leader_orient.fvec, dir)) < 0.0f) {
+      if ((dot_prod = simd::dot(leader_orient.columns[2], dir)) < 0.0f) {
         slowdown = dist / ALIEN_APPROACH_DIST;
       }
     }
@@ -4077,13 +4077,15 @@ int16_t AlienOrganism::CallEvent(int event, tOSIRISEventInfo *data) {
     DoDamage(data->me_handle, &data->evt_damaged);
     break;
   case EVT_DESTROY:
-    msafe_struct mo;
-    mo.objhandle = memory->pos1_handle;
-    MSafe_CallFunction(MSAFE_OBJECT_REMOVE, &mo);
-    mo.objhandle = memory->pos2_handle;
-    MSafe_CallFunction(MSAFE_OBJECT_REMOVE, &mo);
-    mo.objhandle = memory->pos3_handle;
-    MSafe_CallFunction(MSAFE_OBJECT_REMOVE, &mo);
+    {
+      msafe_struct mo;
+      mo.objhandle = memory->pos1_handle;
+      MSafe_CallFunction(MSAFE_OBJECT_REMOVE, &mo);
+      mo.objhandle = memory->pos2_handle;
+      MSafe_CallFunction(MSAFE_OBJECT_REMOVE, &mo);
+      mo.objhandle = memory->pos3_handle;
+      MSafe_CallFunction(MSAFE_OBJECT_REMOVE, &mo);
+    }
     break;
   case EVT_COLLIDE:
     DoCollide(data->me_handle, &data->evt_collide);
@@ -4172,7 +4174,7 @@ bool HeavyTrooper::HasAClearGrenadeShot(int me, bool use_grenade_gunpoint /*=fal
     // since we don't want to aim with the gunpoint, just use the forward vector
     Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
     Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
-    dir = orient.fvec;
+    dir = orient.columns[2];
   }
 
   // See if should check for a clear shot
@@ -4781,7 +4783,7 @@ bool Lifter::OkToPull(int me, bool initial_check /*=true*/) {
   // NOTE: do my own vec to target here! (chris' doesn't update quick enough)
   AI_Value(me, VF_GET, AIV_V_VEC_TO_TARGET, &vec_to_target);
   vm_VectorNormalize(&vec_to_target);
-  fov_angle = simd::dot(orient.fvec, vec_to_target);
+  fov_angle = simd::dot(orient.columns[2], vec_to_target);
   if (fov_angle < 0.7f)
     return false;
 
@@ -4872,7 +4874,7 @@ void Lifter::MoveTargetProp(int target_handle) {
   Obj_Value(target_handle, VF_GET, OBJV_M_ORIENT, &target_orient);
 
   mstruct.objhandle = memory->pull_target_prop;
-  mstruct.pos = target_pos - (target_orient.uvec * 1.4f);
+  mstruct.pos = target_pos - (target_orient.columns[1] * 1.4f);
   mstruct.orient = target_orient;
   mstruct.roomnum = target_room;
   MSafe_CallFunction(MSAFE_OBJECT_WORLD_POSITION, &mstruct);
@@ -6234,9 +6236,9 @@ void AlienBoss::DoInit(int me) {
 
   vec::matrix orient;
   Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
-  memory->home_fvec = orient.fvec;
+  memory->home_fvec = orient.columns[2];
   vm_VectorNormalize(&memory->home_fvec);
-  memory->home_uvec = orient.uvec;
+  memory->home_uvec = orient.columns[1];
   vm_VectorNormalize(&memory->home_uvec);
 
   // Save values for teleport
@@ -6324,7 +6326,7 @@ bool AlienBoss::OkToStartSpecialAttack(int me) {
   // NOTE: do my own vec to target here! (chris' doesn't update quick enough)
   AI_Value(me, VF_GET, AIV_V_VEC_TO_TARGET, &vec_to_target);
   vm_VectorNormalize(&vec_to_target);
-  fov_angle = simd::dot(orient.fvec, vec_to_target);
+  fov_angle = simd::dot(orient.columns[2], vec_to_target);
   if (fov_angle < 0.7f)
     return false;
 
@@ -6355,7 +6357,7 @@ bool AlienBoss::DoStingAttack(int me) {
   // NOTE: do my own vec to target here! (chris' doesn't update quick enough)
   AI_Value(me, VF_GET, AIV_V_VEC_TO_TARGET, &vec_to_target);
   vm_VectorNormalize(&vec_to_target);
-  fov_angle = simd::dot(orient.fvec, vec_to_target);
+  fov_angle = simd::dot(orient.columns[2], vec_to_target);
   if (fov_angle < 0.7f)
     return false;
 
@@ -7347,7 +7349,7 @@ void CrowdControl::DoFrame(int me) {
       Obj_Value(memory->follow_handle, VF_GET, OBJV_V_POS, &leader_pos);
 
       // It's ok to move in reverse, or away from leader
-      ok_to_move_normally = (simd::dot(my_vel, my_orient.fvec) <= 0.0f) ? true : false;
+      ok_to_move_normally = (simd::dot(my_vel, my_orient.columns[2]) <= 0.0f) ? true : false;
       if (!ok_to_move_normally) {
         leader_dir = leader_pos - my_pos;
         ok_to_move_normally = (simd::dot(my_vel, leader_dir) <= 0.0f) ? true : false;

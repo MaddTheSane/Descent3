@@ -1645,9 +1645,9 @@ void UpdatePlayerCameraPosition() {
   if (total_increments > 0) {
     simd::float3 delta_vec = playerobj->pos - Camera_sample_vectors[Camera_sample_index];
 
-    simd::float3 delta_r = playerobj->orient.rvec - Camera_sample_matrix[Camera_sample_index].rvec;
-    simd::float3 delta_u = playerobj->orient.uvec - Camera_sample_matrix[Camera_sample_index].uvec;
-    simd::float3 delta_f = playerobj->orient.fvec - Camera_sample_matrix[Camera_sample_index].fvec;
+    simd::float3 delta_r = playerobj->orient.columns[0] - Camera_sample_matrix[Camera_sample_index].columns[0];
+    simd::float3 delta_u = playerobj->orient.columns[1] - Camera_sample_matrix[Camera_sample_index].columns[1];
+    simd::float3 delta_f = playerobj->orient.columns[2] - Camera_sample_matrix[Camera_sample_index].columns[2];
 
     delta_vec /= total_increments;
     delta_r /= total_increments;
@@ -1655,9 +1655,9 @@ void UpdatePlayerCameraPosition() {
     delta_f /= total_increments;
 
     simd::float3 current_pos = Camera_sample_vectors[Camera_sample_index];
-    simd::float3 current_r = Camera_sample_matrix[Camera_sample_index].rvec;
-    simd::float3 current_u = Camera_sample_matrix[Camera_sample_index].uvec;
-    simd::float3 current_f = Camera_sample_matrix[Camera_sample_index].fvec;
+    simd::float3 current_r = Camera_sample_matrix[Camera_sample_index].columns[0];
+    simd::float3 current_u = Camera_sample_matrix[Camera_sample_index].columns[1];
+    simd::float3 current_f = Camera_sample_matrix[Camera_sample_index].columns[2];
 
     int current_room = Camera_sample_rooms[Camera_sample_index];
 
@@ -1669,9 +1669,9 @@ void UpdatePlayerCameraPosition() {
       else
         Camera_sample_rooms[Camera_sample_index] = playerobj->roomnum;
 
-      Camera_sample_matrix[Camera_sample_index].rvec = current_r;
-      Camera_sample_matrix[Camera_sample_index].uvec = current_u;
-      Camera_sample_matrix[Camera_sample_index].fvec = current_f;
+      Camera_sample_matrix[Camera_sample_index].columns[0] = current_r;
+      Camera_sample_matrix[Camera_sample_index].columns[1] = current_u;
+      Camera_sample_matrix[Camera_sample_index].columns[2] = current_f;
 
       Camera_sample_index++;
 
@@ -1717,19 +1717,19 @@ void UpdatePlayerCameraPosition() {
     dest_room = Camera_sample_rooms[follow_end];
 
   // Set orientation matrix
-  dest_mat.rvec = ((1.0 - follow_norm) * Camera_sample_matrix[follow_start].rvec) +
-                  ((follow_norm)*Camera_sample_matrix[follow_end].rvec);
-  dest_mat.uvec = ((1.0 - follow_norm) * Camera_sample_matrix[follow_start].uvec) +
-                  ((follow_norm)*Camera_sample_matrix[follow_end].uvec);
-  dest_mat.fvec = ((1.0 - follow_norm) * Camera_sample_matrix[follow_start].fvec) +
-                  ((follow_norm)*Camera_sample_matrix[follow_end].fvec);
+  dest_mat.columns[0] = ((1.0 - follow_norm) * Camera_sample_matrix[follow_start].columns[0]) +
+                  ((follow_norm)*Camera_sample_matrix[follow_end].columns[0]);
+  dest_mat.columns[1] = ((1.0 - follow_norm) * Camera_sample_matrix[follow_start].columns[1]) +
+                  ((follow_norm)*Camera_sample_matrix[follow_end].columns[1]);
+  dest_mat.columns[2] = ((1.0 - follow_norm) * Camera_sample_matrix[follow_start].columns[2]) +
+                  ((follow_norm)*Camera_sample_matrix[follow_end].columns[2]);
 
   // Set camera position
   fvi_info hit_data;
   fvi_query fq;
   simd::float3 new_pos = dest_pos;
-  new_pos -= dest_mat.fvec * (playerobj->size * 3);
-  new_pos += dest_mat.uvec * (playerobj->size / 2);
+  new_pos -= dest_mat.columns[2] * (playerobj->size * 3);
+  new_pos += dest_mat.columns[1] * (playerobj->size / 2);
 
   fq.p1 = &new_pos;
   fq.p0 = &dest_pos;
@@ -2161,7 +2161,7 @@ void StartPlayerDeath(int slot, float damage, bool melee, int fate) {
   Death[slot].breakup_count = 0;
 
   if (killer == NULL) // If the killer isn't valid, just use the reverse forward direction
-    Death[slot].force_dir = -playerobj->orient.fvec;
+    Death[slot].force_dir = -playerobj->orient.columns[2];
   else
     Death[slot].force_dir = playerobj->pos - killer->pos;
 
@@ -2373,7 +2373,7 @@ void DoNewPlayerDeathFrame(int slot) {
       //	smoke
       int visnum;
       simd::float3 smoke_pt;
-      smoke_pt = (-playerobj->orient.fvec) * (playerobj->size * 0.5f);
+      smoke_pt = (-playerobj->orient.columns[2]) * (playerobj->size * 0.5f);
       smoke_pt = playerobj->pos + smoke_pt;
       visnum = CreateFireball(&smoke_pt, BLACK_SMOKE_INDEX, playerobj->roomnum, VISUAL_FIREBALL);
       if (visnum >= 0)
@@ -2757,7 +2757,7 @@ void PlayerSpewGuidebot(object *parent, int type, int id) {
 
   // Set physics data for this object
 
-  obj->mtype.phys_info.velocity = parent->mtype.phys_info.velocity + parent->orient.fvec * 30.0;
+  obj->mtype.phys_info.velocity = parent->mtype.phys_info.velocity + parent->orient.columns[2] * 30.0;
 
   vec::vm_MakeZero(&obj->mtype.phys_info.rotthrust);
 
@@ -3394,19 +3394,19 @@ void PlayerGetBallPosition(simd::float3 *dest, int slot, int num) {
 
   // Get matrix to multiply with
   if (num == 0)
-    vm_AnglesToMatrix(&rotmat, 0, 0, rot_angle);
+    vec::vm_AnglesToMatrix(&rotmat, 0, 0, rot_angle);
   else if (num == 1)
-    vm_AnglesToMatrix(&rotmat, 0, rot_angle, 0);
+    vec::vm_AnglesToMatrix(&rotmat, 0, rot_angle, 0);
   else
-    vm_AnglesToMatrix(&rotmat, rot_angle, 0, 0);
+    vec::vm_AnglesToMatrix(&rotmat, rot_angle, 0, 0);
 
   tempm = obj->orient * rotmat;
 
   // Get world position
   if (num == 1)
-    *dest = obj->pos + (tempm.fvec * (obj->size + 1));
+    *dest = obj->pos + (tempm.columns[2] * (obj->size + 1));
   else
-    *dest = obj->pos + (tempm.uvec * (obj->size + 1));
+    *dest = obj->pos + (tempm.columns[1] * (obj->size + 1));
 }
 
 // Sets a wacky rotating ball around the player ship

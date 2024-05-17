@@ -190,7 +190,7 @@ float vm_ComputeBoundingSphere(simd::float3 *center, simd::float3 *vecs, int num
 float vm_GetCentroidFast(simd::float3 *centroid, simd::float3 *src, int nv);
 
 // Here are the C++ operator overloads -- they do as expected
-extern vec::matrix operator*(vec::matrix src0, vec::matrix src1);
-extern vec::matrix operator*=(vec::matrix &src0, vec::matrix src1);
+//extern vec::matrix operator*(vec::matrix src0, vec::matrix src1);
+//extern vec::matrix operator*=(vec::matrix &src0, vec::matrix src1);
 
 #endif

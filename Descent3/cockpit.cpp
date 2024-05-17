@@ -472,11 +472,11 @@ void RenderCockpit() {
   //@@	}
   //	create new orientation, so the cockpit should be facing the viewer
   view_tmat = Viewer_object->orient;
-  view_pos = (view_tmat.fvec * view_z) + (view_tmat.uvec * view_y) + (view_tmat.rvec * view_x) + Viewer_object->pos;
-  view_tmat.fvec = -view_tmat.fvec;
-  view_tmat.rvec = -view_tmat.rvec;
+  view_pos = (view_tmat.columns[2] * view_z) + (view_tmat.columns[1] * view_y) + (view_tmat.columns[0] * view_x) + Viewer_object->pos;
+  view_tmat.columns[2] = -view_tmat.columns[2];
+  view_tmat.columns[0] = -view_tmat.columns[0];
   //	lighting.
-  light_vec = -Viewer_object->orient.uvec;
+  light_vec = -Viewer_object->orient.columns[1];
   if (OBJECT_OUTSIDE(player_obj)) {
     float light_scalar = GetTerrainDynamicScalar(&player_obj->pos, CELLNUM(player_obj->roomnum));
     light_scalar_r = light_scalar;

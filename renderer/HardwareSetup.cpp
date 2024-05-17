@@ -129,9 +129,9 @@ void g3_StartFrame(simd::float3 *view_pos, vec::matrix *view_matrix, float zoom)
   }
 
   // Scale the matrix elements
-  View_matrix.rvec = Unscaled_matrix.rvec * Matrix_scale.x;
-  View_matrix.uvec = Unscaled_matrix.uvec * Matrix_scale.y;
-  View_matrix.fvec = Unscaled_matrix.fvec * Matrix_scale.z;
+  View_matrix.columns[0] = Unscaled_matrix.columns[0] * Matrix_scale.x;
+  View_matrix.columns[1] = Unscaled_matrix.columns[1] * Matrix_scale.y;
+  View_matrix.columns[2] = Unscaled_matrix.columns[2] * Matrix_scale.z;
 
   // Reset the list of free points
   InitFreePoints();

@@ -1417,7 +1417,7 @@ void ComputeBOAVisFaceUpperLeft(room *rp, face *fp, simd::float3 *upper_left, fl
     simd::float3 vert = rp->verts[fp->face_verts[i]];
 
     vert -= avg_vert;
-    vm_MatrixMulVector(&rot_vert, &vert, &trans_matrix);
+    vec::vm_MatrixMulVector(&rot_vert, &vert, &trans_matrix);
 
     verts[i] = rot_vert;
   }
@@ -1490,8 +1490,8 @@ void ComputeBOAVisFaceUpperLeft(room *rp, face *fp, simd::float3 *upper_left, fl
     *ydiff = verts[topmost_point].y - verts[bottommost_point].y;
 
   // Find upper left corner
-  vm_TransposeMatrix(&trans_matrix);
-  vm_MatrixMulVector(&rot_vert, &base_vector, &trans_matrix);
+  vec::vm_TransposeMatrix(&trans_matrix);
+  vec::vm_MatrixMulVector(&rot_vert, &base_vector, &trans_matrix);
 
   if (upper_left)
     *upper_left = rot_vert + avg_vert;
@@ -1716,8 +1716,8 @@ void MakeBOAVisTable(bool from_lighting) {
           float num = src_width / VIS_TABLE_RESOLUTION;
           src_width = VIS_TABLE_RESOLUTION;
 
-          src_upper_left += (src_matrix.rvec * (num / 2));
-          src_matrix.rvec *= num;
+          src_upper_left += (src_matrix.columns[0] * (num / 2));
+          src_matrix.columns[0] *= num;
         }
 
         if (src_height > VIS_TABLE_RESOLUTION) {
@@ -1750,8 +1750,8 @@ void MakeBOAVisTable(bool from_lighting) {
             float num = dest_width / VIS_TABLE_RESOLUTION;
             dest_width = VIS_TABLE_RESOLUTION;
 
-            dest_upper_left += (dest_matrix.rvec * (num / 2));
-            dest_matrix.rvec *= num;
+            dest_upper_left += (dest_matrix.columns[0] * (num / 2));
+            dest_matrix.columns[0] *= num;
           }
 
           if (dest_height > VIS_TABLE_RESOLUTION) {
@@ -1768,7 +1768,7 @@ void MakeBOAVisTable(bool from_lighting) {
           for (int sy = 0; sy < src_height && !done; sy++, src_ybase -= src_matrix.uvec) {
             src_vector = src_ybase;
 
-            for (int sx = 0; sx < src_width && !done; sx++, src_vector += src_matrix.rvec) {
+            for (int sx = 0; sx < src_width && !done; sx++, src_vector += src_matrix.columns[0]) {
               simd::float3 src2 = src_vector;
               simd::float3 subvec;
 
@@ -1781,7 +1781,7 @@ void MakeBOAVisTable(bool from_lighting) {
               for (int dy = 0; dy < dest_height && !done; dy++, dest_ybase -= dest_matrix.uvec) {
                 dest_vector = dest_ybase;
 
-                for (int dx = 0; dx < dest_width && !done; dx++, dest_vector += dest_matrix.rvec) {
+                for (int dx = 0; dx < dest_width && !done; dx++, dest_vector += dest_matrix.columns[0]) {
                   src2 += 0.1f * rp->faces[rp->portals[t].portal_face].normal;
                   dest_vector += 0.1f * Rooms[check_room].faces[Rooms[check_room].portals[j].portal_face].normal;
 

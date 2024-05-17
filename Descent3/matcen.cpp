@@ -337,7 +337,7 @@ bool matcen::DoObjProd() {
   simd::float3 fvec = Player_object->pos - m_create_pnt;
   vec::vm_NormalizeVector(&fvec);
 
-  vm_VectorToMatrix(&orient, &fvec, NULL, NULL);
+  vec::vm_VectorToMatrix(&orient, &fvec, NULL, NULL);
 
   if (m_prod_type[m_cached_prod_index] >= 0) {
     int croom = m_create_room;
@@ -361,7 +361,7 @@ bool matcen::DoObjProd() {
         fvi_query fq;
         int fate;
         simd::float3 start = obj->pos;
-        simd::float3 end = obj->pos - 2000.0f * obj->orient.uvec;
+        simd::float3 end = obj->pos - 2000.0f * obj->orient.columns[1];
 
         fq.p0 = &start;
         fq.p1 = &end;
@@ -379,12 +379,12 @@ bool matcen::DoObjProd() {
           float pr;
           float diff;
 
-          ps = simd::dot(gp - obj->pos, obj->orient.uvec);
-          pr = simd::dot(hit_info.hit_pnt - obj->pos, obj->orient.uvec);
+          ps = simd::dot(gp - obj->pos, obj->orient.columns[1]);
+          pr = simd::dot(hit_info.hit_pnt - obj->pos, obj->orient.columns[1]);
 
           if (ps != pr) {
             diff = ps - pr;
-            obj->pos -= diff * obj->orient.uvec;
+            obj->pos -= diff * obj->orient.columns[1];
             ObjSetPos(obj, &obj->pos, obj->roomnum, NULL, false);
             obj->flags |= OF_MOVED_THIS_FRAME;
 

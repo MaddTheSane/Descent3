@@ -59,29 +59,25 @@ struct angvec {
 };
 
 #define IDENTITY_MATRIX                                                                                                \
-  {                                                                                                                    \
-    {1.0, 0, 0}, {0, 1.0, 0}, { 0, 0, 1.0 }                                                                            \
-  }
+simd_matrix(simd_make_float3(1, 0, 0), simd_make_float3(0, 1, 0), simd_make_float3(0, 0, 1))
 
 typedef simd::float3 vector;
 // typedef struct {
 //   float x, y, z;
 // } vector;
 
+typedef simd::float4 vector4;
 // typedef struct vector4 {
 //   float x, y, z, kat_pad;
 // } vector4;
 
-typedef simd::float4 vector4;
 
 typedef struct {
   float xyz[3];
 } vector_array;
 
 // TODO: replace with simd::float3x3
-typedef struct {
-  simd::float3 rvec, uvec, fvec;
-} matrix;
+typedef simd::float3x3 matrix;
 
 // TODO: replace with simd::float4x3
 typedef struct {
@@ -133,13 +129,15 @@ static inline vector operator+=(vector &a, vector b) { return (a = a + b); }
 
 #endif
 
+#if 0
+
 // Adds 2 matrices
 static inline matrix operator+(matrix a, matrix b) {
   // Adds two 3x3 matrixs.
 
-  a.rvec += b.rvec;
-  a.uvec += b.uvec;
-  a.fvec += b.fvec;
+  a.columns[0] += b.columns[0];
+  a.columns[1] += b.columns[1];
+  a.columns[2] += b.columns[2];
 
   return a;
 }
@@ -147,7 +145,6 @@ static inline matrix operator+(matrix a, matrix b) {
 // Adds 2 matrices
 static inline matrix operator+=(matrix &a, matrix b) { return (a = a + b); }
 
-#if 0
 
 // Subtracts 2 vectors
 static inline vector operator-(vector a, vector b) {
@@ -163,23 +160,19 @@ static inline vector operator-(vector a, vector b) {
 // Subtracts 2 vectors
 static inline vector operator-=(vector &a, vector b) { return (a = a - b); }
 
-#endif
-
 // Subtracts 2 matrices
 static inline matrix operator-(matrix a, matrix b) {
   // subtracts two 3x3 matrices
 
   a.rvec = a.rvec - b.rvec;
-  a.uvec = a.uvec - b.uvec;
-  a.fvec = a.fvec - b.fvec;
+  a.columns[1] = a.columns[1] - b.columns[1];
+  a.columns[2] = a.columns[2] - b.columns[2];
 
   return a;
 }
 
 // Subtracts 2 matrices
 static inline matrix operator-=(matrix &a, matrix b) { return (a = a - b); }
-
-#if 0
 
 // Does a simple dot product calculation
 static inline float operator*(vector u, vector v) { return (u.x * v.x) + (u.y * v.y) + (u.z * v.z); }
@@ -199,12 +192,11 @@ static inline vector operator*=(vector &v, float s) { return (v = v * s); }
 // Scalar multiplication
 static inline vector operator*(float s, vector v) { return v * s; }
 
-#endif
 
 // Scalar multiplication
 static inline matrix operator*(float s, matrix m) {
-  m.fvec = m.fvec * s;
-  m.uvec = m.uvec * s;
+  m.columns[2] = m.columns[2] * s;
+  m.columns[1] = m.columns[1] * s;
   m.rvec = m.rvec * s;
 
   return m;
@@ -216,7 +208,6 @@ static inline matrix operator*(matrix m, float s) { return s * m; }
 // Scalar multiplication
 static inline matrix operator*=(matrix &m, float s) { return (m = m * s); }
 
-#if 0
 
 // Scalar division
 static inline vector operator/(vector src, float n) {
@@ -230,19 +221,20 @@ static inline vector operator/(vector src, float n) {
 // Scalar division
 static inline vector operator/=(vector &src, float n) { return (src = src / n); }
 
-#endif
 
 // Scalar division
 static inline matrix operator/(matrix src, float n) {
-  src.fvec = src.fvec / n;
-  src.rvec = src.rvec / n;
-  src.uvec = src.uvec / n;
+  src.columns[0] = src.columns[0] / n;
+  src.columns[1] = src.columns[1] / n;
+  src.columns[2] = src.columns[2] / n;
 
   return src;
 }
 
 // Scalar division
 static inline matrix operator/=(matrix &src, float n) { return (src = src / n); }
+
+#endif
 
 //// Computes a cross product between u and v, returns the result
 ////	in Normal.
@@ -258,19 +250,7 @@ static inline matrix operator/=(matrix &src, float n) { return (src = src / n); 
 
 // Matrix transpose
 static inline matrix operator~(matrix m) {
-  float t;
-
-  t = m.uvec.x;
-  m.uvec.x = m.rvec.y;
-  m.rvec.y = t;
-  t = m.fvec.x;
-  m.fvec.x = m.rvec.z;
-  m.rvec.z = t;
-  t = m.fvec.y;
-  m.fvec.y = m.uvec.z;
-  m.uvec.z = t;
-
-  return m;
+  return simd::transpose(m);
 }
 
 #if 0
@@ -289,9 +269,9 @@ static inline vector operator-(vector a) {
 static inline vector operator*(vector v, matrix m) {
   vector result;
 
-  result.x = simd::dot(v, m.rvec);
-  result.y = simd::dot(v, m.uvec);
-  result.z = simd::dot(v, m.fvec);
+  result.x = simd::dot(v, m.columns[0]);
+  result.y = simd::dot(v, m.columns[1]);
+  result.z = simd::dot(v, m.columns[2]);
 
   return result;
 }

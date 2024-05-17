@@ -221,7 +221,7 @@ void DoObjectLight(object *obj) {
         fvi_query fq;
 
         // shoot a ray from the light position to the current vertex
-        simd::float3 end_pos = obj->pos + (obj->orient.fvec * HEADLIGHT_DISTANCE * 2);
+        simd::float3 end_pos = obj->pos + (obj->orient.columns[2] * HEADLIGHT_DISTANCE * 2);
         fq.p0 = &obj->pos;
         fq.p1 = &end_pos;
 
@@ -234,7 +234,7 @@ void DoObjectLight(object *obj) {
 
         fvi_FindIntersection(&fq, &hit_info);
 
-        hit_info.hit_pnt -= obj->orient.fvec / 4;
+        hit_info.hit_pnt -= obj->orient.columns[2] / 4;
 
         float dist = vec::vm_VectorDistanceQuick(&hit_info.hit_pnt, &obj->pos);
 
@@ -256,10 +256,10 @@ void DoObjectLight(object *obj) {
 
         if (OBJECT_OUTSIDE(obj))
           ApplyLightingToTerrain(&obj->pos, CELLNUM(obj->roomnum), HEADLIGHT_DISTANCE, negative_light * 1.0,
-                                 negative_light * 1.0, negative_light * 1.0, &obj->orient.fvec, HEADLIGHT_DOT);
+                                 negative_light * 1.0, negative_light * 1.0, &obj->orient.columns[2], HEADLIGHT_DOT);
         else
           ApplyLightingToRooms(&obj->pos, obj->roomnum, HEADLIGHT_DISTANCE, negative_light * 1.0, negative_light * 1.0,
-                               negative_light * 1.0, &obj->orient.fvec, HEADLIGHT_DOT);
+                               negative_light * 1.0, &obj->orient.columns[2], HEADLIGHT_DOT);
       }
     }
 
@@ -375,7 +375,7 @@ void DoObjectLight(object *obj) {
       return;
 
     if (li->flags & OLF_DIRECTIONAL)
-      direction = &obj->orient.fvec;
+      direction = &obj->orient.columns[2];
 
     if (li->flags & OLF_FLICKER_SLIGHTLY) {
       int factor = li->flicker_distance;

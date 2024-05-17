@@ -154,9 +154,9 @@ int LoadGameState(const char *pathname);
   } while (0)
 #define gs_WriteMatrix(_f, _m)                                                                                         \
   do {                                                                                                                 \
-    gs_WriteVector((_f), (_m).rvec);                                                                                   \
-    gs_WriteVector((_f), (_m).uvec);                                                                                   \
-    gs_WriteVector((_f), (_m).fvec);                                                                                   \
+    gs_WriteVector((_f), (_m).columns[0]);                                                                                   \
+    gs_WriteVector((_f), (_m).columns[1]);                                                                                   \
+    gs_WriteVector((_f), (_m).columns[2]);                                                                                   \
   } while (0)
 #define gs_WriteAngle(_f, _a) cf_WriteShort(_f, (int16_t)(_a))
 #define gs_WriteByte(_f, _b) cf_WriteByte(_f, _b)
@@ -176,9 +176,9 @@ int LoadGameState(const char *pathname);
   } while (0)
 #define gs_ReadMatrix(_f, _m)                                                                                          \
   do {                                                                                                                 \
-    gs_ReadVector((_f), (_m).rvec);                                                                                    \
-    gs_ReadVector((_f), (_m).uvec);                                                                                    \
-    gs_ReadVector((_f), (_m).fvec);                                                                                    \
+    gs_ReadVector((_f), (_m).columns[0]);                                                                                    \
+    gs_ReadVector((_f), (_m).columns[1]);                                                                                    \
+    gs_ReadVector((_f), (_m).columns[2]);                                                                                    \
   } while (0)
 #define gs_ReadAngle(_f, _a) ((_a) = (angle)cf_ReadShort(_f))
 #define gs_ReadBool(_f, _b) ((_b) = (bool)cf_ReadByte(_f))

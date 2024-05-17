@@ -860,7 +860,7 @@ void aiBlackStormTrooper::OnInterval(tOSIRISEventInfo *data) {
 
     // Determine real start pos - room
     simd::float3 end_pos = pos;
-    end_pos += orient.fvec * 2000.0f;
+    end_pos += orient.columns[2] * 2000.0f;
 
     int fvi_flags = FQ_CHECK_OBJS | FQ_IGNORE_POWERUPS | FQ_IGNORE_WEAPONS | FQ_IGNORE_MOVING_OBJECTS |
                     FQ_IGNORE_NON_LIGHTMAP_OBJECTS;
@@ -1509,7 +1509,7 @@ void aiSTBlackBarrel::OnDestroy(int me_handle, tOSIRISEVTDESTROY *evt) {
   Obj_Value(me_handle, VF_GET, OBJV_I_ROOMNUM, &room);
   Obj_Value(me_handle, VF_GET, OBJV_M_ORIENT, &orient);
 
-  new_dir = -orient.fvec;
+  new_dir = -orient.columns[2];
   vm_VectorToMatrix(&new_orient, &new_dir, NULL, NULL);
 
   Obj_Create(OBJ_WEAPON, Wpn_FindID("AlienBossFragBurst"), room, &pos, &new_orient, me_handle);

@@ -1680,7 +1680,7 @@ void msafe_CallFunction(uint8_t type, msafe_struct *mstruct) {
         break;
       spew.use_gunpoint = false;
       spew.pt.origin = objp->pos;
-      spew.pt.normal = objp->orient.uvec;
+      spew.pt.normal = objp->orient.columns[1];
       spew.pt.room_num = objp->roomnum;
     } else if (mstruct->gunpoint == -1) { // no gun
       object *objp = ObjGet(mstruct->objhandle);
@@ -1688,7 +1688,7 @@ void msafe_CallFunction(uint8_t type, msafe_struct *mstruct) {
         break;
       spew.use_gunpoint = false;
       spew.pt.origin = objp->pos;
-      spew.pt.normal = objp->orient.fvec;
+      spew.pt.normal = objp->orient.columns[2];
       spew.pt.room_num = objp->roomnum;
     } else {
       spew.use_gunpoint = true;

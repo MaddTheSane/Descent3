@@ -1092,7 +1092,7 @@ void AquireElectricalTarget(object *obj) {
       // Make sure this target is within our view cone
       simd::float3 subvec = hit_obj_ptr->pos - obj->pos;
       vec::vm_NormalizeVectorFast(&subvec);
-      if (simd::dot(subvec, obj->orient.fvec) < .8)
+      if (simd::dot(subvec, obj->orient.columns[2]) < .8)
         continue;
 
       // The distance is actually the objects' centers minus some of the hit object's radius (I set it to 80%)
@@ -1173,7 +1173,7 @@ void AquireElectricalTarget(object *obj) {
     int fate;          // Collision type for response code
     fvi_info hit_info; // Hit information
     fvi_query fq;      // Movement query
-    simd::float3 dest = obj->pos + (obj->orient.fvec * 50.0);
+    simd::float3 dest = obj->pos + (obj->orient.columns[2] * 50.0);
 
     fq.p0 = &obj->pos;
     fq.startroom = obj->roomnum;
@@ -1274,7 +1274,7 @@ int CreateAndFireWeapon(simd::float3 *pos, simd::float3 *dir, object *parent, in
   }
 
   // Set direction
-  vm_VectorToMatrix(&obj->orient, dir, &parent->orient.uvec, NULL);
+  vec::vm_VectorToMatrix(&obj->orient, dir, &parent->orient.columns[1], NULL);
 
   float scalar = 1.0f;
   if (!ObjGet(obj->parent_handle) || ObjGet(obj->parent_handle)->type != OBJ_PLAYER)
@@ -1306,16 +1306,16 @@ int CreateAndFireWeapon(simd::float3 *pos, simd::float3 *dir, object *parent, in
   // Don't do it though if it is a spawned weapon
   if ((obj->mtype.phys_info.flags & PF_USES_PARENT_VELOCITY) && parent->type != OBJ_WEAPON) {
 
-    float fdot = simd::dot(parent->mtype.phys_info.velocity, parent->orient.fvec);
+    float fdot = simd::dot(parent->mtype.phys_info.velocity, parent->orient.columns[2]);
     simd::float3 fvel;
 
     if (fdot > 0.0)
-      fvel = parent->orient.fvec * fdot;
+      fvel = parent->orient.columns[2] * fdot;
     else
       fvel = vec::Zero_vector;
 
-    simd::float3 rvel = 0.1f * parent->orient.rvec * (parent->mtype.phys_info.velocity * parent->orient.rvec);
-    simd::float3 uvel = 0.1f * parent->orient.uvec * (parent->mtype.phys_info.velocity * parent->orient.uvec);
+    simd::float3 rvel = 0.1f * parent->orient.columns[0] * (parent->mtype.phys_info.velocity * parent->orient.columns[0]);
+    simd::float3 uvel = 0.1f * parent->orient.columns[1] * (parent->mtype.phys_info.velocity * parent->orient.columns[1]);
 
     obj->mtype.phys_info.velocity += fvel + rvel + uvel;
   }
@@ -1371,7 +1371,7 @@ int CreateAndFireWeapon(simd::float3 *pos, simd::float3 *dir, object *parent, in
   }
 
   // For smoke effects
-  obj->ctype.laser_info.last_smoke_pos = obj->pos - (obj->orient.fvec * (obj->size / 2));
+  obj->ctype.laser_info.last_smoke_pos = obj->pos - (obj->orient.columns[2] * (obj->size / 2));
   obj->ctype.laser_info.casts_light = true;
   return objnum;
 }
@@ -1391,13 +1391,13 @@ void HomingTurnTowardObj(object *weapon, object *target) {
   dir_to_target = target->pos + movement - weapon->pos;
 
   if (weapon->mtype.phys_info.rotdrag > 0.0f) {
-    if (simd::dot(dir_to_target, weapon->orient.rvec) > 0.0) {
+    if (simd::dot(dir_to_target, weapon->orient.columns[0]) > 0.0) {
       weapon->mtype.phys_info.rotthrust.y = weapon->mtype.phys_info.full_rotthrust;
     } else {
       weapon->mtype.phys_info.rotthrust.y = -weapon->mtype.phys_info.full_rotthrust;
     }
 
-    if (simd::dot(dir_to_target, weapon->orient.uvec) > 0.0) {
+    if (simd::dot(dir_to_target, weapon->orient.columns[1]) > 0.0) {
       weapon->mtype.phys_info.rotthrust.x = -weapon->mtype.phys_info.full_rotthrust;
     } else {
       weapon->mtype.phys_info.rotthrust.x = weapon->mtype.phys_info.full_rotthrust;
@@ -1418,8 +1418,8 @@ void HomingTurnTowardObj(object *weapon, object *target) {
 
     AITurnTowardsDir(weapon, &dir_to_target, weapon->mtype.phys_info.full_rotthrust * scalar);
     weapon->mtype.phys_info.velocity =
-        weapon->orient.fvec * weapon->mtype.phys_info.full_thrust / weapon->mtype.phys_info.drag;
-    weapon->mtype.phys_info.thrust = weapon->orient.fvec * weapon->mtype.phys_info.full_thrust;
+        weapon->orient.columns[2] * weapon->mtype.phys_info.full_thrust / weapon->mtype.phys_info.drag;
+    weapon->mtype.phys_info.thrust = weapon->orient.columns[2] * weapon->mtype.phys_info.full_thrust;
   }
 }
 
@@ -1453,7 +1453,7 @@ object *HomingAquireTarget(object *obj) {
       f_locked = false;
     } else if (obj->effect_info && (obj->effect_info->type_flags & EF_CLOAKED)) {
       f_locked = false;
-    } else if (simd::dot(to_target, obj->orient.fvec) > Weapons[obj->id].homing_fov) {
+    } else if (simd::dot(to_target, obj->orient.columns[2]) > Weapons[obj->id].homing_fov) {
       if (track_goal == Player_object && Player_object->type == OBJ_PLAYER) {
         float sound_delta;
         float volume;
@@ -1554,7 +1554,7 @@ object *HomingAquireTarget(object *obj) {
               continue;
 
             float dist_to_target = vec::vm_NormalizeVector(&to_target) - obj->size - Objects[i].size;
-            float cur_dot = simd::dot(to_target, obj->orient.fvec);
+            float cur_dot = simd::dot(to_target, obj->orient.columns[2]);
 
             if (cur_dot > Weapons[obj->id].homing_fov) {
               // Pick chaff over other objects
@@ -1656,7 +1656,7 @@ void WeaponDoFrame(object *obj) {
 
   if ((Weapons[obj->id].flags & WF_SMOKE) && draw_effects) {
     if (Weapons[obj->id].flags & WF_PLANAR_SMOKE) {
-      simd::float3 newpos = obj->pos - (obj->orient.fvec * (obj->size / 2));
+      simd::float3 newpos = obj->pos - (obj->orient.columns[2] * (obj->size / 2));
       int visnum = VisEffectCreate(VIS_FIREBALL, BILLBOARD_SMOKETRAIL_INDEX, obj->roomnum, &newpos);
       if (visnum >= 0) {
         vis_effect *vis = &VisEffects[visnum];
@@ -1674,7 +1674,7 @@ void WeaponDoFrame(object *obj) {
     } else {
       // Create blobby smoke
       // Create extras
-      simd::float3 blobpos = obj->pos - (obj->orient.fvec * obj->size);
+      simd::float3 blobpos = obj->pos - (obj->orient.columns[2] * obj->size);
 
       float delta_time = Frametime;
       simd::float3 delta_vec = obj->mtype.phys_info.velocity * delta_time;
@@ -1710,7 +1710,7 @@ void WeaponDoFrame(object *obj) {
   }
 
   if (Weapons[obj->id].particle_count > 0 && Weapons[obj->id].particle_handle != -1 && draw_effects) {
-    simd::float3 pos = obj->pos - (obj->orient.fvec * obj->size);
+    simd::float3 pos = obj->pos - (obj->orient.columns[2] * obj->size);
     weapon *weap = &Weapons[obj->id];
     float particle_interval = (1.0 / (float)weap->particle_count);
 
@@ -1741,7 +1741,7 @@ bool WeaponCalcGun(simd::float3 *gun_point, simd::float3 *gun_normal, object *ob
     if (gun_point)
       *gun_point = obj->pos;
     if (gun_normal)
-      *gun_normal = obj->orient.fvec;
+      *gun_normal = obj->orient.columns[2];
 
     return false;
   }
@@ -1754,7 +1754,7 @@ bool WeaponCalcGun(simd::float3 *gun_point, simd::float3 *gun_normal, object *ob
     if (gun_point)
       *gun_point = obj->pos;
     if (gun_normal)
-      *gun_normal = obj->orient.fvec;
+      *gun_normal = obj->orient.columns[2];
 
     return false;
   }
@@ -1767,7 +1767,7 @@ bool WeaponCalcGun(simd::float3 *gun_point, simd::float3 *gun_normal, object *ob
     if (gun_point)
       *gun_point = obj->pos;
     if (gun_normal)
-      *gun_normal = obj->orient.fvec;
+      *gun_normal = obj->orient.columns[2];
     return false;
   }
 
@@ -1829,7 +1829,7 @@ int FireWeaponFromObject(object *obj, int weapon_num, int gun_num, bool f_force_
 
   if (gun_num == -1) {
     laser_pos = obj->pos;
-    laser_dir = obj->orient.fvec;
+    laser_dir = obj->orient.columns[2];
   } else {
     // Find the initial position of the laser
     poly_model *pm = &Poly_models[obj->rtype.pobj_info.model_num];
@@ -1841,11 +1841,11 @@ int FireWeaponFromObject(object *obj, int weapon_num, int gun_num, bool f_force_
       // We don't have a gun point for this gun!
       LOG_WARNING.printf("Trying to fire from gun %d...we don't have that gun!", gun_num);
       laser_pos = obj->pos;
-      laser_dir = obj->orient.fvec;
+      laser_dir = obj->orient.columns[2];
     } else {
       if (f_force_forward) {
         WeaponCalcGun(&laser_pos, NULL, obj, gun_num);
-        laser_dir = obj->orient.fvec;
+        laser_dir = obj->orient.columns[2];
       } else if (f_force_target && obj->ai_info &&
                  simd::any(obj->ai_info->vec_to_target_perceived != vec::Zero_vector)) {
         WeaponCalcGun(&laser_pos, NULL, obj, gun_num);
@@ -2051,7 +2051,7 @@ void DrawElectricalWeapon(object *obj) {
   WeaponCalcGun(&src_vector, &dir, parent_obj, obj->ctype.laser_info.src_gun_num);
 
   if (obj->ctype.laser_info.track_handle == OBJECT_HANDLE_NONE || ObjGet(obj->ctype.laser_info.track_handle) == NULL) {
-    dest_vector = src_vector + (obj->orient.fvec * 50);
+    dest_vector = src_vector + (obj->orient.columns[2] * 50);
   } else {
     object *obj_to_track = ObjGet(obj->ctype.laser_info.track_handle);
     dest_vector = obj_to_track->pos;
@@ -2104,7 +2104,7 @@ void DrawElectricalWeapon(object *obj) {
 
   if (parent_obj != Viewer_object) {
     simd::float3 temp_line_norm = -line_norm;
-    view_dp = simd::dot(Viewer_object->orient.fvec, temp_line_norm);
+    view_dp = simd::dot(Viewer_object->orient.columns[2], temp_line_norm);
   }
 
   vec::matrix mat;
@@ -2130,8 +2130,8 @@ void DrawElectricalWeapon(object *obj) {
 
   for (i = 1; i < num_segments - 1; i++, from += line_norm, cur_sin += 8000) {
     center_vecs[i] = from;
-    center_vecs[i] += (mat.uvec * FixSin(cur_sin % 65536) * .4f);
-    center_vecs[i] += (mat.rvec * FixCos(cur_sin % 65536) * .4f);
+    center_vecs[i] += (mat.columns[1] * FixSin(cur_sin % 65536) * .4f);
+    center_vecs[i] += (mat.columns[0] * FixCos(cur_sin % 65536) * .4f);
   }
 
   // Now that we have our center points, create a tube
@@ -2143,8 +2143,8 @@ void DrawElectricalWeapon(object *obj) {
       arc_vec = center_vecs[i];
 
       if (i != num_segments - 1) {
-        arc_vec += (obj->orient.uvec * size * FixSin(norm * 65536));
-        arc_vec -= (obj->orient.rvec * size * FixCos(norm * 65536));
+        arc_vec += (obj->orient.columns[1] * size * FixSin(norm * 65536));
+        arc_vec -= (obj->orient.columns[0] * size * FixCos(norm * 65536));
       }
 
       g3_RotatePoint(&arc_points[i * circle_pieces + t], &arc_vec);
@@ -2242,11 +2242,11 @@ void DoFusionEffect(object *objp, int weapon_type) {
 
     move = (ps_rand() % 5) - 2;
 
-    objp->mtype.phys_info.velocity += (objp->orient.rvec) * ((float)move * over * Frametime * 175.0);
+    objp->mtype.phys_info.velocity += (objp->orient.columns[0]) * ((float)move * over * Frametime * 175.0);
 
     move = (ps_rand() % 5) - 2;
 
-    objp->mtype.phys_info.velocity += (objp->orient.uvec) * ((float)move * over * Frametime * 175.0);
+    objp->mtype.phys_info.velocity += (objp->orient.columns[1]) * ((float)move * over * Frametime * 175.0);
   }
 
   if (norm > 1.0) {
@@ -2302,16 +2302,16 @@ void DoSprayEffect(object *obj, otype_wb_info *static_wb, uint8_t wb_index) {
 
       // Set initial velocity to that of the firing object
       if (Weapons[weapon_num].phys_info.flags & PF_USES_PARENT_VELOCITY) {
-        float fdot = simd::dot(obj->mtype.phys_info.velocity, obj->orient.fvec);
+        float fdot = simd::dot(obj->mtype.phys_info.velocity, obj->orient.columns[2]);
         simd::float3 fvel;
 
         if (fdot > 0.0)
-          fvel = obj->orient.fvec * fdot;
+          fvel = obj->orient.columns[2] * fdot;
         else
           fvel = vec::Zero_vector;
 
-        simd::float3 rvel = 0.1f * obj->orient.rvec * (obj->mtype.phys_info.velocity * obj->orient.rvec);
-        simd::float3 uvel = 0.1f * obj->orient.uvec * (obj->mtype.phys_info.velocity * obj->orient.uvec);
+        simd::float3 rvel = 0.1f * obj->orient.columns[0] * (obj->mtype.phys_info.velocity * obj->orient.columns[0]);
+        simd::float3 uvel = 0.1f * obj->orient.columns[1] * (obj->mtype.phys_info.velocity * obj->orient.columns[1]);
 
         vis->velocity += fvel + rvel + uvel;
       }
@@ -2445,7 +2445,7 @@ void DrawWeaponStreamer(object *obj) {
   int i;
 
   vecs[0] = obj->pos;
-  vecs[1] = obj->pos - (obj->orient.fvec * len);
+  vecs[1] = obj->pos - (obj->orient.columns[2] * len);
 
   for (i = 0; i < 2; i++) {
     g3_RotatePoint(&pnts[i], &vecs[i]);
@@ -2496,8 +2496,8 @@ void DrawBlobbyWeaponRing(object *obj) {
     float ring_sin = FixSin(ring_angle);
     float ring_cos = FixCos(ring_angle);
 
-    vecs[i] = obj->orient.rvec * (ring_cos * obj->size);
-    vecs[i] += obj->orient.uvec * (ring_sin * obj->size);
+    vecs[i] = obj->orient.columns[0] * (ring_cos * obj->size);
+    vecs[i] += obj->orient.columns[1] * (ring_sin * obj->size);
     vecs[i] += obj->pos;
 
     g3_DrawRotatedBitmap(&vecs[i], ring_angle, blob_size, (blob_size * bm_h(bm_handle, 0)) / bm_w(bm_handle, 0),
@@ -2532,12 +2532,12 @@ void DrawPolygonalWeaponRing(object *obj) {
     float ring_sin = FixSin(ring_angle);
     float ring_cos = FixCos(ring_angle);
 
-    inner_vecs[i] = obj->orient.rvec * (ring_cos * inner_size);
-    inner_vecs[i] += obj->orient.uvec * (ring_sin * inner_size);
+    inner_vecs[i] = obj->orient.columns[0] * (ring_cos * inner_size);
+    inner_vecs[i] += obj->orient.columns[1] * (ring_sin * inner_size);
     inner_vecs[i] += obj->pos;
 
-    outer_vecs[i] = obj->orient.rvec * (ring_cos * obj->size);
-    outer_vecs[i] += obj->orient.uvec * (ring_sin * obj->size);
+    outer_vecs[i] = obj->orient.columns[0] * (ring_cos * obj->size);
+    outer_vecs[i] += obj->orient.columns[1] * (ring_sin * obj->size);
     outer_vecs[i] += obj->pos;
 
     g3_RotatePoint(&inner_points[i], &inner_vecs[i]);
@@ -2718,7 +2718,7 @@ void DoZoomEffect(player_weapon *pw, uint8_t clear) {
     int fate;          // Collision type for response code
     fvi_info hit_info; // Hit information
     fvi_query fq;      // Movement query
-    simd::float3 dest = obj->pos + (obj->orient.fvec * 5000.0);
+    simd::float3 dest = obj->pos + (obj->orient.columns[2] * 5000.0);
 
     fq.p0 = &obj->pos;
     fq.startroom = obj->roomnum;
@@ -3078,7 +3078,7 @@ void DoWeaponExploded(object *obj, simd::float3 *norm, simd::float3 *collision_p
     col_point = *collision_point;
 
   if (norm == NULL)
-    normal = obj->orient.fvec;
+    normal = obj->orient.columns[2];
   else
     normal = *norm;
 
@@ -3185,12 +3185,12 @@ void CreateTimeoutSpawnFromWeapon(object *obj) {
   for (int i = 0; i < num; i++) {
     if (i == 0) // Make first one fire from the center of the ring
     {
-      pos = obj->pos + (obj->orient.fvec * obj->size / 2);
+      pos = obj->pos + (obj->orient.columns[2] * obj->size / 2);
 
-      CreateAndFireWeapon(&pos, &obj->orient.fvec, obj, spawn_index);
+      CreateAndFireWeapon(&pos, &obj->orient.columns[2], obj, spawn_index);
     } else {
       vec::matrix temp_mat;
-      pos = obj->pos + (obj->orient.fvec * obj->size / 2);
+      pos = obj->pos + (obj->orient.columns[2] * obj->size / 2);
 
       float norm = ((float)(i - 1)) / ((float)num - 1);
 
@@ -3200,12 +3200,12 @@ void CreateTimeoutSpawnFromWeapon(object *obj) {
       int x_twist = mycos * 4096;
       int y_twist = mysin * 4096;
 
-      vm_AnglesToMatrix(&temp_mat, x_twist, y_twist, 0);
-      vm_TransposeMatrix(&temp_mat);
+      vec::vm_AnglesToMatrix(&temp_mat, x_twist, y_twist, 0);
+      vec::vm_TransposeMatrix(&temp_mat);
 
       orient = obj->orient * temp_mat;
 
-      CreateAndFireWeapon(&pos, &orient.fvec, obj, spawn_index);
+      CreateAndFireWeapon(&pos, &orient.columns[2], obj, spawn_index);
     }
   }
 }
@@ -3344,7 +3344,7 @@ void CreateImpactSpawnFromWeapon(object *obj, simd::float3 *normal) {
       vec::vm_TransposeMatrix(&rot_mat);
       vec::vm_AnglesToMatrix(&temp_mat, x_twist, y_twist, 0);
 
-      new_norm = temp_mat.fvec * rot_mat;
+      new_norm = temp_mat.columns[2] * rot_mat;
 
       CreateAndFireWeapon(&obj->pos, &new_norm, obj, spawn_index);
     }
@@ -3356,7 +3356,7 @@ void TimeoutWeapon(object *obj) {
   int n = obj->id;
 
   if ((Weapons[n].flags & WF_SPAWNS_TIMEOUT) && Weapons[n].spawn_count > 0 && Weapons[n].spawn_handle >= 0) {
-    DoWeaponExploded(obj, &obj->orient.fvec);
+    DoWeaponExploded(obj, &obj->orient.columns[2]);
     CreateTimeoutSpawnFromWeapon(obj);
   }
 

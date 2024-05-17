@@ -2284,7 +2284,7 @@ void DoFlyingControl(object *objp) {
       Timedemo_timecount += Frametime;
     }
 
-    vm_AnglesToMatrix(&temp_mat, 0, 65536 / 360, 0);
+    vec::vm_AnglesToMatrix(&temp_mat, 0, 65536 / 360, 0);
 
     rot_mat = objp->orient * temp_mat;
 
@@ -2424,9 +2424,9 @@ void DoFlyingControl(object *objp) {
       speed_scalar *= 1.3f;
 
     objp->mtype.phys_info.thrust = speed_scalar * Players[objp->id].movement_scalar *
-                                   ((objp->orient.fvec * controls.forward_thrust * objp->mtype.phys_info.full_thrust) +
-                                    (objp->orient.uvec * controls.vertical_thrust * objp->mtype.phys_info.full_thrust) +
-                                    (objp->orient.rvec * controls.sideways_thrust * objp->mtype.phys_info.full_thrust));
+                                   ((objp->orient.columns[2] * controls.forward_thrust * objp->mtype.phys_info.full_thrust) +
+                                    (objp->orient.columns[1] * controls.vertical_thrust * objp->mtype.phys_info.full_thrust) +
+                                    (objp->orient.columns[0] * controls.sideways_thrust * objp->mtype.phys_info.full_thrust));
   }
 
   // Process player-specific stuff
@@ -3276,8 +3276,8 @@ void GetObjectPointInWorld(simd::float3 *dest, object *obj, int subnum, int vert
   while (mn != -1) {
     simd::float3 tpnt;
 
-    vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
-    vm_TransposeMatrix(&m);
+    vec::vm_AnglesToMatrix(&m, pm->submodel[mn].angs.p, pm->submodel[mn].angs.h, pm->submodel[mn].angs.b);
+    vec::vm_TransposeMatrix(&m);
 
     tpnt = pnt * m;
 
@@ -3288,7 +3288,7 @@ void GetObjectPointInWorld(simd::float3 *dest, object *obj, int subnum, int vert
 
   // now instance for the entire object
   m = obj->orient;
-  vm_TransposeMatrix(&m);
+  vec::vm_TransposeMatrix(&m);
 
   *dest = pnt * m;
   *dest += obj->pos;

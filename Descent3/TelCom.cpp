@@ -3507,7 +3507,7 @@ void TelComSingleShipSelect(tTelComInfo *tcs) {
 
   TCShipSelect.CurrentSelectID = -1;
   TCShipSelect.ship_model = -1;
-  vm_MakeIdentity(&TCShipSelect.orient);
+  vec::vm_MakeIdentity(&TCShipSelect.orient);
 
   TelcomStartScreen(0);
 

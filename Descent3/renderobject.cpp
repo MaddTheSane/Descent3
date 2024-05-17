@@ -669,9 +669,9 @@ void DrawObjectSelectionBrackets(object *obj, bool front_flag) {
   for (int c = 0; c < 8; c++) {
     simd::float3 corner;
     // Get the corner relative to the object
-    corner = (obj->orient.rvec * ((c & 1) ? pm->mins.x : pm->maxs.x)) +
-             (obj->orient.uvec * ((c & 2) ? pm->mins.y : pm->maxs.y)) +
-             (obj->orient.fvec * ((c & 4) ? pm->mins.z : pm->maxs.z));
+    corner = (obj->orient.columns[0] * ((c & 1) ? pm->mins.x : pm->maxs.x)) +
+             (obj->orient.columns[1] * ((c & 2) ? pm->mins.y : pm->maxs.y)) +
+             (obj->orient.columns[2] * ((c & 4) ? pm->mins.z : pm->maxs.z));
     // See if this corner is in front or in back of the object, as specified
     if (((corner * viewvec) > 0.0) != front_flag)
       continue;
@@ -739,9 +739,9 @@ static void DrawNumber(int num, simd::float3 pos, float size, ddgr_color c1) {
     simd::float3 cur_pos;
 
     if (num_numbers & 0x00000001)
-      cur_pos = pos + (2.1 * size * ((num_numbers >> 1) - j)) * Viewer_object->orient.rvec;
+      cur_pos = pos + (2.1 * size * ((num_numbers >> 1) - j)) * Viewer_object->orient.columns[0];
     else
-      cur_pos = pos + (2.1 * size * ((num_numbers >> 1) - j) - size) * Viewer_object->orient.rvec;
+      cur_pos = pos + (2.1 * size * ((num_numbers >> 1) - j) - size) * Viewer_object->orient.columns[0];
     g3_RotatePoint(&basepnt, &cur_pos);
     for (i = 0; i < NumOfPoints[num_array[j]]; i++) {
       rot_pnt[i] = basepnt;
@@ -786,19 +786,19 @@ void ComputeDebugVisFaceUpperLeft(room *rp, face *fp, simd::float3 *upper_left, 
   // Reverse the normal because we're looking "at" the face, not from it
   fvec = -fp->normal;
 
-  vm_VectorToMatrix(&face_matrix, &fvec, NULL, NULL);
+  vec::vm_VectorToMatrix(&face_matrix, &fvec, NULL, NULL);
   // Make the transformation matrix
 
   vec::angvec avec;
-  vm_ExtractAnglesFromMatrix(&avec, &face_matrix);
-  vm_AnglesToMatrix(&trans_matrix, avec.p, avec.h, avec.b);
+  vec::vm_ExtractAnglesFromMatrix(&avec, &face_matrix);
+  vec::vm_AnglesToMatrix(&trans_matrix, avec.p, avec.h, avec.b);
 
   // Rotate all the points
   for (i = 0; i < fp->num_verts; i++) {
     simd::float3 vert = rp->verts[fp->face_verts[i]];
 
     vert -= avg_vert;
-    vm_MatrixMulVector(&rot_vert, &vert, &trans_matrix);
+    vec::vm_MatrixMulVector(&rot_vert, &vert, &trans_matrix);
     verts[i] = rot_vert;
   }
   // Find left most point
@@ -851,8 +851,8 @@ void ComputeDebugVisFaceUpperLeft(room *rp, face *fp, simd::float3 *upper_left, 
   *ydiff = verts[topmost_point].y - verts[bottommost_point].y;
 
   // Find upper left corner
-  vm_TransposeMatrix(&trans_matrix);
-  vm_MatrixMulVector(&rot_vert, &base_vector, &trans_matrix);
+  vec::vm_TransposeMatrix(&trans_matrix);
+  vec::vm_MatrixMulVector(&rot_vert, &base_vector, &trans_matrix);
   *upper_left = rot_vert + avg_vert;
   *center = avg_vert;
 }
@@ -881,20 +881,20 @@ void DrawRoomVisPnts(object *obj) {
       if (src_width > VIS_TABLE_RESOLUTION) {
         float num = src_width / VIS_TABLE_RESOLUTION;
         src_width = VIS_TABLE_RESOLUTION;
-        src_upper_left += (src_matrix.rvec * (num / 2));
-        src_matrix.rvec *= num;
+        src_upper_left += (src_matrix.columns[0] * (num / 2));
+        src_matrix.columns[0] *= num;
       }
       if (src_height > VIS_TABLE_RESOLUTION) {
         float num = src_height / VIS_TABLE_RESOLUTION;
         src_height = VIS_TABLE_RESOLUTION;
-        src_upper_left -= (src_matrix.uvec * (num / 2));
-        src_matrix.uvec *= num;
+        src_upper_left -= (src_matrix.columns[1] * (num / 2));
+        src_matrix.columns[1] *= num;
       }
       simd::float3 src_vector, src_ybase;
       src_ybase = src_upper_left;
-      for (int sy = 0; sy < src_height; sy++, src_ybase -= src_matrix.uvec) {
+      for (int sy = 0; sy < src_height; sy++, src_ybase -= src_matrix.columns[1]) {
         src_vector = src_ybase;
-        for (int sx = 0; sx < src_width; sx++, src_vector += src_matrix.rvec) {
+        for (int sx = 0; sx < src_width; sx++, src_vector += src_matrix.columns[0]) {
           simd::float3 src2 = src_vector;
           //						vector subvec=src_center-src_vector;
           //							float mag=vm_GetMagnitudeFast (&subvec);
@@ -1804,13 +1804,13 @@ int IsPointVisible(simd::float3 *pos, float size, float *pointz) {
       simd::float3 tvec = {0, 1, 0};
       simd::float3 bvec = {0, -1, 0};
       vec::matrix temp_mat;
-      vm_AnglesToMatrix(&temp_mat, 0, 65536 - angle_adjust, 0);
+      vec::vm_AnglesToMatrix(&temp_mat, 0, 65536 - angle_adjust, 0);
       right_normal = rvec * temp_mat;
-      vm_AnglesToMatrix(&temp_mat, 0, angle_adjust, 0);
+      vec::vm_AnglesToMatrix(&temp_mat, 0, angle_adjust, 0);
       left_normal = lvec * temp_mat;
-      vm_AnglesToMatrix(&temp_mat, 65536 - angle_adjust, 0, 0);
+      vec::vm_AnglesToMatrix(&temp_mat, 65536 - angle_adjust, 0, 0);
       bottom_normal = bvec * temp_mat;
-      vm_AnglesToMatrix(&temp_mat, angle_adjust, 0, 0);
+      vec::vm_AnglesToMatrix(&temp_mat, angle_adjust, 0, 0);
       top_normal = tvec * temp_mat;
     }
     // Get unscaled matrix stuff
@@ -2088,7 +2088,7 @@ void DrawPlayerTypingIndicator(object *obj) {
   // See if it is in our viewcone
   simd::float3 subvec = obj->pos - Player_object->pos;
   vec::vm_NormalizeVectorFast(&subvec);
-  if ((simd::dot(subvec, Player_object->orient.fvec)) < IndicatorTan)
+  if ((simd::dot(subvec, Player_object->orient.columns[2])) < IndicatorTan)
     return;
   if ((vec::vm_VectorDistanceQuick(&Viewer_object->pos, &obj->pos) > 800.0f))
     return;
@@ -2191,7 +2191,7 @@ void DrawPlayerNameOnHud(object *obj) {
   // See if it is in our viewcone
   simd::float3 subvec = obj->pos - Player_object->pos;
   vec::vm_NormalizeVectorFast(&subvec);
-  if ((simd::dot(subvec, Player_object->orient.fvec)) < HudNameTan)
+  if ((simd::dot(subvec, Player_object->orient.columns[2])) < HudNameTan)
     return;
   // Find out if it is o.k. to draw here.
   fvi_query fq;
@@ -2317,7 +2317,7 @@ void DrawPlayerSightVector(object *obj) {
   fvi_query fq;
   fvi_info hit_data;
   int fate;
-  simd::float3 end_pos = obj->pos + (obj->orient.fvec * 500);
+  simd::float3 end_pos = obj->pos + (obj->orient.columns[2] * 500);
 
   fq.p0 = &obj->pos;
   fq.startroom = obj->roomnum;

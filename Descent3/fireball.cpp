@@ -724,7 +724,7 @@ void DrawFireballObject(object *obj) {
   if (obj->id == GRAVITY_FIELD_INDEX) {
     // Draw two blast rings
     vec::matrix tempm;
-    vm_MakeIdentity(&tempm);
+    vec::vm_MakeIdentity(&tempm);
     ObjSetOrient(obj, &tempm);
     DrawBlastRingObject(obj);
     return;
@@ -1332,7 +1332,7 @@ void CreateDeadObject(object *objp) {
           simd::float3 old_point, pos;
           PhysCalcGround(&old_point, NULL, objp, 0); // Old ground point
           poly_model *pm = GetPolymodelPointer(Object_info[id].render_handle);
-          pos = old_point - pm->ground_slots[0].pnt * ~objp->orient;
+          pos = old_point - pm->ground_slots[0].pnt * simd::transpose(objp->orient);
           osipf_ObjCreate(Object_info[id].type, id, objp->roomnum, &pos, &objp->orient);
         }
         return; // done
@@ -1954,9 +1954,9 @@ void CreateBlueBlastRing(simd::float3 *pos, int index, float lifetime, float max
 
   if (ps_rand() % 2 || force_up) {
     memset(&tempm, 0, sizeof(vec::matrix));
-    tempm.rvec.x = 1.0;
-    tempm.uvec.z = -1.0;
-    tempm.fvec.y = 1.0;
+    tempm.columns[0].x = 1.0;
+    tempm.columns[1].z = -1.0;
+    tempm.columns[2].y = 1.0;
   } else {
     // Face the viewer
     simd::float3 fvec = Viewer_object->pos - *pos;
@@ -2101,7 +2101,7 @@ void DrawColoredRing(simd::float3 *pos, float r, float g, float b, float inner_a
   // get the view matrix
   vec::matrix viewOrient;
   g3_GetUnscaledMatrix(&viewOrient);
-  viewOrient = ~viewOrient;
+  viewOrient = simd::transpose(viewOrient);
 
   // setup the points
   g3Point innerPoints[32], outerPoints[32];
@@ -2164,7 +2164,7 @@ void DrawSphere(simd::float3 *pos, float r, float g, float b, float alpha, float
         heading = t * increment;
 
         vec::vm_AnglesToMatrix(&tempm, pitch, heading, 0);
-        sphere_vecs[i][t] = tempm.fvec;
+        sphere_vecs[i][t] = tempm.columns[2];
       }
     }
   }
@@ -2304,11 +2304,11 @@ void DrawBlastRingObject(object *obj) {
     float ring_sin = FixSin(((int)(ring_angle + (lifenorm * 65536)) % 65536));
     float ring_cos = FixCos(((int)(ring_angle + (lifenorm * 65536)) % 65536));
 
-    inner_vecs[i] = obj->orient.rvec * (ring_cos * cur_size * .50);
-    inner_vecs[i] += obj->orient.fvec * (ring_sin * cur_size * .50);
+    inner_vecs[i] = obj->orient.columns[0] * (ring_cos * cur_size * .50);
+    inner_vecs[i] += obj->orient.columns[2] * (ring_sin * cur_size * .50);
     inner_vecs[i] += obj->pos;
-    outer_vecs[i] = obj->orient.rvec * (ring_cos * cur_size);
-    outer_vecs[i] += obj->orient.fvec * (ring_sin * cur_size);
+    outer_vecs[i] = obj->orient.columns[0] * (ring_cos * cur_size);
+    outer_vecs[i] += obj->orient.columns[2] * (ring_sin * cur_size);
     outer_vecs[i] += obj->pos;
 
     g3_RotatePoint(&inner_points[i], &inner_vecs[i]);
@@ -2466,7 +2466,7 @@ void CreateLightningRodPositions(simd::float3 *src, simd::float3 *dest, simd::fl
   float delta_dist = mag / num_segments;
   delta_vec /= mag;
   // Create matrix for randomization
-  vm_VectorToMatrix(&mat, &delta_vec, NULL, NULL);
+  vec::vm_VectorToMatrix(&mat, &delta_vec, NULL, NULL);
 
   simd::float3 cur_pos = *src;
 
@@ -2477,9 +2477,9 @@ void CreateLightningRodPositions(simd::float3 *src, simd::float3 *dest, simd::fl
   for (int i = 1; i < num_segments - 1; i++, cur_pos += (delta_vec * delta_dist)) {
     simd::float3 to = cur_pos + (delta_vec * delta_dist);
     // simd::float3 to=world_vecs[i-1]+(delta_vec*delta_dist);
-    to += mat.rvec * ((((ps_rand() % 200) - 100) / 100.0) * rand_mag);
+    to += mat.columns[0] * ((((ps_rand() % 200) - 100) / 100.0) * rand_mag);
     if (!do_flat)
-      to += mat.uvec * ((((ps_rand() % 200) - 100) / 100.0) * rand_mag);
+      to += mat.columns[1] * ((((ps_rand() % 200) - 100) / 100.0) * rand_mag);
     ASSERT(i < 50);
 
     world_vecs[i] = to;

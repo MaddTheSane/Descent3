@@ -764,10 +764,10 @@ void RenderShipMonitor(tGauge *gauge, bool modified) {
     invpts[3].p3_x -= amount;
     invpts[3].p3_y -= amount;
 
-    invpts[0].p3_vecPreRot = invpts[0].p3_vecPreRot - (view_matrix.rvec * amount) + (view_matrix.uvec * amount);
-    invpts[1].p3_vecPreRot = invpts[1].p3_vecPreRot + (view_matrix.rvec * amount) + (view_matrix.uvec * amount);
-    invpts[2].p3_vecPreRot = invpts[2].p3_vecPreRot + (view_matrix.rvec * amount) - (view_matrix.uvec * amount);
-    invpts[3].p3_vecPreRot = invpts[3].p3_vecPreRot - (view_matrix.rvec * amount) - (view_matrix.uvec * amount);
+    invpts[0].p3_vecPreRot = invpts[0].p3_vecPreRot - (view_matrix.columns[0] * amount) + (view_matrix.columns[1] * amount);
+    invpts[1].p3_vecPreRot = invpts[1].p3_vecPreRot + (view_matrix.columns[0] * amount) + (view_matrix.columns[1] * amount);
+    invpts[2].p3_vecPreRot = invpts[2].p3_vecPreRot + (view_matrix.columns[0] * amount) - (view_matrix.columns[1] * amount);
+    invpts[3].p3_vecPreRot = invpts[3].p3_vecPreRot - (view_matrix.columns[0] * amount) - (view_matrix.columns[1] * amount);
 
     DrawGaugeQuad(invpts, HUD_resources.invpulse_bmp, inv_alpha);
     DrawGaugeQuad(invpts, HUD_resources.invpulse_bmp, inv_alpha, true);

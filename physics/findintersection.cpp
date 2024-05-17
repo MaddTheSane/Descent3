@@ -1318,7 +1318,7 @@ int check_vector_to_cylinder(simd::float3 *colp, simd::float3 *intp, float *col_
   bool f_init_collide;
 
   if (!IsPointInCylinder(&init_normal, ep0, &edgevec, edge_len, rad, p0, &mvec3d, &f_init_collide)) {
-    vm_VectorToMatrix(&edge_orient, &edgevec, nullptr, nullptr);
+    vec::vm_VectorToMatrix(&edge_orient, &edgevec, nullptr, nullptr);
 
     po0 = (*p0 - *ep0) * edge_orient;
     po1 = (*p1 - *ep0) * edge_orient;
@@ -1727,19 +1727,19 @@ bool check_line_to_line(float *t1, float *t2, simd::float3 *p1, simd::float3 *v1
   vec::matrix det;
   float d, cross_mag2; // mag squared cross product
 
-  det.rvec = *p2 - *p1;
-  det.fvec = simd::cross(*v1, *v2); // (crossproduct)
-  cross_mag2 = simd::dot(det.fvec, det.fvec);
+  det.columns[0] = *p2 - *p1;
+  det.columns[2] = simd::cross(*v1, *v2); // (crossproduct)
+  cross_mag2 = simd::dot(det.columns[2], det.columns[2]);
 
   if (cross_mag2 == 0.0)
     return false; // lines are parallel
 
-  det.uvec = *v2;
-  d = calc_det_value(&det);
+  det.columns[1] = *v2;
+  d = vec::calc_det_value(&det);
   *t1 = d / cross_mag2;
 
-  det.uvec = *v1;
-  d = calc_det_value(&det);
+  det.columns[1] = *v1;
+  d = vec::calc_det_value(&det);
   *t2 = d / cross_mag2;
 
   return true; // found point
@@ -3002,37 +3002,37 @@ simd::float3 *new_pos, int nv, simd::float3 **vertex_ptr_list, simd::float3 *fac
         bool f_int_poly = false;
 
 
-        verts[0] = (obj->orient.rvec * pm->mins.x) +
-                                  (obj->orient.uvec * pm->maxs.y) +
-                                  (obj->orient.fvec * pm->mins.z);
+        verts[0] = (obj->orient.columns[0] * pm->mins.x) +
+                                  (obj->orient.columns[1] * pm->maxs.y) +
+                                  (obj->orient.columns[2] * pm->mins.z);
 
-        verts[1] = (obj->orient.rvec * pm->mins.x) +
-                                  (obj->orient.uvec * pm->mins.y) +
-                                  (obj->orient.fvec * pm->mins.z);
+        verts[1] = (obj->orient.columns[0] * pm->mins.x) +
+                                  (obj->orient.columns[1] * pm->mins.y) +
+                                  (obj->orient.columns[2] * pm->mins.z);
 
-        verts[2] = (obj->orient.rvec * pm->maxs.x) +
-                                  (obj->orient.uvec * pm->mins.y) +
-                                  (obj->orient.fvec * pm->mins.z);
+        verts[2] = (obj->orient.columns[0] * pm->maxs.x) +
+                                  (obj->orient.columns[1] * pm->mins.y) +
+                                  (obj->orient.columns[2] * pm->mins.z);
 
-        verts[3] = (obj->orient.rvec * pm->maxs.x) +
-                                  (obj->orient.uvec * pm->maxs.y) +
-                                  (obj->orient.fvec * pm->mins.z);
+        verts[3] = (obj->orient.columns[0] * pm->maxs.x) +
+                                  (obj->orient.columns[1] * pm->maxs.y) +
+                                  (obj->orient.columns[2] * pm->mins.z);
 
-        verts[4] = (obj->orient.rvec * pm->maxs.x) +
-                                  (obj->orient.uvec * pm->maxs.y) +
-                                  (obj->orient.fvec * pm->maxs.z);
+        verts[4] = (obj->orient.columns[0] * pm->maxs.x) +
+                                  (obj->orient.columns[1] * pm->maxs.y) +
+                                  (obj->orient.columns[2] * pm->maxs.z);
 
-        verts[5] = (obj->orient.rvec * pm->maxs.x) +
-                                  (obj->orient.uvec * pm->mins.y) +
-                                  (obj->orient.fvec * pm->maxs.z);
+        verts[5] = (obj->orient.columns[0] * pm->maxs.x) +
+                                  (obj->orient.columns[1] * pm->mins.y) +
+                                  (obj->orient.columns[2] * pm->maxs.z);
 
-        verts[6] = (obj->orient.rvec * pm->mins.x) +
-                                  (obj->orient.uvec * pm->mins.y) +
-                                  (obj->orient.fvec * pm->maxs.z);
+        verts[6] = (obj->orient.columns[0] * pm->mins.x) +
+                                  (obj->orient.columns[1] * pm->mins.y) +
+                                  (obj->orient.columns[2] * pm->maxs.z);
 
-        verts[7] = (obj->orient.rvec * pm->mins.x) +
-                                  (obj->orient.uvec * pm->maxs.y) +
-                                  (obj->orient.fvec * pm->maxs.z);
+        verts[7] = (obj->orient.columns[0] * pm->mins.x) +
+                                  (obj->orient.columns[1] * pm->maxs.y) +
+                                  (obj->orient.columns[2] * pm->maxs.z);
 
 
 //	mprintf(0, "START\n");
@@ -3043,12 +3043,12 @@ simd::float3 *new_pos, int nv, simd::float3 **vertex_ptr_list, simd::float3 *fac
         }
 //	mprintf(0, "END\n");
 
-        norms[0] = obj->orient.rvec;
-        norms[1] = obj->orient.fvec;
-        norms[2] = -obj->orient.rvec;
-        norms[3] = -obj->orient.fvec;
-        norms[4] = obj->orient.uvec;
-        norms[5] = -obj->orient.uvec;
+        norms[0] = obj->orient.columns[0];
+        norms[1] = obj->orient.columns[2];
+        norms[2] = -obj->orient.columns[0];
+        norms[3] = -obj->orient.columns[2];
+        norms[4] = obj->orient.columns[1];
+        norms[5] = -obj->orient.columns[1];
 
         for(i = 0; i < 8; i++)
         {
@@ -3198,7 +3198,7 @@ simd::float3 PointSpeed(object *obj, simd::float3 *pos, vec::matrix *orient, sim
 
   vec::matrix o_t1 = *orient;
 
-  vm_TransposeMatrix(&o_t1);
+  vec::vm_TransposeMatrix(&o_t1);
   simd::float3 cmp1 = *rotvel * o_t1;
   ConvertEulerToAxisAmount(&cmp1, &n1, &temp1);
 
@@ -3229,21 +3229,21 @@ bool BBoxPlaneIntersection(bool fast_exit, simd::float3 *collision_point, simd::
   int num_int_box = 0;
   simd::float3 int_points_box[12];
 
-  verts[0] = (orient->rvec * pm->mins.x) + (orient->uvec * pm->maxs.y) + (orient->fvec * pm->mins.z);
+  verts[0] = (orient->columns[0] * pm->mins.x) + (orient->columns[1] * pm->maxs.y) + (orient->columns[2] * pm->mins.z);
 
-  verts[1] = (orient->rvec * pm->mins.x) + (orient->uvec * pm->mins.y) + (orient->fvec * pm->mins.z);
+  verts[1] = (orient->columns[0] * pm->mins.x) + (orient->columns[1] * pm->mins.y) + (orient->columns[2] * pm->mins.z);
 
-  verts[2] = (orient->rvec * pm->maxs.x) + (orient->uvec * pm->mins.y) + (orient->fvec * pm->mins.z);
+  verts[2] = (orient->columns[0] * pm->maxs.x) + (orient->columns[1] * pm->mins.y) + (orient->columns[2] * pm->mins.z);
 
-  verts[3] = (orient->rvec * pm->maxs.x) + (orient->uvec * pm->maxs.y) + (orient->fvec * pm->mins.z);
+  verts[3] = (orient->columns[0] * pm->maxs.x) + (orient->columns[1] * pm->maxs.y) + (orient->columns[2] * pm->mins.z);
 
-  verts[4] = (orient->rvec * pm->maxs.x) + (orient->uvec * pm->maxs.y) + (orient->fvec * pm->maxs.z);
+  verts[4] = (orient->columns[0] * pm->maxs.x) + (orient->columns[1] * pm->maxs.y) + (orient->columns[2] * pm->maxs.z);
 
-  verts[5] = (orient->rvec * pm->maxs.x) + (orient->uvec * pm->mins.y) + (orient->fvec * pm->maxs.z);
+  verts[5] = (orient->columns[0] * pm->maxs.x) + (orient->columns[1] * pm->mins.y) + (orient->columns[2] * pm->maxs.z);
 
-  verts[6] = (orient->rvec * pm->mins.x) + (orient->uvec * pm->mins.y) + (orient->fvec * pm->maxs.z);
+  verts[6] = (orient->columns[0] * pm->mins.x) + (orient->columns[1] * pm->mins.y) + (orient->columns[2] * pm->maxs.z);
 
-  verts[7] = (orient->rvec * pm->mins.x) + (orient->uvec * pm->maxs.y) + (orient->fvec * pm->maxs.z);
+  verts[7] = (orient->columns[0] * pm->mins.x) + (orient->columns[1] * pm->maxs.y) + (orient->columns[2] * pm->maxs.z);
 
   for (i = 0; i < 8; i++) {
     verts[i] += *new_pos;

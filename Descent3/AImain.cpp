@@ -1658,7 +1658,7 @@ float AIDetermineObjVisLevel(object *obj, object *target) {
       simd::float3 from_target = obj->pos - target->pos;
       vec::vm_NormalizeVector(&from_target);
 
-      if (simd::dot(target->orient.fvec, from_target) > 0.965f) {
+      if (simd::dot(target->orient.columns[2], from_target) > 0.965f) {
         vis_level += 1.0f;
       }
     }
@@ -1827,7 +1827,7 @@ bool move_relative_object_vec(object *obj, simd::float3 *vec, object *target, fl
     plane_component = vec_to_plane - normal_component;
 
     if (simd::all(plane_component == vec::Zero_vector)) {
-      goal_dir = target->orient.rvec;
+      goal_dir = target->orient.columns[0];
     } else {
       goal_dir = plane_component;
       vec::vm_NormalizeVector(&goal_dir);
@@ -1901,7 +1901,7 @@ bool compute_dodge_dir(simd::float3 *movement_dir, object *obj, object *dodge_ob
   if (closest_dist > max_dodge_dist)
     return false;
   if (closest_dist == 0.0)
-    dodge_vec = obj->orient.rvec;
+    dodge_vec = obj->orient.columns[0];
 
   // CHRISHACK -- Use the MIN/MAX INFLUENCE and INFLUENCE RAMP
   float scale = MAX_DODGE_INFLUENCE * ((max_dodge_dist - closest_dist) / max_dodge_dist);
@@ -2116,12 +2116,12 @@ void AITurnTowardsDir(object *obj, /*velocity *new_vel,*/ simd::float3 *goal_dir
   float max_angle;
 
   vec::matrix saved_orient = obj->orient;
-  simd::float3 saved_uvec = obj->orient.uvec;
+  simd::float3 saved_uvec = obj->orient.columns[1];
 
-  if (simd::all(*goal_dir == vec::Zero_vector) || simd::dot(obj->orient.fvec, *goal_dir) >= ONE_DEGREE_ARC_COS)
+  if (simd::all(*goal_dir == vec::Zero_vector) || simd::dot(obj->orient.columns[2], *goal_dir) >= ONE_DEGREE_ARC_COS)
     return; // No goal_dir or less than 1 degree off goal
 
-  if (obj->size > 32.0f && simd::dot(obj->orient.fvec, *goal_dir) >= FIVE_DEGREE_ARC_COS)
+  if (obj->size > 32.0f && simd::dot(obj->orient.columns[2], *goal_dir) >= FIVE_DEGREE_ARC_COS)
     return; // Big objects have more play
 
   if (obj->type != OBJ_WEAPON) {
@@ -2130,7 +2130,7 @@ void AITurnTowardsDir(object *obj, /*velocity *new_vel,*/ simd::float3 *goal_dir
       obj->ai_info->saved_orient = obj->orient;
   }
 
-  goal_angle = vec::vm_DeltaAngVecNorm(&obj->orient.fvec, goal_dir, &u_axis);
+  goal_angle = vec::vm_DeltaAngVecNorm(&obj->orient.columns[2], goal_dir, &u_axis);
 
   if (goal_angle == 0)
     return;
@@ -2142,10 +2142,10 @@ void AITurnTowardsDir(object *obj, /*velocity *new_vel,*/ simd::float3 *goal_dir
 
     if (max_angle != 32767 && max_angle != 32768) {
       // Get the up axis
-      u_axis = simd::cross(obj->orient.fvec, *goal_dir);
+      u_axis = simd::cross(obj->orient.columns[2], *goal_dir);
 
       // Using the forward(original orient's forward) and the up (computed), get the orientation matrix
-      vec::vm_VectorToMatrix(&rot_matrix, &obj->orient.fvec, &u_axis, NULL);
+      vec::vm_VectorToMatrix(&rot_matrix, &obj->orient.columns[2], &u_axis, NULL);
     } else {
       rot_matrix = obj->orient;
     }
@@ -2154,25 +2154,25 @@ void AITurnTowardsDir(object *obj, /*velocity *new_vel,*/ simd::float3 *goal_dir
 
     rot_matrix = rot_matrix * turn_matrix;
 
-    obj->orient.fvec = rot_matrix.fvec; // ObjSetOrient below
+    obj->orient.columns[2] = rot_matrix.columns[2]; // ObjSetOrient below
   } else {
-    obj->orient.fvec = *goal_dir; // ObjSetOrient below
+    obj->orient.columns[2] = *goal_dir; // ObjSetOrient below
   }
 
   if (obj->movement_type == MT_WALKING) {
-    obj->orient.uvec = saved_uvec;
+    obj->orient.columns[1] = saved_uvec;
 
-    float f_proj = simd::dot(obj->orient.uvec, obj->orient.fvec);
-    float r_proj = simd::dot(obj->orient.uvec, obj->orient.rvec);
+    float f_proj = simd::dot(obj->orient.columns[1], obj->orient.columns[2]);
+    float r_proj = simd::dot(obj->orient.columns[1], obj->orient.columns[0]);
 
     if (f_proj <= -1.0f || f_proj >= 1.0f || r_proj >= 1.0f || r_proj <= -1.0f) {
       obj->orient = saved_orient;
     } else {
-      obj->orient.fvec -= (obj->orient.uvec * f_proj);
-      obj->orient.rvec -= (obj->orient.uvec * r_proj);
+      obj->orient.columns[2] -= (obj->orient.columns[1] * f_proj);
+      obj->orient.columns[0] -= (obj->orient.columns[1] * r_proj);
 
-      vec::vm_NormalizeVector(&obj->orient.fvec);
-      vec::vm_NormalizeVector(&obj->orient.rvec);
+      vec::vm_NormalizeVector(&obj->orient.columns[2]);
+      vec::vm_NormalizeVector(&obj->orient.columns[0]);
     }
   }
 
@@ -2382,7 +2382,7 @@ bool AiMelee(object *obj) {
     return false;
   }
 
-  f_vec = obj->orient.fvec;
+  f_vec = obj->orient.columns[2];
   vec::vm_NormalizeVector(&f_vec);
 
   dot = simd::dot(f_vec, ai_info->vec_to_target_perceived);
@@ -2821,9 +2821,9 @@ simd::float3 *AIDetermineFovVec(object *obj, simd::float3 *fov) {
     int aiming_gp_index = Object_info[obj->id].static_wb[0].aiming_gp_index;
     WeaponCalcGun(NULL, fov, obj, pm->poly_wb[0].gp_index[aiming_gp_index]);
   } else if (ai_info->flags & AIF_UVEC_FOV) {
-    *fov = obj->orient.uvec;
+    *fov = obj->orient.columns[1];
   } else {
-    *fov = obj->orient.fvec;
+    *fov = obj->orient.columns[2];
   }
 
   return fov;
@@ -3688,7 +3688,7 @@ bool AIInit(object *obj, uint8_t ai_class, uint8_t ai_type, uint8_t ai_movement)
   ai_info->last_played_sound_index = -1;
   ai_info->weapon_speed = 0.0f;
 
-  ai_info->vec_to_target_perceived = obj->orient.fvec;
+  ai_info->vec_to_target_perceived = obj->orient.columns[2];
 
   ai_info->last_dodge_dir = vec::Zero_vector;
   ai_info->dodge_till_time = Gametime - 1.0f;
@@ -3793,8 +3793,8 @@ bool AIInit(object *obj, uint8_t ai_class, uint8_t ai_type, uint8_t ai_movement)
 
   ai_info->last_see_target_pos = obj->pos;
 
-  ai_info->vec_to_target_actual = obj->orient.fvec;
-  ai_info->vec_to_target_perceived = obj->orient.fvec;
+  ai_info->vec_to_target_actual = obj->orient.columns[2];
+  ai_info->vec_to_target_perceived = obj->orient.columns[2];
 
   ai_info->dist_to_target_actual = vec::vm_NormalizeVector(&ai_info->vec_to_target_actual);
   ai_info->dist_to_target_perceived = 10000.0f;
@@ -4433,8 +4433,8 @@ void AIDoOrient(object *obj, int g_index) {
     } else if (goal_ptr->flags & GF_ORIENT_SCRIPTED) {
       AINotify(obj, AIN_SCRIPTED_ORIENT, &g_index);
     } else if (goal_ptr->flags & GF_ORIENT_PATH_NODE) {
-      simd::float3 uvec = obj->orient.uvec;
-      simd::float3 fvec = obj->orient.fvec;
+      simd::float3 uvec = obj->orient.columns[1];
+      simd::float3 fvec = obj->orient.columns[2];
 
       ai_path_info *aip = &obj->ai_info->path;
 
@@ -4565,14 +4565,14 @@ void ai_move(object *obj) {
       ASSERT(g_obj != obj);
 
       AIGoalDoRepulse(obj, AI_FriendDist[temp], &AI_FriendDir[temp], NULL, &composite_dir);
-      AIGoalDoAlignment(obj, AI_FriendDist[temp], &g_obj->orient.fvec, NULL, &composite_dir);
+      AIGoalDoAlignment(obj, AI_FriendDist[temp], &g_obj->orient.columns[2], NULL, &composite_dir);
       AIGoalDoCohesion(obj, g_obj, AI_FriendDist[temp], NULL, &composite_dir);
       f_goal_found = true;
     }
 
     // Facing code
     if (simd::all(composite_dir == vec::Zero_vector))
-      composite_dir = obj->orient.fvec;
+      composite_dir = obj->orient.columns[2];
 
     // FLOCK HEIGHT CODE
     if (ROOMNUM_OUTSIDE(obj->roomnum) && (ai_info->flags & AIF_BIASED_FLIGHT_HEIGHT)) {
@@ -4916,13 +4916,13 @@ void ai_move(object *obj) {
 
               switch (vec_id) {
               case GST_FVEC:
-                vec = &goal_obj->orient.fvec;
+                vec = &goal_obj->orient.columns[2];
                 break;
               case GST_RVEC:
-                vec = &goal_obj->orient.rvec;
+                vec = &goal_obj->orient.columns[0];
                 break;
               case GST_UVEC:
-                vec = &goal_obj->orient.uvec;
+                vec = &goal_obj->orient.columns[1];
                 break;
               default:
                 LOG_DEBUG << "Invalid vec in AIG_MOVE_RELATIVE_OBJ_VEC bashing to fvec";
@@ -4990,24 +4990,24 @@ void ai_move(object *obj) {
 
               if (rel_obj) {
                 if (gtime < 2)
-                  movement_vec = rel_obj->orient.rvec;
+                  movement_vec = rel_obj->orient.columns[0];
                 else if (gtime < 4)
-                  movement_vec = -rel_obj->orient.rvec;
+                  movement_vec = -rel_obj->orient.columns[0];
                 else if (gtime < 6) {
                   if (obj->movement_type != MT_WALKING) {
-                    movement_vec = rel_obj->orient.uvec;
+                    movement_vec = rel_obj->orient.columns[1];
                   } else {
-                    movement_vec = -rel_obj->orient.rvec;
+                    movement_vec = -rel_obj->orient.columns[0];
                   }
                 } else {
                   if (obj->movement_type != MT_WALKING) {
-                    movement_vec = -rel_obj->orient.uvec;
+                    movement_vec = -rel_obj->orient.columns[1];
                   } else {
-                    movement_vec = rel_obj->orient.rvec;
+                    movement_vec = rel_obj->orient.columns[0];
                   }
                 }
               } else {
-                movement_vec = obj->orient.rvec;
+                movement_vec = obj->orient.columns[0];
               }
 
               if (obj->movement_type == MT_WALKING) {
@@ -5202,15 +5202,15 @@ void ai_fire(object *obj) {
           !(Cinematic_inuse && !(ai_info->status_reg & AISR_OK_TO_FIRE_DURING_CINEMATICS))) {
         if (obj_info->static_wb[i].flags & WBF_AIM_FVEC) {
           gun_point[WB_MOVE_STILL] = obj->pos;
-          gun_normal[WB_MOVE_STILL] = obj->orient.fvec;
+          gun_normal[WB_MOVE_STILL] = obj->orient.columns[2];
 
           if (obj_info->static_wb[i].flags & WBF_FIRE_FVEC) {
-            gun_normal[WB_MOVE_STILL] = obj->orient.fvec;
+            gun_normal[WB_MOVE_STILL] = obj->orient.columns[2];
           }
         }
         if (obj_info->static_wb[i].flags & WBF_FIRE_FVEC) {
           WeaponCalcGun(&gun_point[WB_MOVE_STILL], NULL, obj, pm->poly_wb[i].gp_index[aiming_gp_index]);
-          gun_normal[WB_MOVE_STILL] = obj->orient.fvec;
+          gun_normal[WB_MOVE_STILL] = obj->orient.columns[2];
         } else {
           WeaponCalcGun(&gun_point[WB_MOVE_STILL], &gun_normal[WB_MOVE_STILL], obj,
                         pm->poly_wb[i].gp_index[aiming_gp_index]);

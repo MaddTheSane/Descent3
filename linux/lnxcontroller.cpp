@@ -1241,11 +1241,11 @@ float lnxgameController::get_axis_value(int8_t controller, uint8_t axis, ct_form
       if (invert)
         val = -val;
 
-      vm_AnglesToMatrix(&orient, 0.0, val * (((float)(65535.0f / 20)) * .5), 0.0);
+      vec::vm_AnglesToMatrix(&orient, 0.0, val * (((float)(65535.0f / 20)) * .5), 0.0);
 
       Objects[Players[Player_num].objnum].orient = Objects[Players[Player_num].objnum].orient * orient;
 
-      vm_Orthogonalize(&Objects[Players[Player_num].objnum].orient);
+      vec::vm_Orthogonalize(&Objects[Players[Player_num].objnum].orient);
       ObjSetOrient(&Objects[Players[Player_num].objnum], &Objects[Players[Player_num].objnum].orient);
       return 0;
     }
@@ -1264,11 +1264,11 @@ float lnxgameController::get_axis_value(int8_t controller, uint8_t axis, ct_form
       if (invert)
         val = -val;
 
-      vm_AnglesToMatrix(&orient, val * (((float)(65535.0f / 20)) * .5), 0.0, 0.0);
+      vec::vm_AnglesToMatrix(&orient, val * (((float)(65535.0f / 20)) * .5), 0.0, 0.0);
 
       Objects[Players[Player_num].objnum].orient = Objects[Players[Player_num].objnum].orient * orient;
 
-      vm_Orthogonalize(&Objects[Players[Player_num].objnum].orient);
+      vec::vm_Orthogonalize(&Objects[Players[Player_num].objnum].orient);
       ObjSetOrient(&Objects[Players[Player_num].objnum], &Objects[Players[Player_num].objnum].orient);
       return 0;
     }

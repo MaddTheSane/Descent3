@@ -353,7 +353,7 @@ float vm_GetCentroidFast(vector *centroid, vector *src, int nv);
 } // namespace vec
 
 // Here are the C++ operator overloads -- they do as expected
-extern vec::matrix operator*(vec::matrix src0, vec::matrix src1);
-extern vec::matrix operator*=(vec::matrix &src0, vec::matrix src1);
+//extern vec::matrix operator*(vec::matrix src0, vec::matrix src1);
+//extern vec::matrix operator*=(vec::matrix &src0, vec::matrix src1);
 
 #endif

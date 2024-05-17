@@ -935,12 +935,12 @@ void MercEndBoss::DoFrame(int me) {
       Obj_Value(me, VF_GET, OBJV_M_ORIENT, &orient);
       Obj_Value(me, VF_GET, OBJV_V_POS, &pos);
 
-      pos += (orient.fvec * 50.0f) + (orient.uvec * 2.0f);
+      pos += (orient.columns[2] * 50.0f) + (orient.columns[1] * 2.0f);
       Obj_Value(memory->combine_object, VF_SET, OBJV_V_POS, &pos);
       Obj_Value(memory->combine_object, VF_SET, OBJV_I_ROOMNUM, &room);
       start_pos = pos;
 
-      pos += (orient.fvec * 1200.0f);
+      pos += (orient.columns[2] * 1200.0f);
       Obj_Value(memory->camera, VF_SET, OBJV_V_POS, &pos);
       Obj_Value(memory->camera, VF_SET, OBJV_I_ROOMNUM, &room);
       end_pos = pos;
@@ -965,7 +965,7 @@ void MercEndBoss::DoFrame(int me) {
           Obj_Value(me, VF_SET, OBJV_PI_HACK_FVI_IGNORE_LIST, NULL);
 
           if (fate != HIT_NONE) {
-            start_pos = ray.hit_point + (orient.fvec * 13.0f);
+            start_pos = ray.hit_point + (orient.columns[2] * 13.0f);
           }
 
           if (fate == HIT_OBJECT || fate == HIT_SPHERE_2_POLY_OBJECT) {
@@ -983,18 +983,18 @@ void MercEndBoss::DoFrame(int me) {
 
               MSafe_CallFunction(MSAFE_OBJECT_DAMAGE_OBJECT, &mstruct);
 
-              //						if(ray.hit_wallnorm * orient.fvec <= 0.0f)
+              //						if(ray.hit_wallnorm * orient.columns[2] <= 0.0f)
               //						{
-              simd::float3 bf_pos = ray.hit_point + (orient.fvec * 3.0f);
+              simd::float3 bf_pos = ray.hit_point + (orient.columns[2] * 3.0f);
               //							simd::float3 bf_pos = ray.hit_point +
-              //(orient.fvec * -9.0f);
+              //(orient.columns[2] * -9.0f);
               Obj_Create(OBJ_POWERUP, memory->wallhit_id, 76, &bf_pos);
               //							//mprintf(0, "HERE X\n");
               //						}
               //						else
               //						{
               //							simd::float3 bf_pos = ray.hit_point +
-              //(orient.fvec
+              //(orient.columns[2]
               //* 9.0f); 							Obj_Create(OBJ_POWERUP,
               // memory->wallhit_id, 76, &bf_pos);
               ///							//mprintf(0, "HERE X\n");
@@ -1016,14 +1016,14 @@ void MercEndBoss::DoFrame(int me) {
           fate = FVI_RayCast(OBJECT_HANDLE_NONE, &start_pos, &end_pos, 76, 0.0f, FQ_NO_RELINK, &ray);
 
           if (fate != HIT_NONE) {
-            start_pos = ray.hit_point + (orient.fvec * 5.0f);
+            start_pos = ray.hit_point + (orient.columns[2] * 5.0f);
 
-            if (simd::dot(ray.hit_wallnorm, orient.fvec) <= 0.0f) {
-              simd::float3 bf_pos = ray.hit_point + (orient.fvec * -9.0f);
+            if (simd::dot(ray.hit_wallnorm, orient.columns[2]) <= 0.0f) {
+              simd::float3 bf_pos = ray.hit_point + (orient.columns[2] * -9.0f);
               Obj_Create(OBJ_POWERUP, memory->wallhit_id, 76, &bf_pos);
               // mprintf(0, "HERE X\n");
             } else {
-              simd::float3 bf_pos = ray.hit_point + (orient.fvec * 9.0f);
+              simd::float3 bf_pos = ray.hit_point + (orient.columns[2] * 9.0f);
               Obj_Create(OBJ_POWERUP, memory->wallhit_id, 76, &bf_pos);
               // mprintf(0, "HERE X\n");
             }
@@ -1040,14 +1040,14 @@ void MercEndBoss::DoFrame(int me) {
           fate = FVI_RayCast(OBJECT_HANDLE_NONE, &end_pos, &start_pos, 76, 0.0f, FQ_NO_RELINK, &ray);
 
           if (fate != HIT_NONE) {
-            end_pos = ray.hit_point - (orient.fvec * 5.0f);
+            end_pos = ray.hit_point - (orient.columns[2] * 5.0f);
 
-            if (simd::dot(ray.hit_wallnorm, orient.fvec) <= 0.0f) {
-              simd::float3 bf_pos = ray.hit_point + (orient.fvec * -9.0f);
+            if (simd::dot(ray.hit_wallnorm, orient.columns[2]) <= 0.0f) {
+              simd::float3 bf_pos = ray.hit_point + (orient.columns[2] * -9.0f);
               Obj_Create(OBJ_POWERUP, memory->wallhit_id, 76, &bf_pos);
               // mprintf(0, "HERE X\n");
             } else {
-              simd::float3 bf_pos = ray.hit_point + (orient.fvec * 9.0f);
+              simd::float3 bf_pos = ray.hit_point + (orient.columns[2] * 9.0f);
               Obj_Create(OBJ_POWERUP, memory->wallhit_id, 76, &bf_pos);
               // mprintf(0, "HERE X\n");
             }

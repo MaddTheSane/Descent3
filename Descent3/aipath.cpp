@@ -361,8 +361,8 @@ void AIPathMoveTurnTowardsNode(object *obj, simd::float3 *mdir, bool *f_moved) {
     simd::float3 dir = cur_pos - obj->pos;
 
     if (obj->movement_type == MT_WALKING) {
-      float dot = simd::dot(dir, obj->orient.uvec);
-      dir -= dot * obj->orient.uvec;
+      float dot = simd::dot(dir, obj->orient.columns[1]);
+      dir -= dot * obj->orient.columns[1];
     }
     vec::vm_NormalizeVector(&dir);
 
@@ -385,8 +385,8 @@ pass_node:
     simd::float3 dir = cur_pos - obj->pos;
 
     if (obj->movement_type == MT_WALKING) {
-      float dot = simd::dot(dir, obj->orient.uvec);
-      dir -= dot * obj->orient.uvec;
+      float dot = simd::dot(dir, obj->orient.columns[1]);
+      dir -= dot * obj->orient.columns[1];
     }
     float dist = simd::length(dir);
 
@@ -639,7 +639,7 @@ static bool AIGenerateAltBNodePath(object *obj, simd::float3 *start_pos, int *st
   bool f_path_exists = true;
 
   bn_list *bnlist = BNode_GetBNListPtr(*start_room);
-  int last_node = BNode_FindDirLocalVisibleBNode(*start_room, start_pos, &obj->orient.fvec, obj->size);
+  int last_node = BNode_FindDirLocalVisibleBNode(*start_room, start_pos, &obj->orient.columns[2], obj->size);
   if (last_node == -1) {
     f_path_exists = false;
     goto done;
@@ -798,7 +798,7 @@ static bool AIGenerateBNodePath(object *obj, simd::float3 *start_pos, int *start
   simd::float3 *pos;
 
   bn_list *bnlist; // = BNode_GetBNListPtr(*start_room);
-  int last_node = BNode_FindDirLocalVisibleBNode(*start_room, start_pos, &obj->orient.fvec, obj->size);
+  int last_node = BNode_FindDirLocalVisibleBNode(*start_room, start_pos, &obj->orient.columns[2], obj->size);
   if (last_node == -1) {
     f_path_exists = false;
     goto done;

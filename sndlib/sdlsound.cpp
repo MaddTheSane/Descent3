@@ -393,7 +393,7 @@ int lnxsound::PlaySound3d(play_information *play_info, int sound_index, pos_stat
 
   dist = vec::vm_NormalizeVector(&dir_to_sound);
   if (dist < .1f) {
-    dir_to_sound = m_emulated_listener.orient.fvec;
+    dir_to_sound = m_emulated_listener.orient.columns[2];
   }
 
   if (dist >= Sounds[sound_index].max_distance) {
@@ -403,7 +403,7 @@ int lnxsound::PlaySound3d(play_information *play_info, int sound_index, pos_stat
                        (Sounds[sound_index].max_distance - Sounds[sound_index].min_distance)));
   }
 
-  pan = simd::dot(dir_to_sound, m_emulated_listener.orient.rvec);
+  pan = simd::dot(dir_to_sound, m_emulated_listener.orient.columns[0]);
 
   if (volume < 0.0f)
     volume = 0.0f;
@@ -461,7 +461,7 @@ void lnxsound::AdjustSound(int sound_uid, pos_state *cur_pos, float adjusted_vol
 
   dist = vec::vm_NormalizeVector(&dir_to_sound);
   if (dist < .1f) {
-    dir_to_sound = m_emulated_listener.orient.fvec;
+    dir_to_sound = m_emulated_listener.orient.columns[2];
   }
 
   if (dist >= Sounds[sound_cache[current_slot].m_sound_index].max_distance) {
@@ -472,7 +472,7 @@ void lnxsound::AdjustSound(int sound_uid, pos_state *cur_pos, float adjusted_vol
                         Sounds[sound_cache[current_slot].m_sound_index].min_distance)));
   }
 
-  pan = simd::dot(dir_to_sound, m_emulated_listener.orient.rvec);
+  pan = simd::dot(dir_to_sound, m_emulated_listener.orient.columns[0]);
 
   if (volume < 0.0f)
     volume = 0.0f;

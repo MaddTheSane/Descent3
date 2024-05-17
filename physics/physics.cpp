@@ -165,7 +165,7 @@ bool PhysCalcGround(simd::float3 *ground_point, simd::float3 *ground_normal, obj
     if (ground_point)
       *ground_point = obj->pos;
     if (ground_normal)
-      *ground_normal = obj->orient.fvec;
+      *ground_normal = obj->orient.columns[2];
 
     return false;
   }
@@ -178,7 +178,7 @@ bool PhysCalcGround(simd::float3 *ground_point, simd::float3 *ground_normal, obj
     if (ground_point)
       *ground_point = obj->pos;
     if (ground_normal)
-      *ground_normal = obj->orient.fvec;
+      *ground_normal = obj->orient.columns[2];
 
     return false;
   }
@@ -486,7 +486,7 @@ bool PhysicsDoSimRot(object *obj, float frame_time, vec::matrix *orient, simd::f
             ang.b += al_rate;
           }
 
-          fvec = orient->fvec;
+          fvec = orient->columns[2];
 
           vec::vm_AnglesToMatrix(orient, ang.p, ang.h, ang.b);
         }
@@ -526,11 +526,11 @@ bool PhysicsDoSimRot(object *obj, float frame_time, vec::matrix *orient, simd::f
           float scale;
           f_pitch_leveled = true;
 
-          if (obj->orient.uvec.y < 0.0f) {
+          if (obj->orient.columns[1].y < 0.0f) {
             ang.p += 16384;
           }
 
-          scale = 1.05f - fabs(obj->orient.uvec.y);
+          scale = 1.05f - fabs(obj->orient.columns[1].y);
           //					scale *= scale;
 
           if (scale > 1.0)
@@ -784,7 +784,7 @@ void do_physics_sim(object *obj) {
       swiggle = obj->mtype.phys_info.wiggle_amplitude * (scaler) *
                 (FixSin((angle)((int)(Gametime * obj->mtype.phys_info.wiggles_per_sec * 65535) % 65535)) -
                  FixSin((angle)((int)((Gametime - Frametime) * obj->mtype.phys_info.wiggles_per_sec * 65535) % 65535)));
-      w_pos = obj->pos + obj->orient.uvec * (swiggle);
+      w_pos = obj->pos + obj->orient.columns[1] * (swiggle);
 
       fq.p0 = &obj->pos;
       fq.startroom = obj->roomnum;
@@ -925,7 +925,7 @@ void do_physics_sim(object *obj) {
 
     // Updates the thrust vector to the orientation for homing weapons
     if ((obj->type == OBJ_WEAPON) && (pi->flags & PF_USES_THRUST) && (pi->flags & PF_HOMING)) {
-      pi->thrust = end_orient.fvec * pi->full_thrust;
+      pi->thrust = end_orient.columns[2] * pi->full_thrust;
       movement_vec = obj->mtype.phys_info.velocity * Frametime;
       movement_pos = obj->pos + movement_vec;
     }
@@ -1212,7 +1212,7 @@ void do_physics_sim(object *obj) {
     case HIT_NONE:
       if (obj->type == OBJ_WEAPON && (obj->mtype.phys_info.flags & (PF_GRAVITY | PF_WIND))) {
         if (simd::any(obj->mtype.phys_info.velocity != vec::Zero_vector))
-          vm_VectorToMatrix(&obj->orient, &obj->mtype.phys_info.velocity, &obj->orient.uvec, NULL);
+          vec::vm_VectorToMatrix(&obj->orient, &obj->mtype.phys_info.velocity, &obj->orient.columns[1], NULL);
       }
       f_continue_sim = false;
       break;
@@ -1437,7 +1437,7 @@ void do_physics_sim(object *obj) {
           // Weapons should face their new heading.  This is so missiles are pointing in the correct direct.
           if (obj->type == OBJ_WEAPON && (bounced || (obj->mtype.phys_info.flags & (PF_GRAVITY | PF_WIND))))
             if (simd::any(obj->mtype.phys_info.velocity != vec::Zero_vector))
-              vec::vm_VectorToMatrix(&obj->orient, &obj->mtype.phys_info.velocity, &obj->orient.uvec, NULL);
+              vec::vm_VectorToMatrix(&obj->orient, &obj->mtype.phys_info.velocity, &obj->orient.columns[1], NULL);
         }
       }
       f_continue_sim = true;
@@ -1494,7 +1494,7 @@ void do_physics_sim(object *obj) {
 
       // Weapons should face their new heading.  This is so missiles are pointing in the correct direct.
       if (obj->type == OBJ_WEAPON && (bounced || (obj->mtype.phys_info.flags & (PF_GRAVITY | PF_WIND))))
-        vm_VectorToMatrix(&obj->orient, &obj->mtype.phys_info.velocity, &obj->orient.uvec, NULL);
+        vec::vm_VectorToMatrix(&obj->orient, &obj->mtype.phys_info.velocity, &obj->orient.columns[1], NULL);
 
       f_continue_sim = true;
     } break;
@@ -1651,9 +1651,9 @@ int PhysCastWalkRay(object *obj, simd::float3 *p0, simd::float3 *p1, simd::float
 
 void PhysCalPntOnCPntPlane(object *obj, simd::float3 *s_pnt, simd::float3 *d_pnt, float *dist) {
   simd::float3 tpnt = *s_pnt - obj->pos;
-  *dist = simd::dot(obj->orient.uvec, tpnt);
+  *dist = simd::dot(obj->orient.columns[1], tpnt);
 
-  *d_pnt = *s_pnt + ((-(*dist)) * obj->orient.uvec);
+  *d_pnt = *s_pnt + ((-(*dist)) * obj->orient.columns[1]);
 }
 
 bool PhysComputeWalkerPosOrient(object *obj, simd::float3 *pos, vec::matrix *orient) {
@@ -1692,7 +1692,7 @@ bool PhysComputeWalkerPosOrient(object *obj, simd::float3 *pos, vec::matrix *ori
 
       int fate = PhysCastWalkRay(obj, &obj->pos, &pp[i], &x, NULL, &proom[i], &norm);
       if (fate != HIT_NONE) {
-        if (simd::dot(norm, obj->orient.uvec) < 0.4717f) {
+        if (simd::dot(norm, obj->orient.columns[1]) < 0.4717f) {
           return false;
         }
 
@@ -1705,13 +1705,13 @@ bool PhysComputeWalkerPosOrient(object *obj, simd::float3 *pos, vec::matrix *ori
 
     for (i = 0; i < 3; i++) {
       int fate;
-      simd::float3 foot_pnt = pp[i] + obj->orient.uvec * -(obj->size * 1.5f);
+      simd::float3 foot_pnt = pp[i] + obj->orient.columns[1] * -(obj->size * 1.5f);
       simd::float3 norm;
 
       fate = PhysCastWalkRay(obj, &pp[i], &foot_pnt, &hp[i], &proom[i], NULL, &norm);
 
       if (fate != HIT_NONE) {
-        if (simd::dot(norm, obj->orient.uvec) < 0.4717f) {
+        if (simd::dot(norm, obj->orient.columns[1]) < 0.4717f) {
           return false;
         }
 
@@ -1734,8 +1734,8 @@ bool PhysComputeWalkerPosOrient(object *obj, simd::float3 *pos, vec::matrix *ori
     //		if(uvec.y < 0.0)
     //			uvec *= -1.0f;
 
-    float dot = simd::dot(orient->fvec, uvec);
-    simd::float3 fvec = orient->fvec;
+    float dot = simd::dot(orient->columns[2], uvec);
+    simd::float3 fvec = orient->columns[2];
     fvec -= (uvec * dot);
     vec::vm_NormalizeVector(&fvec);
 
@@ -2000,8 +2000,8 @@ void do_walking_sim(object *obj) {
 
         if (PhysComputeWalkerPosOrient(obj, &pos, &orient) &&
             ((!obj->ai_info) ||
-             (simd::dot(orient.uvec, obj->orient.uvec) > .7101 && simd::dot(orient.fvec, obj->orient.fvec) > .7101 &&
-              simd::dot(orient.rvec, obj->orient.rvec) > .7101)))
+             (simd::dot(orient.columns[1], obj->orient.columns[1]) > .7101 && simd::dot(orient.columns[2], obj->orient.columns[2]) > .7101 &&
+              simd::dot(orient.columns[0], obj->orient.columns[0]) > .7101)))
           ObjSetPos(obj, &pos, obj->roomnum, &orient, false);
         else
           ObjSetOrient(obj, &obj->ai_info->saved_orient);
@@ -2035,7 +2035,7 @@ void do_walking_sim(object *obj) {
 #endif
 
     // Remove transient portions of the velocity
-    simd::float3 t = (obj->mtype.phys_info.velocity * obj->orient.uvec) * obj->orient.uvec;
+    simd::float3 t = (obj->mtype.phys_info.velocity * obj->orient.columns[1]) * obj->orient.columns[1];
     obj->mtype.phys_info.velocity -= t;
 
     // Initailly assume that this is the last sim cycle
@@ -2067,8 +2067,8 @@ void do_walking_sim(object *obj) {
         vec::matrix norient;
         norient = obj->orient;
         if (PhysComputeWalkerPosOrient(obj, &footstep, &norient)) {
-          if (simd::dot(norient.uvec, obj->orient.uvec) > .7101 && simd::dot(norient.fvec, obj->orient.fvec) > .7101 &&
-              simd::dot(norient.rvec, obj->orient.rvec) > .7101) {
+          if (simd::dot(norient.columns[1], obj->orient.columns[1]) > .7101 && simd::dot(norient.columns[2], obj->orient.columns[2]) > .7101 &&
+              simd::dot(norient.columns[0], obj->orient.columns[0]) > .7101) {
             ObjSetOrient(obj, &norient);
 
             movement_vec = footstep - obj->pos;
@@ -2324,7 +2324,7 @@ void do_walking_sim(object *obj) {
           // Weapons should face their new heading.  This is so missiles are pointing in the correct direct.
           if (obj->type == OBJ_WEAPON && (bounced || (obj->mtype.phys_info.flags & (PF_GRAVITY | PF_WIND))))
             if (simd::any(obj->mtype.phys_info.velocity != vec::Zero_vector))
-              vec::vm_VectorToMatrix(&obj->orient, &obj->mtype.phys_info.velocity, &obj->orient.uvec, NULL);
+              vec::vm_VectorToMatrix(&obj->orient, &obj->mtype.phys_info.velocity, &obj->orient.columns[1], NULL);
         }
       }
       f_continue_sim = true;
@@ -2575,7 +2575,7 @@ void phys_apply_force(object *obj, simd::float3 *force_vec, int16_t weapon_index
       if (scale > 1.0f)
         scale = 1.0f;
 
-      vm_MatrixMulVector(&local_norm, force_vec, &obj->orient);
+      vec::vm_MatrixMulVector(&local_norm, force_vec, &obj->orient);
       local_norm *= -1.0f;
 
       ForceEffectsPlay(FORCE_TEST_FORCE, &scale, &local_norm);

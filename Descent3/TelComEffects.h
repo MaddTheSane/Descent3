@@ -212,6 +212,10 @@ struct tPolyInfo {
   simd::float3 m_Ori;     // current orientation
   vec::matrix m_mOrient; // orientation
   int handle;       // handle to polymodel
+  
+  tPolyInfo() {
+    m_mOrient = simd::float3x3(0);
+  }
 };
 
 struct tMovieInfo {
@@ -279,6 +283,10 @@ struct tceffect {
   tTCEvent event_queue[MAX_EFFECT_EVENTS]; // event queue for an effect
 
   int prev, next; // Links to previous and next effect
+  
+  tceffect() {
+    polyinfo = tPolyInfo();
+  }
 };
 
 extern int glitch_dx, glitch_dy;

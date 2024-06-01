@@ -188,13 +188,27 @@ const int MSN_FILENAMELEN = PSPATHNAME_LEN, MSN_URLLEN = 256;
 //	increase this value if you are going to add more levels to a mission than the max.
 const int MAX_LEVELS_PER_MISSION = 30;
 
-//	mission flags.
-const unsigned LVLFLAG_STARTMOVIE = 1, LVLFLAG_ENDMOVIE = 2, LVLFLAG_BRIEFING = 4, LVLFLAG_SHIPSELECT = 8,
-               LVLFLAG_SPAWNSECRET = 16, LVLFLAG_SPECIALHOG = 32, LVLFLAG_BRANCH = 64, LVLFLAG_UNUSED = 128,
-               LVLFLAG_SCORE = 256, LVLFLAG_FINAL = 512;
+/// mission flags.
+typedef enum __attribute__((flag_enum,enum_extensibility(open))): unsigned {
+  LVLFLAG_STARTMOVIE = 1,
+  LVLFLAG_ENDMOVIE = 2, 
+  LVLFLAG_BRIEFING = 4,
+  LVLFLAG_SHIPSELECT = 8,
+  LVLFLAG_SPAWNSECRET = 16,
+  LVLFLAG_SPECIALHOG = 32,
+  LVLFLAG_BRANCH = 64,
+  LVLFLAG_UNUSED = 128,
+  LVLFLAG_SCORE = 256,
+  LVLFLAG_FINAL = 512
+} LVLFlag;
 
 const int LVLOBJ_NUM = 4;
-const uint16_t LVLOBJF_SECONDARY1 = 1, LVLOBJF_SECONDARY2 = 2, LVLOBJF_SECONDARY3 = 4, LVLOBJF_SECONDARY4 = 8;
+typedef enum __attribute__((flag_enum,enum_extensibility(open))): uint16_t {
+  LVLOBJF_SECONDARY1 = 1,
+  LVLOBJF_SECONDARY2 = 2,
+  LVLOBJF_SECONDARY3 = 4,
+  LVLOBJF_SECONDARY4 = 8
+} LVLOBJFlag;
 
 // Struct for info about the current level
 typedef struct level_info {
@@ -210,7 +224,7 @@ extern level_info Level_info;
 //	level information
 typedef struct tLevelNode {
   //	level flags
-  unsigned flags;           // level flags
+  LVLFlag flags;            // level flags
   unsigned objective_flags; // level objective flags
 
   //	movies

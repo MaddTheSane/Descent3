@@ -4498,7 +4498,7 @@ void MultiDoWorldStates(uint8_t *data) {
       for (int i = 0; i < n_attach; i++) {
         int child_objnum = MultiGetUshort(data, &count);
         if (child_objnum != 65535) {
-          float rad;
+          float rad = 0;
 
           int attach_index = MultiGetByte(data, &count);
           int attach_type = MultiGetByte(data, &count);
@@ -4619,7 +4619,7 @@ void MultiDoJoinObjects(uint8_t *data) {
     uint16_t short_roomnum;
     uint8_t terrain = 0;
     uint8_t lifeleft = 255;
-    int roomnum;
+    int roomnum = 0;
 
     if (type != OBJ_DOOR) {
       // memcpy (&pos,&data[count],sizeof(vector));
@@ -6108,7 +6108,7 @@ void MultiDoObserverChange(uint8_t *data) {
 // Someone is asking us for permission to enter observer mode
 void MultiDoRequestToObserve(uint8_t *data) {
   int count = 0;
-  int objnum;
+  int objnum = 0;
 
   LOG_DEBUG << "Got request to observe!";
 

@@ -732,9 +732,9 @@ void GoalDoFrame(object *obj) {
       bool f_make_path = false;
       int ignore_obj = -1;
       bool f_kill_goal = false;
-      int kill_reason;
+      int kill_reason = AIN_GOAL_INVALID;
 
-      vector *posp;
+      vector *posp = nullptr;
       int roomnum;
 
       if (OBJGOAL(cur_goal)) {

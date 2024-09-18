@@ -1811,7 +1811,7 @@ void DisplayHUDScores(struct tHUDItem *hitem) {
   // if (HasFlag[team]!=-1) then draw a dimmed flag with the team flag of who has it on top
   // if (HasFlag[team]==-1) && (FlagAtHome[team]==true) then draw normal flag
   // if (HasFlag[team]==-1) && (FlagAtHome[team]==false) then draw dimmed flag
-  int cx, cy;
+  int cx = 0, cy = 0;
   for (i = 0; i < CTFNumOfTeams; i++) {
     // first determine the x and y
     switch (i) {

@@ -1342,7 +1342,7 @@ void DoRoomChangeFrame() {
 // Sets up a room to change its fog or wind over time
 int SetRoomChangeOverTime(int roomnum, bool fog, vector *end, float depth_end, float time) {
   room *rp = &Rooms[roomnum];
-  int index, i;
+  int index = 0, i;
 
   // First search to see if there is another with this same roomnum
 

@@ -729,7 +729,7 @@ void osipf_RoomValue(int roomnum, char op, char vtype, void *ptr, int index) {
 
 void osipf_PlayerValue(int obj_handle, char op, char vhandle, void *ptr, int index) {
   object *objp;
-  int id;
+  int id = 0;
   bool extract_info = true;
 
   if (vhandle == PLYV_I_STRIP_WEAPONS) {

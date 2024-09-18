@@ -507,9 +507,9 @@ char taunt_LoadWaveFile(const char *filename, tWaveFile *wave) {
   uint32_t aligned_size; // Sound files are aligned to SOUND_FILE_SAMPLE_ALIGNMENT samples
 
   // Sound format information
-  int samples_per_second;
-  int16_t bits_per_sample;
-  int16_t number_channels;
+  int samples_per_second = 0;
+  int16_t bits_per_sample = 0;
+  int16_t number_channels = 0;
   char error_code = 0;
 
   // Used to read temporary long values

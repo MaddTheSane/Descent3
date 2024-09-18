@@ -1565,7 +1565,7 @@ void ConvertObject(int *type, int *id) {
 int ReadObject(CFILE *ifile, object *objp, int handle, int fileversion) {
   int type, id, old_id, i;
   int roomnum;
-  float door_shields;
+  float door_shields = 0;
   char tempname[OBJ_NAME_LEN + 1] = "";
 
   type = cf_ReadByte(ifile);
@@ -2693,7 +2693,7 @@ void ReadNewLightmapChunk(CFILE *fp, int version) {
   ASSERT(nummaps < MAX_LIGHTMAP_INFOS);
 
   for (i = 0; i < nummaps; i++) {
-    int w, h, lmi;
+    int w, h, lmi = 0;
     uint8_t type;
     if (nummaps >= 50) {
       if ((i % (nummaps / 50)) == 0) {
@@ -2775,7 +2775,7 @@ void ReadLightmapChunk(CFILE *fp, int version) {
                         (filelen) ? (float)chunk_start + (chunk_size / nummaps) / (float)filelen : 0.0f,
                         CHUNK_LIGHTMAPS);
     }
-    int w, h, lmi;
+    int w, h, lmi = 0;
     uint8_t type;
 
     w = cf_ReadInt(fp);
@@ -3752,7 +3752,7 @@ int LoadLevel(char *filename, void (*cb_fn)(const char *, int, int)) {
           RoomMemInit(0, 0, 0, 0); // 0 means we don't know how much memory we need
 
         n_degenerate_faces_removed = 0;
-        int roomnum;
+        int roomnum = 0;
         for (i = 0; i < num_rooms; i++) {
 
           if ((i % 10) == 0) {

@@ -1061,7 +1061,7 @@ bool matcen::ComputeNextProdInfo() {
 
   ASSERT(m_prod_mode == MMODE_NOTPROD);
 
-  int cur_index;
+  int cur_index = 0;
   bool f_do = true;
 
   if (m_status & MSTAT_RANDOM_PROD_ORDER) {

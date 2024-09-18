@@ -1212,7 +1212,7 @@ int mng_LoadNetPages(int show_progress) {
   std::filesystem::path tablename;
   float start_time;
   int n_pages = 0;
-  int total_bytes;
+  int total_bytes = 0;
   int current_byte;
   float progress;
   int int_progress = 0;

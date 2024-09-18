@@ -1036,7 +1036,7 @@ void RenderTerrainRooms() {
   int room_count = 0;
   float zdist;
   int use_occlusion = 0;
-  int src_occlusion_index;
+  int src_occlusion_index = 0;
   int i;
   if (Terrain_from_mine)
     return;

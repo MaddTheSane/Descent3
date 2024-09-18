@@ -4186,7 +4186,7 @@ void newuiTiledWindow::SetOnUIFrameCB(void (*fn)(newuiTiledWindow *, void *)) { 
 
 // Returns the index of the tile bitmap to draw along the top of the window
 int newuiTiledWindow::GetTopTileIndex(int tx, int window_width) {
-  int title_width, left, right;
+  int title_width = 0, left = 0, right = 0;
 
   // Get size of the title
   int flags = GetFlags();

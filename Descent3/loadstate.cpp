@@ -946,9 +946,9 @@ int LGSObjects(CFILE *fp, int version) {
   Osiris_EnableEvents(OEM_OBJECTS | OEM_TRIGGERS | OEM_LEVELS);
   for (i = 0; i <= highest_index; i++) {
     object *op;
-    weapon *wpn;
-    ship *shp;
-    object_info *obji;
+    weapon *wpn = nullptr;
+    ship *shp = nullptr;
+    object_info *obji = nullptr;
     door *door;
     int index, nattach, new_model, handle;
     uint8_t type, dummy_type;

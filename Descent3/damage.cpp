@@ -1035,7 +1035,7 @@ void GenerateDefaultDeath(object *obj, int *death_flags, float *delay_time) {
 //					damage - how much damage was applied in the death blow?
 void KillObject(object *objp, object *killer, float damage) {
   int death_flags = -1;
-  float delay_time;
+  float delay_time = 0;
 
   // Make sure a valid type
   ASSERT(IS_GENERIC(objp->type) || (objp->type == OBJ_DOOR));

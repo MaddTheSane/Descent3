@@ -1221,7 +1221,7 @@ void Cinematic_DrawText(void) {
   grtext_SetFont(BIG_BRIEFING_FONT);
   grtext_SetColor(GR_RGB(255, 255, 255));
 
-  int start_y;
+  int start_y = 0;
   int end_y;
 
   // determine y positions

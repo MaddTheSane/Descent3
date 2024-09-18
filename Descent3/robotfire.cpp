@@ -131,7 +131,7 @@ void WBFireBattery(object *obj, otype_wb_info *static_wb, int poly_wb_index, int
   vm_MakeZero(&ave_pos);
   pos_state cur_pos;
   dynamic_wb_info *p_dwb = &obj->dynamic_wb[dynamic_wb_index];
-  int weapon_obj;
+  int weapon_obj = 0;
   int must_send = 0;
   int first = 1;
   int saved_weapon_id = 0;

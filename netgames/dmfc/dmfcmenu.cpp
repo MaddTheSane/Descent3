@@ -538,7 +538,7 @@ void MenuItem::Draw(int x, int y, int height, int bmp, float *not_used) {
 
   m_Alpha = alpha_to_use = (uint8_t)a;
 
-  ddgr_color color;
+  ddgr_color color = 0;
   int temp, maxx;
   temp = maxx = 0;
   char buff[256];
@@ -661,7 +661,7 @@ void MenuItem::Draw(int x, int y, int height, int bmp, float *not_used) {
 
   x += 5;
 
-  uint8_t al;
+  uint8_t al = 255;
 
   m_bMoreToScroll = (end_index < SubMenuCount) ? true : false;
   // m_bAtBottom = (m_bMoreToScroll)?((CurrSubMenu<end_index-1)?false:true):((CurrSubMenu<end_index)?false:true);

@@ -700,8 +700,8 @@ void RenderHUDSecondary(tHUDItem *item) {
 }
 
 void RenderHUDShipStatus(tHUDItem *item) {
-  float clk_time_frame, inv_time_frame;
-  uint8_t clk_alpha = 0, inv_alpha;
+  float clk_time_frame, inv_time_frame = 0;
+  uint8_t clk_alpha = 0, inv_alpha = 0;
 
   //	render text status
   if (Objects[Players[Player_num].objnum].effect_info->type_flags & EF_CLOAKED) {

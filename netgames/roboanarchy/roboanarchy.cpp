@@ -818,7 +818,7 @@ void DisplayHUDScores(struct tHUDItem *hitem) {
   uint8_t alpha = DMFCBase->ConvertHUDAlpha((uint8_t)((DisplayScoreScreen) ? 128 : 255));
   int y = (DMFCBase->GetGameWindowH() / 2) - ((height * 5) / 2);
   int x = 520;
-  ddgr_color color;
+  ddgr_color color = 0;
 
   int rank = 1;
   player_record *pr;

@@ -924,7 +924,7 @@ bool hlsSystem::ComputePlayInfo(int sound_obj_index, vector *virtual_pos, vector
         }
       }
       cur_room = BOA_NEXT_ROOM(cur_room, ear_seg);
-      int last_portal;
+      int last_portal = 0;
       if (BOA_INDEX(last_room) == BOA_INDEX(cur_room) || cur_room == BOA_NO_PATH)
         return false;
       if (BOA_INDEX(last_room) != BOA_INDEX(cur_room)) {

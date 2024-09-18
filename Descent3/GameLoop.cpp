@@ -2486,7 +2486,7 @@ void GameDrawMainView() {
   extern bool Guided_missile_smallview; // smallviews.cpp
 
   bool rear_view = 0;
-  object *save_view;
+  object *save_view = nullptr;
 
   // Start rendering
   StartFrame(false);

@@ -327,7 +327,7 @@ void UIListBox::AddItem(const UIItem *item) {
       real_index = -1;
       int result;
 
-      int old_r2v;
+      int old_r2v = 0;
       UIItem *old_item = NULL;
 
       while (oidx <= m_NumItems) {

@@ -3494,7 +3494,7 @@ int AIFindRandomRoom(object *obj, ai_frame *ai_info, goal *goal_ptr, int avoid_r
   int n_tries = 0;
   bool valid = false;
   bool f_use_depth = false;
-  int cur_depth;
+  int cur_depth = 0;
   int cur_room = obj->roomnum;
   int mine_rooms[MAX_ROOMS];
   int num_mine_rooms = 0;

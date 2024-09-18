@@ -1133,7 +1133,7 @@ bool CBriefParse::ParseTextEffect(const char *p, tTextBufferDesc *tbd) {
       bool found = false;
       int i = 0;
       int feffect = 0;
-      int text_font;
+      int text_font = BRIEFING_FONT;
 
       PARSE_TOKEN(buffer);
       while (!found) {

@@ -427,7 +427,7 @@ void tGraphNode::Render(void) {
     return;
   rend_SetFlatColor(color);
 
-  int last_x, last_y = 0, y;
+  int last_x, last_y = 0, y = 0;
   int index = first_pos;
   int count = num_items_stored;
   count--;

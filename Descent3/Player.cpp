@@ -1311,7 +1311,7 @@ int PlayerGetRandomStartPosition(int slot) {
       }
     }
     if (num_avail > 0) {
-      int num;
+      int num = 0;
       int done = 0;
       while (!done) {
         num = avail_array[ps_rand() % (num_avail)];
@@ -1323,7 +1323,7 @@ int PlayerGetRandomStartPosition(int slot) {
   }
 
   // Default to non-team mode
-  int num;
+  int num = 0;
   int done = 0;
   int badcount = 0;
   LOG_DEBUG << "Picking non-team start position.";
